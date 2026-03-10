@@ -1,26 +1,138 @@
 @import "tailwindcss";
+@import "bootstrap-icons/font/bootstrap-icons.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-primary: #1b325f;
+    --color-secondary: #253e6f; /* #536588 */
+    --color-tertiary: #536588;
+    --color-badge-1: #e5ebff;
+    --color-badge-2: #e5ff00;
+    --color-badge-3: #e8e8e8;
+    --color-dark: #111827;
+    --color-bg: #f7f7f5; /* #E9F2F9 */
+    --color-text: #29394e;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    font-family: var(--font-inter), system-ui, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  /* ===== Partículas ===== */
+
+  .particle {
+    position: absolute;
+    border-radius: 9999px;
+    background: #536588;
+    animation-name: float, var(--orbit);
+    animation-duration: 3s, var(--speed);
+    animation-iteration-count: infinite, infinite;
+    animation-timing-function: ease-in-out, linear;
+  }
+
+  /* animação de pulsar leve */
+  @keyframes float {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.25);
+    }
+  }
+
+  /* órbitas diferentes pra parecer natural */
+
+  /* tamanhos diferentes */
+  .particle-1 {
+    width: 4px;
+    height: 4px;
+    opacity: 0.6;
+    animation: orbit1 6s linear infinite;
+  }
+
+  .particle-2 {
+    width: 8px;
+    height: 8px;
+    opacity: 0.9;
+    animation: orbit2 8s linear infinite;
+  }
+
+  .particle-3 {
+    width: 8px;
+    height: 8px;
+    opacity: 0.75;
+    animation: orbit3 7s linear infinite;
+  }
+
+  .particle-4 {
+    width: 6px;
+    height: 6px;
+    opacity: 0.65;
+    animation: orbit4 9s linear infinite;
+  }
+
+  /* ===== animações ===== */
+
+  @keyframes orbit1 {
+    from {
+      transform: rotate(0deg) translateX(120px) rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg) translateX(120px) rotate(-360deg);
+    }
+  }
+
+  @keyframes orbit2 {
+    from {
+      transform: rotate(0deg) translateX(95px) rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg) translateX(95px) rotate(360deg);
+    }
+  }
+
+  @keyframes orbit3 {
+    from {
+      transform: rotate(0deg) translateX(130px) rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg) translateX(130px) rotate(-360deg);
+    }
+  }
+
+  @keyframes orbit4 {
+    from {
+      transform: rotate(0deg) translateX(110px) rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg) translateX(110px) rotate(360deg);
+    }
+  }
+
+  @keyframes ring {
+    0% {
+      transform: rotate(0);
+    }
+    15% {
+      transform: rotate(18deg);
+    }
+    30% {
+      transform: rotate(-15deg);
+    }
+    45% {
+      transform: rotate(10deg);
+    }
+    60% {
+      transform: rotate(-6deg);
+    }
+    75% {
+      transform: rotate(3deg);
+    }
+    100% {
+      transform: rotate(0);
+    }
+  }
 }
