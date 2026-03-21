@@ -11,6 +11,8 @@ import {
   Store,
   AlertCircle,
   PauseCircle,
+  AlignJustify,
+  List,
 } from "lucide-react";
 
 import RestaurantCard from "../../../components/restaurant_card";
@@ -29,28 +31,42 @@ type Restaurant = {
 
 export default function MyRestaurants() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [page, setPage] = useState<number>(1);
+
+  const restaurantsPerPage: number = 3;
 
   useEffect(() => {
-  async function fetchRestaurants() {
-    const response = await fetch("/api/restaurant/me/all-restaurants");
-    const data = await response.json();
-    setRestaurants(data);
-  }
-
-  fetchRestaurants();
-
-  const channel = new BroadcastChannel("restaurants");
-
-  channel.onmessage = (event) => {
-    if (event.data === "restaurant-created") {
-      fetchRestaurants();
+    async function fetchRestaurants() {
+      const response = await fetch("/api/restaurant/me/all-restaurants");
+      const data = await response.json();
+      setRestaurants(data);
     }
-  };
 
-  return () => {
-    channel.close();
-  };
-}, []);
+    fetchRestaurants();
+
+    const channel = new BroadcastChannel("restaurants");
+
+    channel.onmessage = (event) => {
+      if (event.data === "restaurant-created") {
+        fetchRestaurants();
+      }
+    };
+
+    return () => {
+      channel.close();
+    };
+  }, []);
+
+  const lastRestaurant: number = page * restaurantsPerPage;
+
+  const firstRestaurant: number = lastRestaurant - restaurantsPerPage;
+
+  const visibleRestaurants: Restaurant[] = restaurants.slice(
+    firstRestaurant,
+    lastRestaurant,
+  );
+
+  const totalPages: number = Math.ceil(restaurants.length / restaurantsPerPage);
 
   return (
     <section className="min-h-screen flex py-15 bg-gray-50">
@@ -66,70 +82,55 @@ export default function MyRestaurants() {
           </div>
         </div>
 
-        {/* <div className="relative flex w-full bg-[#f4f5f7] py-10 px-20 border-b border-gray-200 overflow-hidden">
-          <Image
-            src="/.png"
-            alt=""
-            fill
-            className="object-cover"
-            priority
-          />
+        <div className="w-full mx-auto px-6 py-16">
+          {/* <div className="w-full flex justify-center mb-3">
+            <div className="flex flex-row gap-6 max-w-275 w-full">
+            
+              <div className="flex items-center gap-4">
+              
+                <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm">
+                    <List className="w-4 h-4" />
+                    Todos
+                  </button>
 
-          <div className="relative z-10 flex flex-col text-start">
-            <h1 className="mb-5 text-4xl font-bold text-[#1F2933]">
-              Meus restaurantes
-            </h1>
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-white">
+                    <CircleCheck className="w-4 h-4" />
+                    Operacional
+                  </button>
 
-            <p className="text-md text-[#1F2933]">
-              Gerencie os seus restaurantes e configure suas opções!
-            </p>
-          </div>
-        </div> */}
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-white">
+                    <Settings className="w-4 h-4" />
+                    Configurando
+                  </button>
 
-        <div className="w-full mx-auto px-6 py-10">
-          <div className="w-full flex justify-center py-8">
-            <form className="flex flex-col md:flex-row items-center gap-4 justify-start">
-              <div className="w-60">
-                <div className="relative">
-                  <Search
-                    size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-                  />
-
-                  <input
-                    type="text"
-                    name="search"
-                    placeholder="Buscar restaurante..."
-                    className="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-(--color-primary) focus:border-(--color-primary)"
-                  />
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-white">
+                    <PauseCircle className="w-4 h-4" />
+                    Pausado
+                  </button>
                 </div>
               </div>
 
-              <div className="w-48">
-                <select
-                  name="status"
-                  className="w-full rounded-lg border border-gray-300 bg-[#ffffff] px-4 py-2 focus:outline-none focus:ring-2 focus:ring-(--color-primary) focus:border-(--color-primary)"
-                >
-                  <option value="">Todos</option>
-                  <option value="open">Aberto</option>
-                  <option value="closed">Fechado</option>
-                </select>
+              <div className="flex items-center gap-4">
+                
+
+                <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm">
+                    <Building2 className="w-4 h-4" />
+                    Matriz
+                  </button>
+
+                  <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 hover:bg-white">
+                    <Store className="w-4 h-4" />
+                    Filial
+                  </button>
+                </div>
               </div>
+            </div>
+          </div> */}
 
-              <button
-                type="submit"
-                className="bg-(--color-primary) text-white font-medium py-2 px-6 rounded-lg hover:bg-(--color-secondary) transition-all duration-200 flex items-center gap-2"
-              >
-                Filtrar
-              </button>
-            </form>
-          </div>
-          <div className="py-10 w-full flex justify-center">
+          <div className="pb-10 pt-5 w-full flex justify-center">
             <div className="w-full max-w-275">
-              {/* Div grid */}
-
-              {/* Card */}
-
               {restaurants.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-gray-500 text-lg">
@@ -138,7 +139,7 @@ export default function MyRestaurants() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {restaurants.map((restaurant) => (
+                  {visibleRestaurants.map((restaurant: Restaurant) => (
                     <RestaurantCard
                       key={restaurant.id}
                       restaurant={restaurant}
@@ -146,6 +147,62 @@ export default function MyRestaurants() {
                   ))}
                 </div>
               )}
+
+              <div className="flex items-center mt-15 text-sm text-gray-600">
+                <div className="flex-1">
+                  <p className="text-start">
+                    Mostrando {firstRestaurant + 1}–
+                    {Math.min(lastRestaurant, restaurants.length)} de{" "}
+                    {restaurants.length}
+                  </p>
+                </div>
+
+                <div className="flex justify-center items-center gap-2 flex-1 font-semibold text-[14.5px]">
+                  <button
+                    onClick={() => setPage((p: number) => Math.max(p - 1, 1))}
+                    className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer"
+                  >
+                    Anterior
+                  </button>
+
+                  <div className="flex items-center">
+                    {[...Array(totalPages)].map((_, i: number) => {
+                      const pageNumber: number = i + 1;
+
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => setPage(pageNumber)}
+                          className={`px-3 py-1.5 border border-gray-300 cursor-pointer ${
+                            page === pageNumber
+                              ? "bg-(--color-primary) text-white"
+                              : "hover:bg-gray-100"
+                          } ${
+                            i === 0
+                              ? "rounded-l-[3px]"
+                              : i === totalPages - 1
+                                ? "rounded-r-[3px] border-l-0"
+                                : "rounded-none border-l-0"
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setPage((p: number) => Math.min(p + 1, totalPages))
+                    }
+                    className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer"
+                  >
+                    Próximo
+                  </button>
+                </div>
+
+                <div className="flex-1"></div>
+              </div>
             </div>
           </div>
         </div>

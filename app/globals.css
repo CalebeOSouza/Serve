@@ -9,18 +9,16 @@
     --color-badge-1: #e5ebff;
     --color-badge-2: #e5ff00;
     --color-badge-3: #e8e8e8;
-    --color-dark: #111827;
+    --color-dark: #22262f; /* #111827 */
     --color-bg: #f7f7f5; /* #E9F2F9 */
     --color-text: #29394e;
   }
-
+  /* #0b1b42 */
   body {
     font-family: var(--font-inter), system-ui, sans-serif;
     background-color: var(--color-bg);
     color: var(--color-text);
   }
-
-  /* ===== Partículas ===== */
 
   .particle {
     position: absolute;
@@ -32,7 +30,6 @@
     animation-timing-function: ease-in-out, linear;
   }
 
-  /* animação de pulsar leve */
   @keyframes float {
     0%,
     100% {
@@ -43,9 +40,6 @@
     }
   }
 
-  /* órbitas diferentes pra parecer natural */
-
-  /* tamanhos diferentes */
   .particle-1 {
     width: 4px;
     height: 4px;
@@ -73,8 +67,6 @@
     opacity: 0.65;
     animation: orbit4 9s linear infinite;
   }
-
-  /* ===== animações ===== */
 
   @keyframes orbit1 {
     from {

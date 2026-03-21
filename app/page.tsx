@@ -3,9 +3,8 @@ import Link from "next/link";
 export default function Home() {
   return (
     <section className="min-h-screen w-full flex flex-col">
-      <div className="h-18" />
+      <div className="h-16" />
       <div className="w-full bg-[#F3F4F6]">
-        {/* Bloco texto */}
 
         <div className="mx-auto max-w-6xl w-full items-center gap-12 grid grid-cols-1 md:grid-cols-2 text-(--color-primary) pt-10 px-8">
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
@@ -22,7 +21,7 @@ export default function Home() {
             <div>
               <Link href="/">
                 <button className="rounded-lg bg-(--color-primary) px-7 py-3 font-bold text-white hover:bg-(--color-secondary) transition cursor-pointer">
-                  Comece agora — é grátis!
+                  Comece agora - é grátis!
                 </button>
               </Link>
 
@@ -32,7 +31,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Bloco imagem */}
           <div className="flex justify-center md:justify-end select-none">
             <img
               src="/cooking.svg"

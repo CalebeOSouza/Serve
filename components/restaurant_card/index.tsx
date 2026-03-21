@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-
+import Link from "next/link";
 import {
   Settings,
   Settings2,
@@ -85,11 +85,10 @@ export default function RestaurantCard({ restaurant }: Props) {
                   Operacional
                 </span>
               )}
-{/* [#ffdc9c] */}
+              {/* [#ffdc9c] */}
               {status === "configurando" && (
                 <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[14px] font-bold bg-(--color-badge-3) text-[#292929]">
-                  <Settings className="w-4 h-4 text-[#292929]" />{" "}
-                  Configurando
+                  <Settings className="w-4 h-4 text-[#292929]" /> Configurando
                 </span>
               )}
 
@@ -127,10 +126,13 @@ export default function RestaurantCard({ restaurant }: Props) {
             <p className="">Ultíma edição: {formattedDate}</p>
           </div>
 
-          <button className="bg-(--color-primary) text-white font-semibold py-2 px-8 rounded hover:bg-(--color-secondary) transition-all duration-200 cursor-pointer flex items-center justify-center gap-4">
+          <Link
+            href={`/admin/dashboard/${restaurant.id}`}
+            className="bg-(--color-primary) text-white font-semibold py-2 px-8 rounded hover:bg-(--color-secondary) transition-all duration-200 cursor-pointer flex items-center justify-center gap-4"
+          >
             <Settings2 className="w-5.5 h-5.5 text-white" />
             <span className="text-[16.5px]">Painel de Controle</span>
-          </button>
+          </Link>
         </div>
       </div>
     </>

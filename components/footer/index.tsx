@@ -67,7 +67,7 @@ export function Footer() {
             </li>
           </ul>
 
-          <div className="flex gap-4 mt-5">
+          {/* <div className="flex gap-4 mt-5">
             <a
               href="https://www.instagram.com/cal3be_os/"
               target="_blank"
@@ -76,7 +76,7 @@ export function Footer() {
             >
               <i className="bi bi-instagram text-xl"></i>
             </a>
-          </div>
+          </div> */}
         </section>
 
       </div>
