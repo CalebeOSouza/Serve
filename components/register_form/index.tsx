@@ -90,9 +90,12 @@ export function RegisterForm({ activeContainer }: Props) {
           
         />
 
+          {/* border border-gray-300 py-2 px-4 rounded-md outline-none */}
         <div className="relative my-7.5 ">
           <input
-            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 bg-[#eee] rounded-lg border-transparent outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-2 focus:ring-black/10 transition"
+            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white
+    autofill:text-black
+    autofill:shadow-[inset_0_0_0px_1000px_white]"
             type="text"
             name="name"
             value={formData.name}
@@ -103,7 +106,9 @@ export function RegisterForm({ activeContainer }: Props) {
         </div>
         <div className="relative my-7.5">
           <input
-            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 bg-[#eee] rounded-lg border-transparent outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-2 focus:ring-black/10 transition"
+            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white
+    autofill:text-black
+    autofill:shadow-[inset_0_0_0px_1000px_white]"
             name="email"
             value={formData.email}
             onChange={handleChange}
@@ -114,7 +119,9 @@ export function RegisterForm({ activeContainer }: Props) {
         </div>
         <div className="relative my-7.5">
           <input
-            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 bg-[#eee] rounded-lg border-transparent outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-2 focus:ring-black/10 transition"
+            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white
+    autofill:text-black
+    autofill:shadow-[inset_0_0_0px_1000px_white]"
             name="password"
             value={formData.password}
             onChange={handleChange}

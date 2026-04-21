@@ -39,7 +39,7 @@ export default function MyRestaurants() {
     async function fetchRestaurants() {
       const response = await fetch("/api/restaurant/me/all-restaurants");
       const data = await response.json();
-      setRestaurants(data);
+      setRestaurants(data.restaurants || []);
     }
 
     fetchRestaurants();

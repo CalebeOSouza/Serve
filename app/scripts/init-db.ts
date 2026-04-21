@@ -103,6 +103,83 @@ CREATE TABLE restaurant_hours (
     `);
 
     await pool.query(`
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    type ENUM('gerente', 'cozinha', 'caixa', 'garcom') NOT NULL,
+
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NULL,
+
+    restaurant_id INT NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_role_per_restaurant (restaurant_id, type),
+
+    FOREIGN KEY (restaurant_id) 
+        REFERENCES restaurants(id) 
+        ON DELETE CASCADE
+);
+`);
+
+    await pool.query(`
+      CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    name VARCHAR(120) NULL,
+    cpf VARCHAR(50),
+
+    pin VARCHAR(255) NULL,
+
+    restaurant_id INT NOT NULL,
+
+    status ENUM('ativo', 'inativo') DEFAULT 'ativo',
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (restaurant_id)
+        REFERENCES restaurants(id)
+        ON DELETE CASCADE
+);
+    `);
+
+    await pool.query(`
+CREATE TABLE employee_roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    employee_id INT NOT NULL,
+    role_id INT NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_employee_role (employee_id, role_id),
+
+    FOREIGN KEY (employee_id)
+        REFERENCES employees(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (role_id)
+        REFERENCES roles(id)
+        ON DELETE CASCADE
+);
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS employee_logs (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          restaurant_id INT NOT NULL,
+          system_account ENUM('cozinha', 'caixa', 'garçom') NOT NULL,
+          employee_id INT NOT NULL,
+          action_description VARCHAR(255) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (employee_id) REFERENCES employees(id),
+          FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
+      );
+    `);
+
+    await pool.query(`
   CREATE TABLE menu_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     restaurant_id INT NOT NULL,
@@ -139,45 +216,6 @@ CREATE TABLE menu_items (
     FOREIGN KEY (category_id) REFERENCES menu_categories(id) ON DELETE CASCADE
 );
 
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS workstation_accounts (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          restaurant_id INT NOT NULL,
-          account_type ENUM('cozinha', 'caixa', 'garçom') NOT NULL,
-          email VARCHAR(150) NOT NULL UNIQUE,
-          password VARCHAR(255) NOT NULL,
-          active BOOLEAN DEFAULT TRUE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
-      );
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS employees (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          restaurant_id INT NOT NULL,
-          name VARCHAR(100) NOT NULL,
-          function ENUM('kitchen', 'cashier', 'waiter') NOT NULL,
-          pin CHAR(6) NOT NULL,
-          active BOOLEAN DEFAULT TRUE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
-      );
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS employee_logs (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          restaurant_id INT NOT NULL,
-          system_account ENUM('cozinha', 'caixa', 'garçom') NOT NULL,
-          employee_id INT NOT NULL,
-          action_description VARCHAR(255) NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (employee_id) REFERENCES employees(id),
-          FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
-      );
     `);
 
     console.log("Banco e tabelas criados com sucesso!");

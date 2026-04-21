@@ -65,7 +65,7 @@ ORDER BY r.created_at DESC
       [userId],
     );
 
-    return NextResponse.json(rows);
+    return NextResponse.json({ restaurants: rows });
   } catch (err) {
     console.error(err);
     return NextResponse.json(

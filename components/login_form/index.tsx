@@ -73,8 +73,17 @@ export function LoginForm({ activeContainer }: Props) {
         />
 
         <div className="relative my-7.5">
-          <input
+          {/* <input
             className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 bg-[#eee] rounded-lg border-transparent outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-2 focus:ring-black/10 transition"
+            type="text"
+            name="email"
+            placeholder="Email"
+            onChange={(e) => setEmail(e.target.value)}
+          /> */}
+          <input
+            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white
+    autofill:text-black
+    autofill:shadow-[inset_0_0_0px_1000px_white]"
             type="text"
             name="email"
             placeholder="Email"
@@ -83,8 +92,11 @@ export function LoginForm({ activeContainer }: Props) {
           <i className="bi bi-envelope-fill absolute right-5 top-1/2 -translate-y-1/2 text-[#888] text-[20px]"></i>
         </div>
         <div className="relative my-7.5">
+          {/* border border-gray-300 py-2 px-4 rounded-md outline-none */}
           <input
-            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 bg-[#eee] rounded-lg border-transparent outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-2 focus:ring-black/10 transition"
+            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white
+    autofill:text-black
+    autofill:shadow-[inset_0_0_0px_1000px_white]"
             type="password"
             name="password"
             placeholder="Senha"
