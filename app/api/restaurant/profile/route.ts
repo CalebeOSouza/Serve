@@ -18,8 +18,6 @@ interface ProfileBody {
   parentId?: number | null;
 }
 
-
-
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);

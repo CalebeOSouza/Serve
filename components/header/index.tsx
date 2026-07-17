@@ -70,6 +70,11 @@ export function Header() {
     lastscrollY.current = window.scrollY;
 
     const handleScroll = () => {
+      if (pathname.startsWith("/admin/dashboard")) {
+        setshowHeader(true);
+        return;
+      }
+
       const current = window.scrollY;
       const diff = current - lastscrollY.current;
 
@@ -99,7 +104,7 @@ export function Header() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [menuOpen]);
+  }, [menuOpen, pathname]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -187,7 +192,6 @@ export function Header() {
 
     async function checkOnboarding() {
       try {
-
         const res = await fetch("/api/restaurant/onboarding-status");
         const data = await res.json();
 
@@ -405,7 +409,7 @@ export function Header() {
             <img
               src="/Serve6.png"
               alt="Serve"
-              className="h-[31px] w-auto object-contain shrink-0"
+              className="h-[35px] w-auto object-contain shrink-0"
             />
           </Link>
 

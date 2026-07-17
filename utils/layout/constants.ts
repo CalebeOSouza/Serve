@@ -1,0 +1,11 @@
+  export const WORLD_WIDTH = 5000;
+  export const WORLD_HEIGHT = 5000;
+  export const GRID_SIZE = 25;
+  export const HALF_GRID_SIZE = GRID_SIZE / 2;
+  export const SNAP_THRESHOLD = 8;
+  export const WALL_THICKNESS = 12.5;
+  export const GRID_SIZE_WALL = 25;
+  export const HALF_GRID_SIZE_WALL = GRID_SIZE_WALL / 2;
+  export const QUARTER_GRID_SIZE_WALL = GRID_SIZE_WALL / 4;   // 6.25
+export const EIGHTH_GRID_SIZE_WALL = GRID_SIZE_WALL / 8;    // 3.125
+export const WALL_THICKNESS_INTERNA = QUARTER_GRID_SIZE_WALL; // 6.25

@@ -8,6 +8,7 @@ import {
   Layout,
   Star,
   CalendarCheck,
+  ArrowLeftRight,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 type Props = {
@@ -18,9 +19,10 @@ export function DashboardMenu({ restaurantId }: Props) {
   const pathname = usePathname();
   const basePath = `/admin/dashboard/${restaurantId}`;
   return (
-    <section className="hidden sm:hidden md:flex min-h-screen w-60 pt-16 bg-(--color-primary) text-white">
+    <section className="hidden lg:flex fixed top-0 left-0 h-screen w-60 bg-(--color-primary) text-white z-10">
+
       <div className="flex flex-col w-full text-center mx-auto">
-        <ul className="flex flex-col px-5 py-10 w-full items-center text-center">
+        <ul className="flex flex-col px-5 py-10 pt-20 w-full items-center text-center">
           <div className="flex flex-col items-start gap-3 p-3 text-[15px] w-full">
             {/* DASHBOARD */}
             <li className="w-full">
@@ -97,8 +99,8 @@ export function DashboardMenu({ restaurantId }: Props) {
             : "hover:bg-(--color-secondary)/50"
         }`}
                 >
-                  <CalendarCheck size={18} />
-                  <span>Reservas</span>
+                  <ArrowLeftRight size={18} />
+                  <span>Alternar perfil</span>
                 </div>
               </Link>
             </li>

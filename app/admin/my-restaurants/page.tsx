@@ -68,10 +68,17 @@ export default function MyRestaurants() {
 
   const totalPages: number = Math.ceil(restaurants.length / restaurantsPerPage);
 
+  const maxVisiblePages = 5;
+
+  const startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+  const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+  const adjustedStartPage = Math.max(1, endPage - maxVisiblePages + 1);
+
   return (
-    <section className="min-h-screen flex py-15 bg-gray-50">
+    <section className="min-h-screen flex py-15 bg-(--color-background)">
       <div className="flex flex-col w-full text-center mx-auto">
-        <div className="flex flex-start w-full bg-[#f4f5f7] py-10 px-20 border-b border-gray-200">
+        <div className="flex flex-start w-full bg-[#f4f4f5] py-10 px-20 border-b border-gray-200">
           <div className="flex flex-col text-start ">
             <h1 className="mb-5 text-4xl font-bold text-[#1F2933]">
               Meus restaurantes
@@ -160,42 +167,44 @@ export default function MyRestaurants() {
                 <div className="flex justify-center items-center gap-2 flex-1 font-semibold text-[14.5px]">
                   <button
                     onClick={() => setPage((p: number) => Math.max(p - 1, 1))}
-                    className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer"
+                    className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer bg-white"
                   >
                     Anterior
                   </button>
 
                   <div className="flex items-center">
-                    {[...Array(totalPages)].map((_, i: number) => {
-                      const pageNumber: number = i + 1;
+                    {[...Array(endPage - adjustedStartPage + 1)].map(
+                      (_, i: number) => {
+                        const pageNumber = adjustedStartPage + i;
 
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => setPage(pageNumber)}
-                          className={`px-3 py-1.5 border border-gray-300 cursor-pointer ${
-                            page === pageNumber
-                              ? "bg-(--color-primary) text-white"
-                              : "hover:bg-gray-100"
-                          } ${
-                            i === 0
-                              ? "rounded-l-[3px]"
-                              : i === totalPages - 1
-                                ? "rounded-r-[3px] border-l-0"
-                                : "rounded-none border-l-0"
-                          }`}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    })}
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => setPage(pageNumber)}
+                            className={`px-3 py-1.5 border border-gray-300 cursor-pointer ${
+                              page === pageNumber
+                                ? "bg-(--color-primary) text-white"
+                                : "hover:bg-gray-100 bg-white"
+                            } ${
+                              i === 0
+                                ? "rounded-l-[3px]"
+                                : i === endPage - adjustedStartPage
+                                  ? "rounded-r-[3px] border-l-0"
+                                  : "rounded-none border-l-0"
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      },
+                    )}
                   </div>
 
                   <button
                     onClick={() =>
                       setPage((p: number) => Math.min(p + 1, totalPages))
                     }
-                    className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer"
+                    className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer bg-white"
                   >
                     Próximo
                   </button>

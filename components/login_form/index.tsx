@@ -49,7 +49,7 @@ export function LoginForm({ activeContainer }: Props) {
       setErrorMessage("Email ou senha inválidos.");
       return;
     } else {
-      router.push("/user-type");
+      router.push("/admin/my-restaurants");
     }
   }
 

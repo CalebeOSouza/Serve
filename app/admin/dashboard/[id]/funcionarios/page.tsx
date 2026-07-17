@@ -5,17 +5,23 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { SquareMousePointer, UserRoundKey, Lock } from "lucide-react";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
-import EmployeeCard, { Employee } from "@/components/dashboard/employee_card";
-
+import EmployeeCard, { Employee } from "@/components/dashboard/dashboard_employees/employee_card";
+import { useRef } from "react";
 export default function RestaurantFuncionarios() {
+  const formRef = useRef<HTMLDivElement | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [openModal, setOpenModal] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [search, setSearch] = useState("");
+  const [cargoFiltro, setCargoFiltro] = useState<Cargo["tipo"] | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const employeesPerPage = 4;
   const [hasRolePassword, setHasRolePassword] = useState(false);
   const [cargosSelecionados, setCargosSelecionados] = useState<string[]>([]);
   const [rolePassword, setRolePassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
   const [roles, setRoles] = useState<{ type: string; username: string }[]>([]);
   const [isReset, setIsReset] = useState(false);
   const [pinModal, setPinModal] = useState<{
@@ -130,29 +136,33 @@ export default function RestaurantFuncionarios() {
       return;
     }
 
-    const res = await fetch("/api/restaurant/roles/password", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        password: rolePassword,
-        restaurantId,
-      }),
-    });
+    try {
+      const res = await fetch("/api/restaurant/roles/password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: rolePassword,
+          restaurantId,
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao salvar senha");
+      }
+
       setCredentialsModal({ open: false });
-
       setRolePassword("");
       setConfirmPassword("");
-
       setHasRolePassword(true);
-    } else {
+
+      await fetchRoles();
+    } catch (error: any) {
       setAlert({
-        message: data.error || "Erro ao salvar senha",
+        message: error.message || "Erro inesperado",
         type: "error",
       });
     }
@@ -217,6 +227,17 @@ export default function RestaurantFuncionarios() {
   }, [restaurantId]);
 
   useEffect(() => {
+    if (openModal && formRef.current && window.innerWidth < 1700) {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 50);
+    }
+  }, [openModal]);
+
+  useEffect(() => {
     console.log("Selecionados:", cargosSelecionados);
   }, [cargosSelecionados]);
 
@@ -229,11 +250,46 @@ export default function RestaurantFuncionarios() {
     setEmployees(data.employees);
   }
 
+  const lastEmployee = page * employeesPerPage;
+  const firstEmployee = lastEmployee - employeesPerPage;
+
+  const filteredEmployees = employees.filter((emp) => {
+    const matchNome = emp.name.toLowerCase().includes(search.toLowerCase());
+
+    const matchCargo = cargoFiltro ? emp.roles.includes(cargoFiltro) : true;
+
+    return matchNome && matchCargo;
+  });
+
+  const sortedEmployees = [...filteredEmployees].sort((a, b) => {
+    const aIsGerente = a.roles.includes("gerente");
+    const bIsGerente = b.roles.includes("gerente");
+
+    if (aIsGerente && !bIsGerente) return -1;
+    if (!aIsGerente && bIsGerente) return 1;
+    return 0;
+  });
+
+  const visibleEmployees = sortedEmployees.slice(firstEmployee, lastEmployee);
+
+  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
+
+  const maxVisiblePages = 5;
+
+  const startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+  const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+  const adjustedStartPage = Math.max(1, endPage - maxVisiblePages + 1);
+
   useEffect(() => {
     if (restaurantId) {
       fetchEmployees();
     }
   }, [restaurantId]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [employees, search, cargoFiltro]);
 
   function getInitials(name: string) {
     if (!name) return "";
@@ -341,7 +397,7 @@ export default function RestaurantFuncionarios() {
 
   return (
     <div
-      className={`${openModal ? "lg:px-10 px-10" : "px-10 lg:px-20 md:px-10"} py-10 w-full mx-auto flex flex-col gap-6 transition-all duration-400`}
+      className={`${openModal ? "lg:px-10 px-5" : "px-5 lg:px-20 md:px-10"} py-10 w-full mx-auto flex flex-col gap-6 transition-all duration-400`}
     >
       <div className="flex flex-col text-start gap-2">
         <div className="flex flex-col text-start gap-2">
@@ -355,7 +411,7 @@ export default function RestaurantFuncionarios() {
         <span className="mt-4 border-b border-gray-200"></span>
       </div>
 
-      <div className="flex  justify-between text-start my-5 flex-col gap-6 lg:flex-row lg:gap-0">
+      <div className="flex justify-between text-start my-5 flex-col gap-6 lg:flex-row lg:gap-0">
         <div className="flex flex-col">
           <h1 className="font-semibold text-[26px] text-[#19274b]">
             Criar funcionários!
@@ -380,15 +436,10 @@ export default function RestaurantFuncionarios() {
           </button>
         </div>
       </div>
-
-      <section className={`flex items-stretch w-full`}>
-        <div
-          className={`transition-all duration-500 ease-in-out ${
-            openModal ? "w-2/3" : "w-full"
-          }`}
-        >
+      {/* Div que engloba o formulario e os cards */}
+      <section className={`layout-container`}>
+        <div className={`layout-main ${openModal ? "is-open" : ""}`}>
           <div className="flex flex-col">
- 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {cargos.map((cargo) => (
                 <div
@@ -405,7 +456,13 @@ export default function RestaurantFuncionarios() {
                     </div>
                   </div>
 
-                  <div className="w-18 h-18 min-w-18 min-h-18 rounded-full bg-[#c9dbff] flex items-center justify-center mt-6 shadow-sm">
+                  <div
+                    className={`w-18 h-18 min-w-18 min-h-18 rounded-full flex items-center justify-center mt-6 shadow-sm ${
+                      hasRolePassword
+                        ? "bg-(--color-tertiary) border border-[#c9dbff]" //bg-[#e3effe] border border-[#c9dbff]
+                        : "bg-[#E5E5E5] grayscale opacity-90"
+                    }`}
+                  >
                     <Image
                       src={cargo.imagem}
                       alt={cargo.nome}
@@ -433,7 +490,7 @@ export default function RestaurantFuncionarios() {
     ${
       hasRolePassword
         ? "bg-(--color-primary) hover:bg-(--color-secondary) cursor-pointer text-white"
-        : "bg-[#E5E5E5] cursor-not-allowed text-[#ABABAB]"
+        : "bg-[#E5E5E5] cursor-not-allowed text-[#676767]"
     }
   `}
                     >
@@ -444,42 +501,66 @@ export default function RestaurantFuncionarios() {
               ))}
             </div>
 
-            <div className="flex flex-col text-start gap-2 mt-8">
-              <h1 className="font-semibold text-[26px] text-[#19274b]">
-                Funcionários cadastrados!
-              </h1>
-              <p className=" text-[15px] text-[#19274b]">
-                Visualize e gerencie as contas da sua equipe
-              </p>
+            <div className="flex flex-col justify-baseline lg:flex-row lg:justify-between text-start gap-2 mt-8">
+              <div>
+                <h1 className="font-semibold text-[26px] text-[#19274b]">
+                  Funcionários cadastrados!
+                </h1>
+                <p className=" text-[15px] text-[#19274b]">
+                  Visualize e gerencie as contas da sua equipe
+                </p>
+              </div>
+
+              <div className="mt-4 flex flex-col items-start lg:flex-row gap-5">
+                <input
+                  type="text"
+                  placeholder="Buscar funcionário..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="border border-gray-300 bg-white px-4 py-2 rounded-md outline-none w-full md:w-[300px]"
+                />
+
+                <div className="flex gap-2 flex-wrap">
+                  {cargos.map((cargo) => (
+                    <div
+                      key={cargo.tipo}
+                      onClick={() =>
+                        setCargoFiltro((prev) =>
+                          prev === cargo.tipo ? null : cargo.tipo,
+                        )
+                      }
+                      className={`relative group w-9 h-9 flex items-center justify-center rounded-full shadow-sm cursor-pointer bg-(--color-tertiary)
+        ${cargoFiltro === cargo.tipo ? "bg-[#0055ff]" : "bg-[#e0e0e0] grayscale opacity-70"}"
+      `}
+                    >
+                      <Image
+                        src={cargo.imagem}
+                        width={80}
+                        height={80}
+                        className={`object-contain `}
+                        alt={cargo.nome}
+                      />
+
+                      <span className="absolute top-10 hidden group-hover:flex px-2 py-1 rounded-md text-xs bg-white text-(--color-primary) font-semibold whitespace-nowrap shadow-md">
+                        {cargo.nome}
+                      </span>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => setCargoFiltro(null)}
+                    className="px-3 py-1.5 rounded-md text-sm border border-gray-300 hover:bg-gray-100 cursor-pointer bg-white"
+                  >
+                    Limpar
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-              {employees.length > 0 ? (
-                [...employees]
-                  .sort((a, b) => {
-                    const aIsGerente = a.roles.includes("gerente");
-                    const bIsGerente = b.roles.includes("gerente");
-
-                    if (aIsGerente && !bIsGerente) return -1;
-                    if (!aIsGerente && bIsGerente) return 1;
-                    return 0;
-                  })
-                  .map((emp) => (
-                    <EmployeeCard
-                      key={emp.id}
-                      emp={emp}
-                      cargos={cargos}
-                      setPinModal={setPinModal}
-                      setEditingEmployee={setEditingEmployee}
-                      setDeleteModal={setDeleteModal}
-                      setNome={setNome}
-                      setCpf={setCpf}
-                      setCargosSelecionados={setCargosSelecionados}
-                      abrirModal={abrirModal}
-                      getInitials={getInitials}
-                    />
-                  ))
-              ) : (
+            <div
+              className={`mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3`}
+            >
+              {employees.length === 0 ? (
                 <div className="rounded-2xl bg-white flex flex-col items-center shadow-sm hover:shadow-md transition-all col-span-4">
                   <div className="relative w-30 h-16">
                     <Image
@@ -502,21 +583,117 @@ export default function RestaurantFuncionarios() {
                     </div>
                   </div>
                 </div>
+              ) : filteredEmployees.length === 0 ? (
+                <div className="rounded-2xl bg-white flex flex-col items-center shadow-sm hover:shadow-md transition-all col-span-4">
+                  <div className="relative w-30 h-16">
+                    <Image
+                      src="/sem_funcionarios2.png"
+                      alt="Banner do restaurante"
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                  </div>
+
+                  <div className="flex flex-col px-5 py-5 pt-3 text-center w-full">
+                    <div className="flex flex-col text-center gap-2">
+                      <h1 className="font-semibold text-[22px] text-[#19274b]">
+                        Nenhum resultado encontrado
+                      </h1>
+                      <p className=" text-[15px] text-[#19274b]">
+                        Tente mudar o filtro ou limpar a busca
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                visibleEmployees.map((emp) => (
+                  <EmployeeCard
+                    key={emp.id}
+                    emp={emp}
+                    cargos={cargos}
+                    setPinModal={setPinModal}
+                    setEditingEmployee={setEditingEmployee}
+                    setDeleteModal={setDeleteModal}
+                    setNome={setNome}
+                    setCpf={setCpf}
+                    setCargosSelecionados={setCargosSelecionados}
+                    abrirModal={abrirModal}
+                    getInitials={getInitials}
+                  />
+                ))
               )}
             </div>
+            {filteredEmployees.length > 0 && (
+              <div className="flex flex-col md:flex-row items-center mt-10 text-sm text-gray-600">
+                <div className="flex-1 mb-5">
+                  <p>
+                    Mostrando {firstEmployee + 1}–
+                    {Math.min(lastEmployee, employees.length)} de{" "}
+                    {employees.length}
+                  </p>
+                </div>
+
+                <div className="flex flex-col md:flex-row items-center gap-2">
+                  <button
+                    onClick={() => setPage((p: number) => Math.max(p - 1, 1))}
+                    className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer bg-white"
+                  >
+                    Anterior
+                  </button>
+
+                  <div className="flex items-center">
+                    {[...Array(endPage - adjustedStartPage + 1)].map(
+                      (_, i: number) => {
+                        const pageNumber = adjustedStartPage + i;
+
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => setPage(pageNumber)}
+                            className={`px-3 py-1.5 border border-gray-300 cursor-pointer ${
+                              page === pageNumber
+                                ? "bg-(--color-primary) text-white"
+                                : "hover:bg-gray-100 bg-white"
+                            } ${
+                              i === 0
+                                ? "rounded-l-[3px]"
+                                : i === endPage - adjustedStartPage
+                                  ? "rounded-r-[3px] border-l-0 "
+                                  : "rounded-none border-l-0 "
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      },
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setPage((p: number) => Math.min(p + 1, totalPages))
+                    }
+                    className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer bg-white"
+                  >
+                    Próximo
+                  </button>
+                </div>
+
+                <div className="flex-1"></div>
+              </div>
+            )}
           </div>
         </div>
 
         {showModal && (
           <div
-            className={`
-      transition-all duration-400 ease-in-out overflow-hidden
-      ${openModal ? "w-1/3 ml-5 opacity-100" : "w-0 ml-0 opacity-0"}
-    `}
+            ref={formRef}
+            className={`layout-aside ${openModal ? "is-open" : ""}`}
           >
             <form
               onSubmit={criarFuncionario}
-              className="bg-white rounded-2xl shadow-sm p-10 h-full transition-all border border-gray-200"
+              className="bg-white rounded-2xl shadow-sm p-10 py-5 h-fit transition-all border border-gray-200 flex flex-col"
             >
               <h1 className="font-semibold text-[22px] text-[#19274b]">
                 {editingEmployee ? "Editar funcionário" : "Novo funcionário"}
@@ -569,7 +746,7 @@ export default function RestaurantFuncionarios() {
                     Cargo
                   </h1>
 
-                  <div className="grid grid-cols-2 gap-2 w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full">
                     {cargos.map((cargo) => (
                       <button
                         type="button"
@@ -613,7 +790,7 @@ export default function RestaurantFuncionarios() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-4 mt-6">
+              <div className="flex justify-end gap-4 mt-auto pt-6">
                 <button
                   type="button"
                   onClick={fecharModal}
@@ -672,7 +849,7 @@ export default function RestaurantFuncionarios() {
                 )
               ) : (
                 <>
-                  <div className="bg-[#e3effe] text-(--color-primary) font-bold text-2xl tracking-widest px-6 py-3 rounded-xl text-center">
+                  <div className="bg-(--color-tertiary) text-(--color-primary) font-bold text-2xl tracking-widest px-6 py-3 rounded-xl text-center">
                     {pinModal.pin}
                   </div>
 
@@ -789,6 +966,7 @@ export default function RestaurantFuncionarios() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     type="password"
                     placeholder="Confirme a senha"
+                    maxLength={30}
                     className="border border-gray-300 py-2 px-4 rounded-md outline-none"
                   />
                 </div>

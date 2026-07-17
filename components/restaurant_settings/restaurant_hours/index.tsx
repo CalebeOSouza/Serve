@@ -177,7 +177,7 @@ export default function RestaurantHours({
   }, [restaurantId]);
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gray-50">
+    <section className="min-h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-10">
         {mode === "onboarding" && (
           <div className="w-full max-w-2xl">

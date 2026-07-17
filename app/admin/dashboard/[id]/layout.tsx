@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { DashboardMenu } from "@/components/dashboard/dashboard_menu";
+import { DashboardMenuTablet } from "@/components/dashboard/dashboard_menu_tablet";
 import Image from "next/image";
 
 type Restaurant = {
@@ -50,28 +51,31 @@ export default function DashboardLayout({
 
   if (!id || Array.isArray(id)) return null;
 
-  return (
-    <section className="min-h-screen flex bg-[#ededf5]">
-      <DashboardMenu restaurantId={id} />
-      <div className="flex flex-col w-full pt-16">
-        <div className="w-full">
-          <div className="relative h-40 w-full overflow-hidden shadow-sm">
-            {!loading && (
-              <Image
-                src={restaurant?.media?.banner_url || "/no_banner2.png"}
-                alt="Banner do restaurante"
-                fill
-                className="object-cover"
-                priority
-              />
-            )}
+ return (
+  <section className="min-h-screen bg-(--color-background)">
+    <DashboardMenu restaurantId={id} />
 
-            <div className="absolute inset-0 bg-black/20" />
-          </div>
+    <div className="flex flex-col w-full lg:pl-60 pt-16">
+      <div className="w-full">
+        <div className="relative h-40 w-full overflow-hidden shadow-sm">
+          {!loading && (
+            <Image
+              src={restaurant?.media?.banner_url || "/no_banner2.png"}
+              alt="Banner do restaurante"
+              fill
+              className="object-cover"
+              priority
+            />
+          )}
 
-          {children}
+          <div className="absolute inset-0 bg-black/20" />
         </div>
+
+        <DashboardMenuTablet restaurantId={id} />
+
+        {children}
       </div>
-    </section>
-  );
+    </div>
+  </section>
+);
 }

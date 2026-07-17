@@ -1,8 +1,6 @@
 "use client";
-import { SquareMousePointer, KeyRound, DoorOpen } from "lucide-react";
+import { KeyRound, DoorOpen } from "lucide-react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
 import { Dispatch, SetStateAction } from "react";
 export type CargoTipo = "gerente" | "cozinha" | "garcom" | "caixa";
 
@@ -40,6 +38,10 @@ interface Props {
   getInitials: (name: string) => string;
 }
 
+function getFirstName(name: string) {
+  return name.trim().split(" ")[0];
+}
+
 export default function EmployeeCard({
   emp,
   cargos,
@@ -64,7 +66,7 @@ export default function EmployeeCard({
             return (
               <div
                 key={roleType}
-                className="relative group w-8 h-8 flex items-center justify-center rounded-full bg-[#e3effe] shadow-sm cursor-pointer"
+                className="relative group w-8 h-8 flex items-center justify-center rounded-full bg-(--color-tertiary) shadow-sm cursor-pointer"
               >
                 {dadosCargo && (
                   <Image
@@ -72,7 +74,7 @@ export default function EmployeeCard({
                     alt={dadosCargo.nome}
                     width={80}
                     height={80}
-                    className="object-contain "
+                    className="object-contain"
                   />
                 )}
 
@@ -119,17 +121,22 @@ export default function EmployeeCard({
       </div>
 
       <div className="flex items-center gap-4 mb-1">
-        <div className="w-16 h-16 rounded-full bg-[#e3effe] border border-[#c9dbff] flex items-center justify-center shadow-sm shrink-0">
+        <div className="w-16 h-16 rounded-full bg-(--color-tertiary) border border-[#c9dbff] flex items-center justify-center shadow-sm shrink-0">
           <span className="text-(--color-primary) font-semibold text-xl">
             {getInitials(emp.name)}
           </span>
         </div>
 
         <div className="flex flex-col min-w-0">
-          <div className="w-[90%] overflow-x-auto whitespace-nowrap">
-            <h1 className="font-semibold text-[20px] text-[#19274b] leading-tight inline-block">
+          <div className="relative group w-[90%]">
+            <h1 className="font-semibold text-[20px] text-[#19274b] leading-tight truncate w-full">
               {emp.name}
             </h1>
+
+            {/* Tooltip */}
+            <div className="absolute hidden group-hover:block top-8 left-0 z-50 bg-white border border-gray-200 shadow-md rounded-md px-3 py-2 text-sm text-[#19274b] max-w-[220px] break-words whitespace-normal">
+              {emp.name}
+            </div>
           </div>
           <p className="text-sm text-gray-500">
             {emp.roles.length} cargo(s) vinculado(s)
@@ -146,7 +153,7 @@ export default function EmployeeCard({
             setCargosSelecionados(emp.roles);
             abrirModal();
           }}
-          className="flex-1 border border-gray-300 text-(--color-primary) text-sm font-semibold py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
+          className="flex-1 text-white bg-(--color-primary) hover:bg-(--color-secondary) text-sm font-semibold py-2 rounded-md  transition cursor-pointer"
         >
           Editar
         </button>
@@ -157,7 +164,7 @@ export default function EmployeeCard({
               employee: emp,
             });
           }}
-          className="flex-1 bg-(--color-primary) text-white text-sm font-semibold py-2 rounded-md hover:bg-(--color-secondary) transition cursor-pointer"
+          className="flex-1 border border-red-300 hover:bg-red-100 text-red-400 text-sm font-semibold py-2 rounded-md  transition cursor-pointer"
         >
           Excluir
         </button>

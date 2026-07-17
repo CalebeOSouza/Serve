@@ -26,7 +26,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`}>
       <body
-        className="min-h-screen flex flex-col antialiased"
+        className="min-h-screen flex flex-col antialiased bg-(--color-background)"
         suppressHydrationWarning
       >
         <Providers>

@@ -158,7 +158,7 @@ export default function AdminMenu() {
   if (!step) return null;
 
   return (
-    <section className="min-h-screen bg-[#F6F8FB] p-8">
+    <section className="min-h-screen bg-(--color-background) p-8">
       {step === "profile" && (
         <RestaurantProfile
           mode="onboarding"
@@ -202,7 +202,11 @@ export default function AdminMenu() {
         />
       )}
 
-      {step === "success" && <RestaurantSuccess />}
+      {step === "success" && (
+  <RestaurantSuccess
+    logoPreview={logoPreview}
+  />
+)}
     </section>
   );
 }

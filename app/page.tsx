@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <section className="min-h-screen w-full flex flex-col">
+    <section className="min-h-screen w-full flex flex-col ">
       <div className="h-16" />
       <div className="w-full bg-[#F3F4F6]">
 
@@ -14,7 +14,7 @@ export default function Home() {
 
             <p className="font-(--font-inter) text-base md:text-lg lg:text-xl mb-8 max-w-xl">
               Um sistema completo para organizar pedidos, operações e
-              atendimento em um só lugar. Feito para restaurantes que querem
+              atendimento em um só lugar. Feito para estabelecimentos gastronômicos que querem
               mais controle, agilidade e crescimento.
             </p>
 

@@ -117,7 +117,7 @@ export default function RestaurantProfile({
   }, [alert.message]);
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gray-50 pt-15">
+    <section className="min-h-screen flex items-center justify-center pt-15">
       <div className="flex flex-col items-center gap-10">
         {/* Cabeçalho */}
 
@@ -160,10 +160,10 @@ export default function RestaurantProfile({
                       onChange={handleChange}
                       type="text"
                       disabled={form.type === "filial"}
-                      className={`w-full mt-1 px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-black/10 ${
+                      className={`w-full mt-1 px-4 py-3 rounded-md outline-none focus:ring-black/10 ${
                         form.type === "filial"
                           ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                          : "bg-[#eee]"
+                          : "border border-gray-300 outline-none"
                       }`}
                       placeholder="Restaurante Exemplo"
                       required
@@ -183,7 +183,7 @@ export default function RestaurantProfile({
                       value={form.description}
                       onChange={handleChange}
                       type="text"
-                      className="w-full mt-1 px-4 py-3 rounded-lg bg-[#eee] outline-none focus:ring-2 focus:ring-black/10"
+                      className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                       placeholder="Descrição Exemplo"
                     />
                   </div>
@@ -204,10 +204,10 @@ export default function RestaurantProfile({
                             parentId: null,
                           }));
                         }}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition cursor-pointer ${
+                        className={`flex-1 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
                           form.type === "matriz"
                             ? "bg-(--color-primary) text-white"
-                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-100"
                         }`}
                       >
                         Matriz
@@ -229,10 +229,10 @@ export default function RestaurantProfile({
                           const data = await res.json();
                           setMatrices(data.matrices || []);
                         }}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition cursor-pointer ${
+                        className={`flex-1 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
                           form.type === "filial"
                             ? "bg-(--color-primary) text-white"
-                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-100"
                         }`}
                       >
                         Filial
@@ -264,7 +264,7 @@ export default function RestaurantProfile({
                       value={form.zipcode}
                       onChange={handleChange}
                       type="text"
-                      className="w-full mt-1 px-4 py-3 rounded-lg bg-[#eee] outline-none focus:ring-2 focus:ring-black/10"
+                      className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                       placeholder="00000-000"
                       maxLength={8}
                       required
@@ -281,7 +281,7 @@ export default function RestaurantProfile({
                       value={form.street}
                       onChange={handleChange}
                       type="text"
-                      className="w-full mt-1 px-4 py-3 rounded-lg bg-[#eee] outline-none focus:ring-2 focus:ring-black/10"
+                      className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                       placeholder="Rua Exemplo"
                       required
                     />
@@ -300,7 +300,7 @@ export default function RestaurantProfile({
                         value={form.number}
                         onChange={handleChange}
                         type="text"
-                        className="w-full mt-1 px-4 py-3 rounded-lg bg-[#eee] outline-none focus:ring-2 focus:ring-black/10"
+                        className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                         placeholder="123"
                         required
                       />
@@ -318,7 +318,7 @@ export default function RestaurantProfile({
                         value={form.neighborhood}
                         onChange={handleChange}
                         type="text"
-                        className="w-full mt-1 px-4 py-3 rounded-lg bg-[#eee] outline-none focus:ring-2 focus:ring-black/10"
+                        className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                         placeholder="Centro"
                         required
                       />
@@ -338,7 +338,7 @@ export default function RestaurantProfile({
                         value={form.city}
                         onChange={handleChange}
                         type="text"
-                        className="w-full mt-1 px-4 py-3 rounded-lg bg-[#eee] outline-none focus:ring-2 focus:ring-black/10"
+                        className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                         placeholder="São Paulo"
                         required
                       />
@@ -356,7 +356,7 @@ export default function RestaurantProfile({
                         value={form.state}
                         onChange={handleChange}
                         type="text"
-                        className="w-full mt-1 px-4 py-3 rounded-lg bg-[#eee] outline-none focus:ring-2 focus:ring-black/10"
+                        className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                         placeholder="SP"
                         required
                       />
@@ -417,7 +417,7 @@ export default function RestaurantProfile({
                       }));
                     }}
                     className={`
-        text-left px-3 py-2 rounded-lg border
+        text-left px-3 py-2 rounded-md border
         transition-all
         ${
           isOperational

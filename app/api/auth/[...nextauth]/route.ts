@@ -8,17 +8,30 @@ export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",
+
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Senha", type: "password" },
+        email: {
+          label: "Email",
+          type: "email",
+        },
+
+        password: {
+          label: "Senha",
+          type: "password",
+        },
       },
 
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
 
         const { email, password } = credentials;
 
-        // USERS
+        // =========================
+        // USERS (ADMIN PRINCIPAL)
+        // =========================
+
         const [users]: any = await db.query(
           "SELECT * FROM users WHERE email = ? LIMIT 1",
           [email]
@@ -26,36 +39,60 @@ export const authOptions: NextAuthOptions = {
 
         if (users.length) {
           const user = users[0];
-          const ok = await bcrypt.compare(password, user.password);
-          if (!ok) return null;
+
+          const passwordMatch = await bcrypt.compare(
+            password,
+            user.password
+          );
+
+          if (!passwordMatch) {
+            return null;
+          }
 
           return {
-            id: user.id,
-            role: user.user_type,
-            accountType: "user",
+            id: String(user.id),
+
             name: user.name,
             email: user.email,
+
+            role: "admin",
+
+            accountType: "user",
           };
         }
 
-        // WORKSTATION
-        const [works]: any = await db.query(
-          "SELECT * FROM workstation_accounts WHERE email = ? LIMIT 1",
+        // =========================
+        // ROLES (CONTAS OPERACIONAIS)
+        // =========================
+
+        const [roles]: any = await db.query(
+          "SELECT * FROM roles WHERE username = ? LIMIT 1",
           [email]
         );
 
-        if (works.length) {
-          const acc = works[0];
-          const ok = await bcrypt.compare(password, acc.password);
-          if (!ok) return null;
+        if (roles.length) {
+          const role = roles[0];
+
+          const passwordMatch = await bcrypt.compare(
+            password,
+            role.password
+          );
+
+          if (!passwordMatch) {
+            return null;
+          }
 
           return {
-            id: acc.id,
-            role: acc.account_type,
-            accountType: "workstation",
-            restaurantId: acc.restaurant_id,
-            name: acc.account_type,
-            email: acc.email,
+            id: String(role.id),
+
+            name: role.type,
+            email: role.username,
+
+            role: role.type,
+
+            restaurantId: role.restaurant_id,
+
+            accountType: "role",
           };
         }
 
@@ -64,18 +101,20 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
 
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+  },
 
   callbacks: {
-    async jwt({ token, user, trigger, session }: any) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
-        token.accountType = user.accountType;
-      }
 
-      if (trigger === "update" && session?.role) {
-        token.role = session.role;
+        token.role = user.role;
+
+        token.accountType = user.accountType;
+
+        token.restaurantId = user.restaurantId || null;
       }
 
       return token;
@@ -84,9 +123,14 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.id;
+
         session.user.role = token.role;
+
         session.user.accountType = token.accountType;
+
+        session.user.restaurantId = token.restaurantId;
       }
+
       return session;
     },
   },

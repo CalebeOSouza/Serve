@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { RegisterForm } from "../../../components/register_form/index";
 import { LoginForm } from "../../../components/login_form/index";
 
-
 export default function Cadastro() {
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
@@ -21,7 +20,7 @@ export default function Cadastro() {
   }, [mode]);
 
   return (
-    <section className="flex items-center justify-center min-h-screen px-3.5 py-30 pt-42">
+    <section className="flex items-center justify-center min-h-screen px-3.5 py-30 pt-42 bg-(--color-background)">
       {/* Container  */}
       <div
         className={`relative w-220 h-[calc(140vh-100px)] md:h-145 bg-white rounded-xl shadow-2xl overflow-hidden`} //h-[calc(140vh-180px)]

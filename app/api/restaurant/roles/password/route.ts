@@ -21,6 +21,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "A senha deve ter no mínimo 6 caracteres" },
+        { status: 400 },
+      );
+    }
+
+    const regexSenha = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+
+    if (!regexSenha.test(password)) {
+      return NextResponse.json(
+        { error: "A senha deve conter pelo menos 1 letra e 1 número" },
+        { status: 400 },
+      );
+    }
+
     const [restaurants]: any = await db.query(
       `SELECT name, type FROM restaurants WHERE id = ?`,
       [restaurantId],
