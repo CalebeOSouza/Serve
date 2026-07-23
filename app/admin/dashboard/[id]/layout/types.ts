@@ -81,7 +81,7 @@ export type Action =
       from: { x: number; y: number; width: number };
       to: { x: number; y: number; width: number };
     }
-
+  | { type: "ROTATE_WALL"; id: string; from: number; to: number }
   //Piso
   | { type: "ADD_FLOOR"; floor: Floor }
   | { type: "REMOVE_FLOOR"; id: string; floor: Floor }
@@ -100,25 +100,3 @@ export type Action =
   | { type: "PASTE_FLOOR"; floor: Floor }
   | { type: "PASTE"; item: AllCanvasItem }
   | { type: "PASTE_WALL"; wall: Wall };
-
-// export type LayoutItem = {
-//   id: string;
-
-//   // Número fixo da mesa
-//   tableNumber?: number;
-
-//   // Quantidade de pessoas
-//   capacity?: number;
-
-//   // Estado atual da mesa
-//   status?: TableStatus;
-
-//   type: ElementType;
-//   x: number;
-//   y: number;
-//   rotation: number;
-
-//   chairs?: number;
-
-//   swingDirection?: "left" | "right";
-// };

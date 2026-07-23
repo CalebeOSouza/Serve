@@ -1,4 +1,4 @@
-import { CircleQuestionMark, Plus, Minus } from "lucide-react";
+import { CircleQuestionMark, Plus, Minus, Keyboard } from "lucide-react";
 
 type Props = {
   zoom: number;
@@ -42,7 +42,7 @@ export default function ZoomControls({
       hover:bg-gray-50
     "
         >
-          <CircleQuestionMark className="w-5 h-5 text-gray-500" />
+          <Keyboard className="w-5 h-5 text-gray-500" />
         </div>
 
         <div
@@ -67,7 +67,8 @@ export default function ZoomControls({
       shadow-xl
       rounded-xl
       p-4
-      w-40
+      w-70
+      
       z-50
     "
         >
@@ -87,7 +88,7 @@ export default function ZoomControls({
       "
           />
 
-          <h3 className="text-md text-gray-600 mb-4">Estados</h3>
+          {/* <h3 className="text-md text-gray-600 mb-4">Estados</h3>
 
           <ul className="flex flex-col gap-3 items-start">
             <li className="flex items-center gap-2">
@@ -106,7 +107,49 @@ export default function ZoomControls({
               <div className="border-2 border-[#6D7387] bg-gray-100 w-3.5 h-3.5 rounded-full"></div>
               <p className="text-[15px] text-gray-500">Indisponível</p>
             </li>
+          </ul> */}
+
+<h3 className="text-md text-gray-600 mb-4">Atalhos</h3>
+
+          <ul className="flex flex-col gap-2.5 items-start">
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">R</span>
+              <p className="text-[13px] text-gray-500">Rotacionar selecionado</p>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">F</span>
+              <p className="text-[13px] text-gray-500">Virar porta</p>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">Delete</span>
+              <p className="text-[13px] text-gray-500">Excluir selecionado</p>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">Ctrl+C</span>
+              <p className="text-[13px] text-gray-500">Copiar</p>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">Ctrl+V</span>
+              <p className="text-[13px] text-gray-500">Colar</p>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">Ctrl+Z</span>
+              <p className="text-[13px] text-gray-500">Desfazer</p>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">Ctrl+Y</span>
+              <p className="text-[13px] text-gray-500">Refazer</p>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">Ctrl+S</span>
+              <p className="text-[13px] text-gray-500">Salvar layout</p>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="font-bold text-[14px] text-[#19274b]">Esc</span>
+              <p className="text-[13px] text-gray-500">Cancelar ação</p>
+            </li>
           </ul>
+
         </div>
       </div>
 

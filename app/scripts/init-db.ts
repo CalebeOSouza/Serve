@@ -219,39 +219,27 @@ CREATE TABLE menu_items (
 );
 
     `);
-    //Tabela dos ambientes
-    await pool.query(`
 
-CREATE TABLE environments (
-  id           INT AUTO_INCREMENT PRIMARY KEY,
-  restaurant_id INT NOT NULL,
-  name         VARCHAR(100) NOT NULL DEFAULT 'Salão principal',
-  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-  FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
-);
-
-    `);
 
     //Tabela das paredes do layout
     await pool.query(`
 CREATE TABLE layout_walls (
   id             INT AUTO_INCREMENT PRIMARY KEY,
-  environment_id INT NOT NULL,
+  restaurant_id INT NOT NULL,
 
-  wall_type      ENUM('externa','interna','cerca') NOT NULL DEFAULT 'interna',
+  wall_type      ENUM('externa','interna') NOT NULL DEFAULT 'interna',
 
   pos_x          DECIMAL(8,2) NOT NULL,
   pos_y          DECIMAL(8,2) NOT NULL,
 
-  //Comprimento em pixels (a ponta final = pos_x + length se horizontal,pos_y + length se vertical)
+  -- Comprimento em pixels (a ponta final = pos_x + length se horizontal,pos_y + length se vertical)
   length         DECIMAL(8,2) NOT NULL,
 
   is_vertical    BOOLEAN NOT NULL DEFAULT FALSE,
 
   created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  FOREIGN KEY (environment_id) REFERENCES environments(id) ON DELETE CASCADE
+  FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
 );
     `);
 
@@ -260,7 +248,7 @@ CREATE TABLE layout_walls (
 CREATE TABLE layout_items (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
-  environment_id INT NOT NULL,
+  restaurant_id INT NOT NULL,
 
   type ENUM('porta') NOT NULL,
 
@@ -273,17 +261,34 @@ CREATE TABLE layout_items (
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  FOREIGN KEY (environment_id)
-    REFERENCES environments(id)
+  FOREIGN KEY (restaurant_id)
+    REFERENCES restaurants(id)
     ON DELETE CASCADE
 );
     `);
+
+    await pool.query(`
+CREATE TABLE layout_floors (
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  restaurant_id INT NOT NULL,
+
+  pos_x  DECIMAL(8,2) NOT NULL,
+  pos_y  DECIMAL(8,2) NOT NULL,
+  width  DECIMAL(8,2) NOT NULL,
+  height DECIMAL(8,2) NOT NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
+);
+`);
+
     await pool.query(`
 
 CREATE TABLE tables (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
-  environment_id INT NOT NULL,
+  restaurant_id INT NOT NULL,
 
   number SMALLINT UNSIGNED NOT NULL,
 
@@ -311,12 +316,12 @@ CREATE TABLE tables (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   UNIQUE KEY unique_table_number (
-    environment_id,
+    restaurant_id,
     number
   ),
 
-  FOREIGN KEY (environment_id)
-    REFERENCES environments(id)
+  FOREIGN KEY (restaurant_id)
+    REFERENCES restaurants(id)
     ON DELETE CASCADE
 );
 

@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { UserRound } from "lucide-react";
-import AnimatedAlert from "@/components/alert/AnimatedAlert";
+import { useParams } from "next/navigation";
 import {
   isRectTableVertical,
   isRectTableHorizontalFlipped,
@@ -40,6 +38,7 @@ import {
   WORLD_WIDTH,
   WORLD_HEIGHT,
   WALL_THICKNESS,
+  WALL_THICKNESS_INTERNA,
   GRID_SIZE_WALL,
   HALF_GRID_SIZE_WALL,
   HALF_GRID_SIZE,
@@ -50,6 +49,9 @@ import {
   snapToHalfGrid,
   isWallTooSmall,
   getWallAnchorPoint,
+  getInternalWallAnchorPoint,
+  snapInternalWallEdge,
+  snapExternalWallEdge,
 } from "@/utils/layout/wall";
 
 import { getAngle, getOBB } from "@/utils/layout/geometry";
@@ -69,7 +71,6 @@ export default function RestaurantLayout() {
   const dragStartItemPos = useRef({ x: 0, y: 0 });
 
   const isAltPressedRef = useRef(false);
-  // Contador dos numeros das mesas
   const nextTableNumberRef = useRef(1);
   const [guides, setGuides] = useState<{
     vertical: number | null;
@@ -78,6 +79,13 @@ export default function RestaurantLayout() {
     distanceY?: number;
   }>({ vertical: null, horizontal: null });
 
+  const params = useParams();
+  const restaurantId = params.id as string;
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [loadingOverlay, setLoadingOverlay] = useState<{
+    visible: boolean;
+    message: string;
+  } | null>(null);
   const [previewItem, setPreviewItem] = useState<AllCanvasItem | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedType, setSelectedType] = useState<
@@ -180,6 +188,23 @@ export default function RestaurantLayout() {
     porta: { w: 50, h: 50 },
   };
 
+  async function withLoadingOverlay(
+    message: string,
+    action: () => Promise<void>,
+  ) {
+    setLoadingOverlay({ visible: true, message });
+    const start = Date.now();
+
+    try {
+      await action();
+    } finally {
+      const elapsed = Date.now() - start;
+      const remaining = Math.max(0, 2000 - elapsed);
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+      setLoadingOverlay(null);
+    }
+  }
+
   function isDoor(item: AllCanvasItem): item is LayoutItem & { type: "porta" } {
     return item.type === "porta";
   }
@@ -215,10 +240,8 @@ export default function RestaurantLayout() {
     return Math.round(value / HALF_GRID_SIZE) * HALF_GRID_SIZE;
   }
 
-  const QUARTER_GRID_SIZE = GRID_SIZE / 4;
-
   function snapDoorToQuarterGrid(value: number) {
-    return Math.round(value / QUARTER_GRID_SIZE) * QUARTER_GRID_SIZE;
+    return snapInternalWallEdge(value);
   }
 
   const snapFloorToGrid = snapItemToHalfGrid;
@@ -248,6 +271,7 @@ export default function RestaurantLayout() {
         future: [action, ...s.future],
       };
     });
+    setHasUnsavedChanges(true);
   }
 
   function redo() {
@@ -263,6 +287,107 @@ export default function RestaurantLayout() {
         future: s.future.slice(1),
       };
     });
+    setHasUnsavedChanges(true);
+  }
+
+  function buildLayoutPayload() {
+    const tables = items.filter(isRestaurantTable);
+    const doors = items.filter(isDoor);
+    return { tables, doors, walls, floors };
+  }
+
+  async function saveLayout() {
+    try {
+      const res = await fetch(`/api/restaurant/${restaurantId}/layout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildLayoutPayload()),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        console.error("Falha ao salvar layout:", data?.error);
+        // aqui é onde você pode disparar o <AnimatedAlert /> de erro
+        return;
+      }
+      setHasUnsavedChanges(false);
+      // aqui é onde você pode disparar o <AnimatedAlert /> de sucesso
+    } catch (err) {
+      console.error("Erro de rede ao salvar layout:", err);
+    }
+  }
+
+  async function loadLayout() {
+    try {
+      const res = await fetch(`/api/restaurant/${restaurantId}/layout`);
+      if (!res.ok) return;
+
+      const {
+        tables,
+        doors,
+        walls: dbWalls,
+        floors: dbFloors,
+      } = await res.json();
+
+      const loadedItems: AllCanvasItem[] = [
+        ...tables.map((t: any) => ({
+          id: `table-${t.id}`,
+          type: t.type,
+          x: Number(t.pos_x),
+          y: Number(t.pos_y),
+          rotation: Number(t.rotation),
+          tableNumber: t.number,
+          capacity: t.capacity,
+          status: t.status,
+        })),
+        ...doors.map((d: any) => ({
+          id: `door-${d.id}`,
+          type: "porta" as const,
+          x: Number(d.pos_x),
+          y: Number(d.pos_y),
+          rotation: Number(d.rotation),
+          swingDirection: d.swing_right ? "right" : "left",
+        })),
+      ];
+
+      const loadedWalls: Wall[] = dbWalls.map((w: any) => ({
+        id: String(w.id),
+        x: Number(w.pos_x),
+        y: Number(w.pos_y),
+        width: Number(w.length),
+        rotation: w.is_vertical ? 90 : 0,
+        side: "near",
+        wallType: w.wall_type,
+      }));
+
+      const loadedFloors: Floor[] = dbFloors.map((f: any) => ({
+        id: String(f.id),
+        x: Number(f.pos_x),
+        y: Number(f.pos_y),
+        width: Number(f.width),
+        height: Number(f.height),
+      }));
+
+      // Evita colisão com a UNIQUE KEY (restaurant_id, number) ao criar
+      // novas mesas após o reload — ver observação abaixo.
+      const maxTableNumber = tables.reduce(
+        (max: number, t: any) => Math.max(max, t.number),
+        0,
+      );
+      nextTableNumberRef.current = maxTableNumber + 1;
+
+      setLayoutState({
+        items: loadedItems,
+        walls: loadedWalls,
+        floors: loadedFloors,
+        history: [],
+        future: [],
+      });
+
+      setHasUnsavedChanges(false);
+    } catch (err) {
+      console.error("Erro ao carregar layout:", err);
+    }
   }
 
   function applySnap(x: number, y: number, currentId?: string) {
@@ -363,12 +488,16 @@ export default function RestaurantLayout() {
     return { x: snappedX, y: snappedY };
   }
 
-  function wallFromDrag(ax: number, ay: number, bx: number, by: number) {
+  function wallFromDrag(
+    ax: number,
+    ay: number,
+    bx: number,
+    by: number,
+    wallType: "externa" | "interna",
+  ) {
     const dx = Math.abs(bx - ax);
     const dy = Math.abs(by - ay);
-
     const distance = Math.sqrt(dx * dx + dy * dy);
-
     const isVertical = distance < GRID_SIZE_WALL ? false : dy >= dx;
 
     if (isAltPressedRef.current) {
@@ -392,10 +521,14 @@ export default function RestaurantLayout() {
 
     if (isVertical) {
       const goingUp = by < ay;
-      const nearestLineX = Math.round(ax / GRID_SIZE_WALL) * GRID_SIZE_WALL;
 
-      const side: "near" | "far" = ax >= nearestLineX ? "far" : "near";
-      const x = side === "near" ? nearestLineX - WALL_THICKNESS : nearestLineX;
+      let x: number;
+      if (wallType === "interna") {
+        // 4 colunas de 6.25px e no centro
+        x = snapInternalWallEdge(ax);
+      } else {
+        x = snapExternalWallEdge(ax);
+      }
 
       const startY = snapToHalfGrid(Math.min(ay, by));
       const endY = snapToHalfGrid(Math.max(ay, by));
@@ -406,15 +539,17 @@ export default function RestaurantLayout() {
         y: shiftedY,
         width: Math.max(GRID_SIZE_WALL, endY - startY),
         isVertical: true,
-        side,
+        side: "near" as const,
       };
     } else {
       const goingLeft = bx < ax;
 
-      const nearestLineY = Math.round(ay / GRID_SIZE_WALL) * GRID_SIZE_WALL;
-
-      const side: "near" | "far" = ay >= nearestLineY ? "far" : "near";
-      const y = side === "near" ? nearestLineY - WALL_THICKNESS : nearestLineY;
+      let y: number;
+      if (wallType === "interna") {
+        y = snapInternalWallEdge(ay);
+      } else {
+        y = snapExternalWallEdge(ay);
+      }
 
       const startX = snapToHalfGrid(Math.min(ax, bx));
       const endX = snapToHalfGrid(Math.max(ax, bx));
@@ -425,10 +560,39 @@ export default function RestaurantLayout() {
         y,
         width: Math.max(GRID_SIZE_WALL, endX - startX),
         isVertical: false,
-        side,
+        side: "near" as const,
       };
     }
   }
+
+function isDoorNearWallEnd(wall: Wall, end: "start" | "end") {
+  if (wall.wallType !== "externa") return false;
+
+  const isVertical = wall.rotation === 90;
+  const point = isVertical
+    ? { x: wall.x, y: end === "start" ? wall.y : wall.y + wall.width }
+    : { x: end === "start" ? wall.x : wall.x + wall.width, y: wall.y };
+
+  const THRESHOLD = 6;
+
+  return items.some((item) => {
+    if (item.type !== "porta") return false;
+
+    const doorLeft = item.x;
+    const doorRight = item.x + 50;
+    const doorTop = item.y;
+    const doorBottom = item.y + 50;
+
+    const closestX = Math.max(doorLeft, Math.min(point.x, doorRight));
+    const closestY = Math.max(doorTop, Math.min(point.y, doorBottom));
+
+    const dist = Math.sqrt(
+      (point.x - closestX) ** 2 + (point.y - closestY) ** 2,
+    );
+
+    return dist < THRESHOLD;
+  });
+}
 
   function spawnElement(type: TableType | ElementType) {
     setSelectedType(type);
@@ -504,6 +668,30 @@ export default function RestaurantLayout() {
     setZoom(newZoom);
     setPan({ x: newX, y: newY });
   }
+
+  //UseEffect para carregar o layout
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    withLoadingOverlay("Carregando layout...", loadLayout);
+  }, [restaurantId]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges) return;
+
+      event.preventDefault();
+
+      // Necessário para Chrome/Edge
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     setZoomInput(String(Math.round(zoom * 100)));
@@ -607,6 +795,7 @@ export default function RestaurantLayout() {
               future: [],
             };
           });
+          setHasUnsavedChanges(true);
           setSelectedItemId(null);
         }
 
@@ -628,6 +817,7 @@ export default function RestaurantLayout() {
               future: [],
             };
           });
+          setHasUnsavedChanges(true);
           setSelectedWallId(null);
         }
 
@@ -651,6 +841,7 @@ export default function RestaurantLayout() {
               future: [],
             };
           });
+          setHasUnsavedChanges(true);
           setSelectedFloorId(null);
         }
       }
@@ -687,6 +878,34 @@ export default function RestaurantLayout() {
               future: [],
             };
           });
+          setHasUnsavedChanges(true);
+        }
+
+        if (selectedWallId) {
+          setLayoutState((s) => {
+            const wall = s.walls.find((w) => w.id === selectedWallId);
+            if (!wall) return s;
+
+            const newRotation = wall.rotation === 90 ? 0 : 90;
+
+            return {
+              ...s,
+              walls: s.walls.map((w) =>
+                w.id === selectedWallId ? { ...w, rotation: newRotation } : w,
+              ),
+              history: [
+                ...s.history,
+                {
+                  type: "ROTATE_WALL",
+                  id: wall.id,
+                  from: wall.rotation,
+                  to: newRotation,
+                },
+              ],
+              future: [],
+            };
+          });
+          setHasUnsavedChanges(true);
         }
       }
 
@@ -727,6 +946,7 @@ export default function RestaurantLayout() {
             future: [],
           };
         });
+        setHasUnsavedChanges(true);
       }
       // CTRL + C
       if (e.ctrlKey && e.key.toLowerCase() === "c") {
@@ -828,6 +1048,7 @@ export default function RestaurantLayout() {
 
           setSelectedItemId(newItem.id);
           setSelectedWallId(null);
+          setHasUnsavedChanges(true);
 
           console.log("ITEM COLADO:", newItem);
         }
@@ -854,7 +1075,7 @@ export default function RestaurantLayout() {
             ],
             future: [],
           }));
-
+          setHasUnsavedChanges(true);
           setSelectedWallId(newWall.id);
           setSelectedItemId(null);
 
@@ -877,7 +1098,7 @@ export default function RestaurantLayout() {
             history: [...s.history, { type: "PASTE_FLOOR", floor: newFloor }],
             future: [],
           }));
-
+          setHasUnsavedChanges(true);
           setSelectedFloorId(newFloor.id);
           setSelectedItemId(null);
           setSelectedWallId(null);
@@ -897,6 +1118,11 @@ export default function RestaurantLayout() {
       ) {
         e.preventDefault();
         redo();
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        withLoadingOverlay("Salvando layout...", saveLayout);
       }
     }
 
@@ -929,6 +1155,8 @@ export default function RestaurantLayout() {
 
   // UseEffect para rotação dos elementos
   useEffect(() => {
+    if (!isRotating) return;
+
     function handleMove(e: MouseEvent) {
       if (!isRotating || !selectedItemId) return;
 
@@ -981,9 +1209,12 @@ export default function RestaurantLayout() {
           return { ...item, rotation: newRotation };
         }),
       }));
+      setHasUnsavedChanges(true);
     }
 
     function stopRotate() {
+      if (!isRotating) return;
+
       setLayoutState((s) => {
         const item = s.items.find((i) => i.id === selectedItemId);
         if (!item) return s;
@@ -1006,7 +1237,7 @@ export default function RestaurantLayout() {
           future: [],
         };
       });
-
+      setHasUnsavedChanges(true);
       setIsRotating(false);
     }
 
@@ -1169,6 +1400,7 @@ export default function RestaurantLayout() {
             : item,
         ),
       }));
+      setHasUnsavedChanges(true);
     }
 
     function stopDrag() {
@@ -1197,6 +1429,7 @@ export default function RestaurantLayout() {
             future: [],
           };
         });
+        setHasUnsavedChanges(true);
       }
       setGuides({ vertical: null, horizontal: null });
       setDraggingItemId(null);
@@ -1263,6 +1496,7 @@ export default function RestaurantLayout() {
           }
         }),
       }));
+      setHasUnsavedChanges(true);
     }
 
     function stopResize() {
@@ -1294,7 +1528,7 @@ export default function RestaurantLayout() {
           future: [],
         };
       });
-
+      setHasUnsavedChanges(true);
       setWallResizing(null);
     }
 
@@ -1326,29 +1560,54 @@ export default function RestaurantLayout() {
           if (w.id !== draggingWallId) return w;
 
           const isVertical = w.rotation === 90;
-
           const rawX = mouseX - wallDragOffset.x;
           const rawY = mouseY - wallDragOffset.y;
 
-          // Movimento livre com o ALT
           if (isAltPressedRef.current) {
-            return {
-              ...w,
-              x: rawX,
-              y: rawY,
-            };
+            return { ...w, x: rawX, y: rawY };
+          }
+
+          // if (w.wallType === "interna") {
+
+          //   const snappedX = isVertical
+          //     ? snapInternalWallEdge(rawX)
+          //     : snapToHalfGrid(rawX);
+          //   const snappedY = isVertical
+          //     ? snapToHalfGrid(rawY)
+          //     : snapInternalWallEdge(rawY);
+          //   return { ...w, x: snappedX, y: snappedY };
+          // }
+
+          // const snappedX = snapToHalfGrid(rawX);
+          // const snappedY = snapToHalfGrid(rawY);
+          // return { ...w, x: snappedX, y: snappedY };
+
+          if (w.wallType === "interna") {
+            const snappedX = isVertical
+              ? snapInternalWallEdge(rawX)
+              : snapToHalfGrid(rawX);
+            const snappedY = isVertical
+              ? snapToHalfGrid(rawY)
+              : snapInternalWallEdge(rawY);
+            return { ...w, x: snappedX, y: snappedY };
+          }
+
+          if (w.wallType === "externa") {
+            const snappedX = isVertical
+              ? snapExternalWallEdge(rawX)
+              : snapToHalfGrid(rawX);
+            const snappedY = isVertical
+              ? snapToHalfGrid(rawY)
+              : snapExternalWallEdge(rawY);
+            return { ...w, x: snappedX, y: snappedY };
           }
 
           const snappedX = snapToHalfGrid(rawX);
           const snappedY = snapToHalfGrid(rawY);
-
-          return {
-            ...w,
-            x: snappedX,
-            y: snappedY,
-          };
+          return { ...w, x: snappedX, y: snappedY };
         }),
       }));
+      setHasUnsavedChanges(true);
     }
 
     function stopDrag() {
@@ -1379,6 +1638,7 @@ export default function RestaurantLayout() {
 
       wallDragStartPos.current = null;
       setDraggingWallId(null);
+      setHasUnsavedChanges(true);
     }
 
     window.addEventListener("mousemove", handleMove);
@@ -1421,6 +1681,7 @@ export default function RestaurantLayout() {
           return { ...f, x: snappedX, y: snappedY };
         }),
       }));
+      setHasUnsavedChanges(true);
     }
 
     function stopDrag() {
@@ -1448,7 +1709,7 @@ export default function RestaurantLayout() {
           future: [],
         };
       });
-
+      setHasUnsavedChanges(true);
       floorDragStartPos.current = null;
       setDraggingFloorId(null);
     }
@@ -1517,6 +1778,7 @@ export default function RestaurantLayout() {
           return { ...f, x, y, width, height };
         }),
       }));
+      setHasUnsavedChanges(true);
     }
 
     function stopResize() {
@@ -1559,7 +1821,7 @@ export default function RestaurantLayout() {
           future: [],
         };
       });
-
+      setHasUnsavedChanges(true);
       setFloorResizing(null);
     }
 
@@ -1854,7 +2116,11 @@ export default function RestaurantLayout() {
               Gerencie o mapa de mesas e ambientes do seu restaurante!
             </p>
           </div>
-          <ToolbarActions onUndo={undo} onRedo={redo} onSave={() => {}} />
+          <ToolbarActions
+            onUndo={undo}
+            onRedo={redo}
+            onSave={() => withLoadingOverlay("Salvando layout...", saveLayout)}
+          />
         </div>
 
         {/* Div principal do gerenciamento do layout */}
@@ -1969,7 +2235,10 @@ export default function RestaurantLayout() {
                       (e.clientY - rect.top - panRef.current.y) /
                       zoomRef.current;
 
-                    const anchor = getWallAnchorPoint(worldX, worldY);
+                    const anchor =
+                      isWallModeActive === "interna"
+                        ? getInternalWallAnchorPoint(worldX, worldY)
+                        : getWallAnchorPoint(worldX, worldY);
 
                     setWallDrawing({
                       startX: anchor.x,
@@ -2138,7 +2407,7 @@ export default function RestaurantLayout() {
                     history: [...s.history, { type: "ADD", item }],
                     future: [],
                   }));
-
+                  setHasUnsavedChanges(true);
                   setPreviewItem(null);
                 }}
                 onMouseUp={(e) => {
@@ -2162,6 +2431,7 @@ export default function RestaurantLayout() {
                       wallDrawing.startY,
                       wallDrawing.currentX,
                       wallDrawing.currentY,
+                      wallDrawing.wallType,
                     );
 
                     const newWall: Wall = {
@@ -2184,7 +2454,7 @@ export default function RestaurantLayout() {
                       ],
                       future: [],
                     }));
-
+                    setHasUnsavedChanges(true);
                     setWallDrawing(null);
                   }
 
@@ -2233,7 +2503,7 @@ export default function RestaurantLayout() {
                       ],
                       future: [],
                     }));
-
+                    setHasUnsavedChanges(true);
                     setFloorDrawing(null);
                   }
                 }}
@@ -2241,7 +2511,13 @@ export default function RestaurantLayout() {
               >
                 {(previewItem || isWallModeActive || isFloorModeActive) && (
                   <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-(--color-primary) text-white text-xs px-3 py-1 rounded-md shadow-md pointer-events-none flex flex-col items-center text-center z-50">
-                    <p>{( isWallModeActive ? 'Clique e arraste para criar uma parede' : isFloorModeActive ? 'Clique e arraste para criar um piso' : 'Clique para posicionar' )}</p>
+                    <p>
+                      {isWallModeActive
+                        ? "Clique e arraste para criar uma parede"
+                        : isFloorModeActive
+                          ? "Clique e arraste para criar um piso"
+                          : "Clique para posicionar"}
+                    </p>
                     <p>
                       (<span className="font-bold">Esc</span> para cancelar)
                     </p>
@@ -2382,6 +2658,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                               future: [],
                             };
                           });
+                          setHasUnsavedChanges(true);
                           setSelectedFloorId(null);
                         }}
                       />
@@ -2487,6 +2764,8 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                       <WallRenderer
                         key={wall.id}
                         wall={wall}
+                        flatStart={isDoorNearWallEnd(wall, "start")}
+  flatEnd={isDoorNearWallEnd(wall, "end")}
                         isSelected={selectedWallId === wall.id}
                         isHovered={hoveredWallId === wall.id}
                         isDragging={draggingWallId === wall.id}
@@ -2558,6 +2837,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                               future: [],
                             };
                           });
+                          setHasUnsavedChanges(true);
                           setSelectedWallId(null);
                         }}
                       />
@@ -2571,6 +2851,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                         wallDrawing.startY,
                         wallDrawing.currentX,
                         wallDrawing.currentY,
+                        wallDrawing.wallType,
                       );
                       const isV = computed.isVertical;
                       const previewLength = computed.width;
@@ -2578,7 +2859,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                       const thickness =
                         wallDrawing.wallType === "externa"
                           ? WALL_THICKNESS
-                          : 6.5;
+                          : WALL_THICKNESS_INTERNA;
 
                       const displayW = isV ? thickness : previewLength;
                       const displayH = isV ? previewLength : thickness;
@@ -2649,7 +2930,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                               future: [],
                             };
                           });
-
+                          setHasUnsavedChanges(true);
                           setSelectedItemId(null);
                         }}
                         onFlipDoor={(id) => {
@@ -2687,6 +2968,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                               future: [],
                             };
                           });
+                          setHasUnsavedChanges(true);
                         }}
                         onDragStart={(itemId, offset) => {
                           setDraggingItemId(itemId);
@@ -2722,6 +3004,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                                 i.id === id ? { ...i, ...changes } : i,
                               ),
                             }));
+                            setHasUnsavedChanges(true);
                           }}
                         />
                       );
@@ -2749,6 +3032,14 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                     </div>
                   )}
                 </div>
+                {loadingOverlay?.visible && (
+                  <div className="absolute inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-white/40 backdrop-blur-sm">
+                    <div className="w-14 h-14 rounded-full border-8 border-white border-t-[#1b325f] animate-spin shadow-md" />
+                    <p className="text-sm font-medium text-[#1b325f] bg-white/80 px-4 py-1.5 rounded-full shadow-sm">
+                      {loadingOverlay.message}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

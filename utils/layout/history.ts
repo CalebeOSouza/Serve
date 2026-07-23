@@ -1,4 +1,8 @@
-import { Action, LayoutItem, AllCanvasItem } from "@/app/admin/dashboard/[id]/layout/types";
+import {
+  Action,
+  LayoutItem,
+  AllCanvasItem,
+} from "@/app/admin/dashboard/[id]/layout/types";
 import type { Wall } from "@/components/dashboard/dashboard_layout/wallRenderer";
 import type { Floor } from "@/components/dashboard/dashboard_layout/floorRenderer";
 
@@ -15,19 +19,25 @@ export function applyAction(
       return { items: items.filter((i) => i.id !== action.id), walls, floors };
     case "MOVE":
       return {
-        items: items.map((i) => (i.id === action.id ? { ...i, x: action.to.x, y: action.to.y } : i)),
+        items: items.map((i) =>
+          i.id === action.id ? { ...i, x: action.to.x, y: action.to.y } : i,
+        ),
         walls,
         floors,
       };
     case "ROTATE":
       return {
-        items: items.map((i) => (i.id === action.id ? { ...i, rotation: action.to } : i)),
+        items: items.map((i) =>
+          i.id === action.id ? { ...i, rotation: action.to } : i,
+        ),
         walls,
         floors,
       };
     case "FLIP_DOOR":
       return {
-        items: items.map((i) => (i.id === action.id ? { ...i, swingDirection: action.to } : i)),
+        items: items.map((i) =>
+          i.id === action.id ? { ...i, swingDirection: action.to } : i,
+        ),
         walls,
         floors,
       };
@@ -38,18 +48,29 @@ export function applyAction(
     case "MOVE_WALL":
       return {
         items,
-        walls: walls.map((w) => (w.id === action.id ? { ...w, x: action.to.x, y: action.to.y } : w)),
+        walls: walls.map((w) =>
+          w.id === action.id ? { ...w, x: action.to.x, y: action.to.y } : w,
+        ),
         floors,
       };
     case "RESIZE_WALL":
       return {
         items,
         walls: walls.map((w) =>
-          w.id === action.id ? { ...w, x: action.to.x, y: action.to.y, width: action.to.width } : w,
+          w.id === action.id
+            ? { ...w, x: action.to.x, y: action.to.y, width: action.to.width }
+            : w,
         ),
         floors,
       };
-
+    case "ROTATE_WALL":
+      return {
+        items,
+        walls: walls.map((w) =>
+          w.id === action.id ? { ...w, rotation: action.to } : w,
+        ),
+        floors,
+      };
     case "ADD_FLOOR":
       return { items, walls, floors: [...floors, action.floor] };
     case "REMOVE_FLOOR":
@@ -58,7 +79,9 @@ export function applyAction(
       return {
         items,
         walls,
-        floors: floors.map((f) => (f.id === action.id ? { ...f, x: action.to.x, y: action.to.y } : f)),
+        floors: floors.map((f) =>
+          f.id === action.id ? { ...f, x: action.to.x, y: action.to.y } : f,
+        ),
       };
     case "RESIZE_FLOOR":
       return {
@@ -66,7 +89,13 @@ export function applyAction(
         walls,
         floors: floors.map((f) =>
           f.id === action.id
-            ? { ...f, x: action.to.x, y: action.to.y, width: action.to.width, height: action.to.height }
+            ? {
+                ...f,
+                x: action.to.x,
+                y: action.to.y,
+                width: action.to.width,
+                height: action.to.height,
+              }
             : f,
         ),
       };
@@ -76,11 +105,9 @@ export function applyAction(
     case "PASTE_WALL":
       return { items, walls: [...walls, action.wall], floors };
 
-  case "PASTE_FLOOR":
+    case "PASTE_FLOOR":
       return { items, walls, floors: [...floors, action.floor] };
-
   }
-  
 }
 
 export function applyInverse(
@@ -91,55 +118,91 @@ export function applyInverse(
 ): { items: AllCanvasItem[]; walls: Wall[]; floors: Floor[] } {
   switch (action.type) {
     case "ADD":
-      return { items: items.filter((i) => i.id !== action.item.id), walls, floors };
+      return {
+        items: items.filter((i) => i.id !== action.item.id),
+        walls,
+        floors,
+      };
     case "REMOVE":
       return { items: [...items, action.item], walls, floors };
     case "MOVE":
       return {
-        items: items.map((i) => (i.id === action.id ? { ...i, x: action.from.x, y: action.from.y } : i)),
+        items: items.map((i) =>
+          i.id === action.id ? { ...i, x: action.from.x, y: action.from.y } : i,
+        ),
         walls,
         floors,
       };
     case "ROTATE":
       return {
-        items: items.map((i) => (i.id === action.id ? { ...i, rotation: action.from } : i)),
+        items: items.map((i) =>
+          i.id === action.id ? { ...i, rotation: action.from } : i,
+        ),
         walls,
         floors,
       };
     case "FLIP_DOOR":
       return {
-        items: items.map((i) => (i.id === action.id ? { ...i, swingDirection: action.from } : i)),
+        items: items.map((i) =>
+          i.id === action.id ? { ...i, swingDirection: action.from } : i,
+        ),
         walls,
         floors,
       };
     case "ADD_WALL":
-      return { items, walls: walls.filter((w) => w.id !== action.wall.id), floors };
+      return {
+        items,
+        walls: walls.filter((w) => w.id !== action.wall.id),
+        floors,
+      };
     case "REMOVE_WALL":
       return { items, walls: [...walls, action.wall], floors };
     case "MOVE_WALL":
       return {
         items,
-        walls: walls.map((w) => (w.id === action.id ? { ...w, x: action.from.x, y: action.from.y } : w)),
+        walls: walls.map((w) =>
+          w.id === action.id ? { ...w, x: action.from.x, y: action.from.y } : w,
+        ),
         floors,
       };
     case "RESIZE_WALL":
       return {
         items,
         walls: walls.map((w) =>
-          w.id === action.id ? { ...w, x: action.from.x, y: action.from.y, width: action.from.width } : w,
+          w.id === action.id
+            ? {
+                ...w,
+                x: action.from.x,
+                y: action.from.y,
+                width: action.from.width,
+              }
+            : w,
         ),
         floors,
       };
-
+    case "ROTATE_WALL":
+      return {
+        items,
+        walls: walls.map((w) =>
+          w.id === action.id ? { ...w, rotation: action.from } : w,
+        ),
+        floors,
+      };
     case "ADD_FLOOR":
-      return { items, walls, floors: floors.filter((f) => f.id !== action.floor.id) };
+      return {
+        items,
+        walls,
+        floors: floors.filter((f) => f.id !== action.floor.id),
+      };
     case "REMOVE_FLOOR":
       return { items, walls, floors: [...floors, action.floor] };
     case "MOVE_FLOOR":
       return {
         items,
         walls,
-        floors: floors.map((f) => (f.id === action.id ? { ...f, x: action.from.x, y: action.from.y } : f)),
+        floors: floors.map((f) =>
+          f.id === action.id ? { ...f, x: action.from.x, y: action.from.y } : f,
+        ),
       };
     case "RESIZE_FLOOR":
       return {
@@ -147,24 +210,41 @@ export function applyInverse(
         walls,
         floors: floors.map((f) =>
           f.id === action.id
-            ? { ...f, x: action.from.x, y: action.from.y, width: action.from.width, height: action.from.height }
+            ? {
+                ...f,
+                x: action.from.x,
+                y: action.from.y,
+                width: action.from.width,
+                height: action.from.height,
+              }
             : f,
         ),
       };
 
     case "PASTE":
-      return { items: items.filter((i) => i.id !== action.item.id), walls, floors };
+      return {
+        items: items.filter((i) => i.id !== action.item.id),
+        walls,
+        floors,
+      };
     case "PASTE_WALL":
-      return { items, walls: walls.filter((w) => w.id !== action.wall.id), floors };
-case "PASTE_FLOOR":
-      return { items, walls, floors: floors.filter((f) => f.id !== action.floor.id) };
-
+      return {
+        items,
+        walls: walls.filter((w) => w.id !== action.wall.id),
+        floors,
+      };
+    case "PASTE_FLOOR":
+      return {
+        items,
+        walls,
+        floors: floors.filter((f) => f.id !== action.floor.id),
+      };
   }
 }
 
 //  import { Action, LayoutItem, AllCanvasItem } from "@/app/admin/dashboard/[id]/layout/types";
 // import type { Wall } from "@/components/dashboard/dashboard_layout/wallRenderer";
- 
+
 //  export function applyAction(
 //     items: AllCanvasItem[],
 //     walls: Wall[],
@@ -190,7 +270,6 @@ case "PASTE_FLOOR":
 //           walls,
 //         };
 
-        
 // case "FLIP_DOOR":
 //   return {
 //     items: items.map((i) =>
@@ -241,7 +320,7 @@ case "PASTE_FLOOR":
 //           items,
 //           walls: [...walls, action.wall],
 //         };
-        
+
 //     }
 //   }
 
@@ -325,5 +404,3 @@ case "PASTE_FLOOR":
 //         };
 //     }
 //   }
-
-

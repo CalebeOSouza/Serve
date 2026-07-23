@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { DashboardMenu } from "../../../../components/dashboard/dashboard_menu";
+import { DashboardMenu } from "../../../../components/dashboard/dashboard_sidebar";
 import Image from "next/image";
 import Link from "next/link";
 import {

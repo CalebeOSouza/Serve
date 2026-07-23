@@ -2,21 +2,21 @@ export function normalizeRotation(rotation: number) {
   return ((rotation % 360) + 360) % 360;
 }
 
-// Vertical = 90° OU 270°
+// Vertical
 export function isRectTableVertical(rotation: number) {
   const normalized = normalizeRotation(rotation);
 
   return normalized === 90 || normalized === 270;
 }
 
-// Horizontal invertida = 180°
+// Horizontal invertida
 export function isRectTableHorizontalFlipped(rotation: number) {
   const normalized = normalizeRotation(rotation);
 
   return normalized === 180;
 }
 
-// Vertical invertida = 270°
+// Vertical invertida
 export function isRectTableVerticalFlipped(rotation: number) {
   const normalized = normalizeRotation(rotation);
 

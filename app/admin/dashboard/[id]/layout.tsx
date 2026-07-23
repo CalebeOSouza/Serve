@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { DashboardMenu } from "@/components/dashboard/dashboard_menu";
-import { DashboardMenuTablet } from "@/components/dashboard/dashboard_menu_tablet";
+import { DashboardMenu } from "@/components/dashboard/dashboard_sidebar";
+import { DashboardMenuTablet } from "@/components/dashboard/dashboard_sidebar_tablet";
 import Image from "next/image";
 
 type Restaurant = {

@@ -34,7 +34,7 @@ export default function TableSettingsPanel({
     <div
       className="absolute z-[9999] cursor-auto"
       style={{
-        left: table.x + size.w + 70,
+        left: table.x + size.w + 95,
         top: table.y - 90,
       }}
       onMouseDown={(e) => e.stopPropagation()}

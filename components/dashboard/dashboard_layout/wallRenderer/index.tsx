@@ -14,6 +14,8 @@ export type Wall = {
 
 type Props = {
   wall: Wall;
+   flatStart?: boolean;
+  flatEnd?: boolean;
   isSelected: boolean;
   isHovered: boolean;
   isDragging: boolean;
@@ -31,6 +33,8 @@ const WALL_THICKNESS_INTERNA = 6.25;
 
 export default function WallRenderer({
   wall,
+    flatStart = false,
+  flatEnd = false,
   isSelected,
   isHovered,
   isDragging,
@@ -46,7 +50,14 @@ export default function WallRenderer({
     wall.wallType === "interna" ? WALL_THICKNESS_INTERNA : WALL_THICKNESS;
   const displayW = isVertical ? thickness : wall.width;
   const displayH = isVertical ? wall.width : thickness;
-  const borderRadius = wall.wallType === "interna" ? 0 : 10;
+  const baseRadius = wall.wallType === "interna" ? 0 : 10;
+
+const cornerRadius =
+  wall.wallType === "interna"
+    ? "0px"
+    : isVertical
+      ? `${flatStart ? 0 : baseRadius}px ${flatStart ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px`
+      : `${flatStart ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatStart ? 0 : baseRadius}px`;
 
   return (
     <div
@@ -73,8 +84,8 @@ export default function WallRenderer({
           className="absolute pointer-events-none rounded-sm"
           style={{
             inset: -3,
-            border: "2px solid #6366f1",
-            borderRadius: borderRadius,
+            border: "2px solid #253e6f",
+            borderRadius: cornerRadius,
           }}
         />
       )}
@@ -85,7 +96,7 @@ export default function WallRenderer({
           width: "100%",
           height: "100%",
           backgroundColor: wall.wallType === "externa" ? "#59595B" : "#C3C5C9",
-          borderRadius: borderRadius,
+           borderRadius: cornerRadius,
           opacity: isDragging ? 0.7 : 1,
           boxSizing: "border-box",
           
@@ -107,8 +118,7 @@ export default function WallRenderer({
         >
           <button
             onClick={onDelete}
-            className="text-red-500 hover:bg-red-100 p-1 rounded transition"
-            title="Deletar parede"
+            className="text-red-500 hover:bg-gray-50 p-1 rounded transition cursor-pointer"       
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -127,7 +137,7 @@ export default function WallRenderer({
             width: 12,
             height: 12,
             backgroundColor: "white",
-            border: "2px solid #6366f1",
+            border: "2px solid #253e6f",
             borderRadius: 2,
             cursor: isVertical ? "ns-resize" : "ew-resize",
             zIndex: 10001,
@@ -152,7 +162,7 @@ export default function WallRenderer({
             width: 12,
             height: 12,
             backgroundColor: "white",
-            border: "2px solid #6366f1",
+            border: "2px solid #253e6f",
             borderRadius: 2,
             cursor: isVertical ? "ns-resize" : "ew-resize",
             zIndex: 70,

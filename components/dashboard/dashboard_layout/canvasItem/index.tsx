@@ -10,6 +10,17 @@ const elementSize = {
   porta: { w: 50, h: 50 },
 };
 
+function getRotatedBoundingBox(w: number, h: number, rotationDeg: number) {
+  const rad = (rotationDeg * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+
+  return {
+    width: w * cos + h * sin,
+    height: w * sin + h * cos,
+  };
+}
+
 type Props = {
   item: AllCanvasItem;
 
@@ -62,6 +73,16 @@ export default function CanvasItem({
   renderElement,
 }: Props) {
   const size = elementSize[item.type];
+  const rotation = item.rotation || 0;
+
+  const bbox = getRotatedBoundingBox(size.w, size.h, rotation);
+
+  const centerX = item.x + size.w / 2;
+  const centerY = item.y + size.h / 2;
+
+  const HANDLE_GAP = 20;
+  const MENU_GAP = 50;
+
   function handleRotateMouseDown(e: React.MouseEvent) {
     e.stopPropagation();
     rotationStartRef.current = item.rotation;
@@ -111,61 +132,83 @@ export default function CanvasItem({
       onMouseLeave={onHoverLeave}
       className="absolute"
       style={{
-        top: item.y,
-        left: item.x,
-        transform: `rotate(${item.rotation || 0}deg)`,
+        left: centerX,
+        top: centerY,
+        width: 0,
+        height: 0,
         zIndex: isSelected ? 100 : 1,
       }}
     >
       <div
-        className={`relative ${
-          isDragging && isDragReady ? "animate-drag-pickup" : ""
-        }`}
+        className="absolute"
         style={{
           width: size.w,
           height: size.h,
+          left: -size.w / 2,
+          top: -size.h / 2,
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: "center center",
         }}
       >
-        {/* Borda de seleção/hover */}
+        <div
+          className={`relative w-full h-full ${
+            isDragging && isDragReady ? "animate-drag-pickup" : ""
+          }`}
+        >
+          {renderElement(item)}
+        </div>
+
         {(isSelected || isHovered) && (
           <div className="absolute -inset-2 border-2 border-(--color-secondary) rounded-md pointer-events-none" />
         )}
+      </div>
 
-        {/* Handle de rotação */}
-        {isSelected && (
-          <div
-            className="absolute -right-13 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 h-7 bg-white border border-gray-300 rounded-full cursor-grab shadow-md hover:scale-110 transition select-none text-xs z-50"
-            onMouseDown={handleRotateMouseDown}
-          >
-            ⟳ <span className="text-[10px] text-gray-500">R</span>
-          </div>
-        )}
+      {isSelected && (
+        <div
+          className="absolute flex items-center gap-1 px-2 h-7 bg-white border border-gray-300 rounded-full cursor-grab shadow-md hover:scale-110 transition select-none text-xs z-50"
+          style={{
+            left: bbox.width / 2 + HANDLE_GAP,
+            top: 0,
+            transform: "translateY(-50%)",
+          }}
+          onMouseDown={handleRotateMouseDown}
+        >
+          ⟳ <span className="text-[10px] text-gray-500">R</span>
+        </div>
+      )}
 
-        {/* Menu de ações */}
-        {isSelected && (
-          <div className="absolute left-1/2 -translate-x-1/2 -top-12 z-50 flex items-center gap-2 bg-white border border-gray-300 shadow-md rounded-md px-2 py-1 cursor-pointer">
-            {item.type === "porta" && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onFlipDoor(item.id);
-                }}
-                className="text-(--color-primary) hover:bg-indigo-100 p-1 rounded transition"
-              >
-                <FlipHorizontal2 className="w-4 h-4" />
-              </button>
-            )}
-
+      {isSelected && (
+        <div
+          className="absolute flex items-center gap-2 bg-white border border-gray-300 shadow-md rounded-md px-2 py-1 cursor-pointer z-50"
+          style={{
+            left: 0,
+            top: -(bbox.height / 2 + MENU_GAP),
+            transform: "translateX(-50%)",
+          }}
+        >
+          {item.type === "porta" && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete();
+                onFlipDoor(item.id);
               }}
-              className="text-red-500 hover:bg-gray-50 p-1 rounded transition cursor-pointer"
+              className="text-(--color-primary) hover:bg-gray-50 p-1 rounded transition cursor-pointer"
             >
-              <Trash2 className="w-4 h-4" />
+              <FlipHorizontal2 className="w-4 h-4" />
             </button>
+          )}
 
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="text-red-500 hover:bg-gray-50 p-1 rounded transition cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+
+          {item.type !== "porta" && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -175,11 +218,9 @@ export default function CanvasItem({
             >
               <Settings className="w-4 h-4" />
             </button>
-          </div>
-        )}
-
-        {renderElement(item)}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

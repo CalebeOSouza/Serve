@@ -38,10 +38,7 @@ const CURSOR_BY_HANDLE: Record<FloorHandle, string> = {
   se: "nwse-resize",
 };
 
-const HANDLE_POSITION: Record<
-  FloorHandle,
-  { top: string; left: string }
-> = {
+const HANDLE_POSITION: Record<FloorHandle, { top: string; left: string }> = {
   nw: { top: "0%", left: "0%" },
   n: { top: "0%", left: "50%" },
   ne: { top: "0%", left: "100%" },
@@ -52,16 +49,7 @@ const HANDLE_POSITION: Record<
   w: { top: "50%", left: "0%" },
 };
 
-const ALL_HANDLES: FloorHandle[] = [
-  "nw",
-  "n",
-  "ne",
-  "e",
-  "se",
-  "s",
-  "sw",
-  "w",
-];
+const ALL_HANDLES: FloorHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
 
 export default function FloorRenderer({
   floor,
@@ -147,8 +135,12 @@ export default function FloorRenderer({
               style={{
                 top: pos.top,
                 left: pos.left,
-                width: handleSize,
-                height: handleSize,
+
+                width: 12,
+                height: 12,
+                backgroundColor: "white",
+                border: "2px solid #253e6f",
+                borderRadius: 2,
                 transform: "translate(-50%, -50%)",
                 cursor: CURSOR_BY_HANDLE[handle],
               }}

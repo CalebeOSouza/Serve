@@ -1,4 +1,3 @@
-// components/layout/TableOverlay.tsx
 import { UserRound, Armchair } from "lucide-react";
 import {} from "../../../../utils/layout/tableContentRotation";
 type TableOverlayProps = {
@@ -32,9 +31,7 @@ export function TableOverlay({
   isVerticalFlipped,
   lCorner,
 }: TableOverlayProps) {
-  // ─────────────────────────────
-  // MESA REDONDA
-  // ─────────────────────────────
+
   if (type === "mesa_redonda") {
     const overlayVisibility = isPreview
       ? "opacity-0 scale-90"
@@ -87,7 +84,7 @@ export function TableOverlay({
   if (type === "mesa_l") {
     return (
       <div className="relative w-full h-full flex">
-        {/* BADGE */}
+        {/* NUMERO DA MESA*/}
         <div
           className={`absolute bg-(--color-secondary) w-fit max-w-6 px-1.5 h-4 rounded-sm flex items-center justify-center text-white text-[10px]
         
@@ -108,7 +105,7 @@ ${status === "indisponivel" ? "bg-gray-700" : "bg-(--color-secondary)"}
           <p className="text-[10px] leading-none text-center">{tableNumber}</p>
         </div>
 
-        {/* USUÁRIOS */}
+        {/* CAPACIDADE */}
         <div
           className={`absolute flex gap-0.5 items-center justify-center
         
@@ -139,27 +136,27 @@ ${
       ? status === "livre"
         ? "bottom-24.75 left-26 -rotate-90"
         : status === "reservada"
-          ? "bottom-21.5 left-22.5 -rotate-90" // <-- ajuste aqui
+          ? "bottom-21.5 left-22.5 -rotate-90"
           : status === "ocupada"
-            ? "bottom-22.5 left-23.5 -rotate-90" // <-- ajuste aqui
-            : "bottom-20.5 left-22 -rotate-90" // <-- ajuste aqui
+            ? "bottom-22.5 left-23.5 -rotate-90"
+            : "bottom-20.5 left-22 -rotate-90"
 
       : lCorner === "bottom-right"
         ? status === "livre"
           ? "bottom-26.25 left-24 rotate-180"
           : status === "reservada"
-            ? "bottom-26.5 left-17 rotate-180" // <-- ajuste aqui
+            ? "bottom-26.5 left-17 rotate-180"
             : status === "ocupada"
-              ? "bottom-26.5 left-19 rotate-180" // <-- ajuste aqui
-              : "bottom-26.5 left-15.5 rotate-180" // <-- ajuste aqui
+              ? "bottom-26.5 left-19 rotate-180"
+              : "bottom-26.5 left-15.5 rotate-180"
 
         : status === "livre"
           ? "top-25 right-25.5 rotate-90"
           : status === "reservada"
-            ? "top-21 right-22.25 rotate-90" // <-- ajuste aqui
+            ? "top-21 right-22.25 rotate-90"
             : status === "ocupada"
-              ? "top-22 right-23.25 rotate-90" // <-- ajuste aqui
-              : "top-20 right-21.5 rotate-90" // <-- ajuste aqui
+              ? "top-22 right-23.25 rotate-90"
+              : "top-20 right-21.5 rotate-90"
 }
 `}
         >
@@ -176,10 +173,6 @@ ${
       </div>
     );
   }
-
-  // ─────────────────────────────
-  // QUADRADA + RETANGULAR
-  // ─────────────────────────────
 
   if (type === "mesa_retangular") {
     if (isVertical) {

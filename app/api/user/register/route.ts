@@ -14,10 +14,6 @@ export async function POST(request: Request) {
 
     const { name, email, password } = body;
 
-    // =========================
-    // VALIDAÇÕES
-    // =========================
-
     if (!name || !email || !password) {
       return NextResponse.json(
         {
@@ -53,15 +49,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // =========================
-    // HASH DA SENHA
-    // =========================
-
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // =========================
-    // CRIA USUÁRIO
-    // =========================
 
     const [result]: any = await db.query(
       `
@@ -81,10 +69,6 @@ export async function POST(request: Request) {
     );
 
     const userId = result.insertId;
-
-    // =========================
-    // RESPONSE
-    // =========================
 
     return NextResponse.json(
       {
