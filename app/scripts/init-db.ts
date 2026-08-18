@@ -177,7 +177,7 @@ CREATE TABLE employee_roles (
     `);
 
     await pool.query(`
-  CREATE TABLE menu_categories (
+ CREATE TABLE menu_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     restaurant_id INT NOT NULL,
 
@@ -189,11 +189,19 @@ CREATE TABLE employee_roles (
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_category_name (
+        restaurant_id,
+        parent_id,
+        name
+    ),
 
-    FOREIGN KEY (parent_id) REFERENCES menu_categories(id)
-    ON DELETE CASCADE
-    
+    FOREIGN KEY (restaurant_id)
+        REFERENCES restaurants(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (parent_id)
+        REFERENCES menu_categories(id)
+        ON DELETE CASCADE
 );
 
     `);

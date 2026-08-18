@@ -3,9 +3,16 @@
 import { use, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { SquareMousePointer, UserRoundKey, Lock } from "lucide-react";
+import {
+  SquareMousePointer,
+  UserRoundKey,
+  Lock,
+  LoaderCircle,
+} from "lucide-react";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
-import EmployeeCard, { Employee } from "@/components/dashboard/dashboard_employees/employee_card";
+import EmployeeCard, {
+  Employee,
+} from "@/components/dashboard/dashboard_employees/employee_card";
 import { useRef } from "react";
 export default function RestaurantFuncionarios() {
   const formRef = useRef<HTMLDivElement | null>(null);
@@ -13,6 +20,7 @@ export default function RestaurantFuncionarios() {
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [openModal, setOpenModal] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [cargoFiltro, setCargoFiltro] = useState<Cargo["tipo"] | null>(null);
   const [page, setPage] = useState<number>(1);
@@ -44,13 +52,7 @@ export default function RestaurantFuncionarios() {
   });
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
-  const [deleteModal, setDeleteModal] = useState<{
-    open: boolean;
-    employee: any | null;
-  }>({
-    open: false,
-    employee: null,
-  });
+ const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const [credentialsModal, setCredentialsModal] = useState<{
     open: boolean;
@@ -242,12 +244,25 @@ export default function RestaurantFuncionarios() {
   }, [cargosSelecionados]);
 
   async function fetchEmployees() {
-    const res = await fetch(
-      `/api/restaurant/employees?restaurantId=${restaurantId}`,
-    );
-    const data = await res.json();
+    try {
+      setLoading(true);
 
-    setEmployees(data.employees);
+      const res = await fetch(
+        `/api/restaurant/employees?restaurantId=${restaurantId}`,
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao carregar funcionários");
+      }
+
+      setEmployees(data.employees);
+    } catch (error) {
+      console.error("Erro ao carregar funcionários:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const lastEmployee = page * employeesPerPage;
@@ -280,12 +295,6 @@ export default function RestaurantFuncionarios() {
   const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
   const adjustedStartPage = Math.max(1, endPage - maxVisiblePages + 1);
-
-  useEffect(() => {
-    if (restaurantId) {
-      fetchEmployees();
-    }
-  }, [restaurantId]);
 
   useEffect(() => {
     setPage(1);
@@ -373,38 +382,37 @@ export default function RestaurantFuncionarios() {
     }
   }
 
-  async function deletarFuncionario() {
-    if (!deleteModal.employee) return;
+ async function deletarFuncionario(employeeId: number) {
+  const res = await fetch(
+    `/api/restaurant/employees?employeeId=${employeeId}`,
+    {
+      method: "DELETE",
+    },
+  );
 
-    const res = await fetch(
-      `/api/restaurant/employees?employeeId=${deleteModal.employee.id}`,
-      {
-        method: "DELETE",
-      },
-    );
+  if (res.ok) {
+    setConfirmDeleteId(null);
+    await fetchEmployees();
+  } else {
+    const data = await res.json();
 
-    if (res.ok) {
-      setDeleteModal({ open: false, employee: null });
-      await fetchEmployees();
-    } else {
-      const data = await res.json();
-      setAlert({
-        message: data.error || "Erro ao excluir",
-        type: "error",
-      });
-    }
+    setAlert({
+      message: data.error || "Erro ao excluir",
+      type: "error",
+    });
   }
+}
 
   return (
     <div
       className={`${openModal ? "lg:px-10 px-5" : "px-5 lg:px-20 md:px-10"} py-10 w-full mx-auto flex flex-col gap-6 transition-all duration-400`}
     >
       <div className="flex flex-col text-start gap-2">
-        <div className="flex flex-col text-start gap-2">
-          <h1 className="font-semibold text-[30px] text-[#19274b]">
+        <div className="flex flex-col text-start">
+          <h1 className="font-semibold text-[27px] text-[#19274b]">
             Gerencie sua equipe!
           </h1>
-          <p className=" text-[18px] text-[#19274b]">
+          <p className=" text-[16px] text-[#19274b]">
             Crie e administre as contas dos cargos do seu restaurante.
           </p>
         </div>
@@ -413,10 +421,10 @@ export default function RestaurantFuncionarios() {
 
       <div className="flex justify-between text-start my-5 flex-col gap-6 lg:flex-row lg:gap-0">
         <div className="flex flex-col">
-          <h1 className="font-semibold text-[26px] text-[#19274b]">
+          <h1 className="font-semibold text-[27px] text-[#19274b]">
             Criar funcionários!
           </h1>
-          <p className=" text-[15px] text-[#19274b]">
+          <p className=" text-[16px] text-[#19274b]">
             Selecione o cargo para criar um funcionário
           </p>
         </div>
@@ -503,10 +511,10 @@ export default function RestaurantFuncionarios() {
 
             <div className="flex flex-col justify-baseline lg:flex-row lg:justify-between text-start gap-2 mt-8">
               <div>
-                <h1 className="font-semibold text-[26px] text-[#19274b]">
+                <h1 className="font-semibold text-[27px] text-[#19274b]">
                   Funcionários cadastrados!
                 </h1>
-                <p className=" text-[15px] text-[#19274b]">
+                <p className=" text-[16px] text-[#19274b]">
                   Visualize e gerencie as contas da sua equipe
                 </p>
               </div>
@@ -560,7 +568,13 @@ export default function RestaurantFuncionarios() {
             <div
               className={`mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3`}
             >
-              {employees.length === 0 ? (
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-30 w-full col-span-full gap-3">
+                  <LoaderCircle className="w-10 h-10 text-(--color-primary) animate-spin" />
+
+                  <p className="text-gray-500">Carregando funcionários...</p>
+                </div>
+              ) : employees.length === 0 ? (
                 <div className="rounded-2xl bg-white flex flex-col items-center shadow-sm hover:shadow-md transition-all col-span-4">
                   <div className="relative w-30 h-16">
                     <Image
@@ -608,19 +622,21 @@ export default function RestaurantFuncionarios() {
                 </div>
               ) : (
                 visibleEmployees.map((emp) => (
-                  <EmployeeCard
-                    key={emp.id}
-                    emp={emp}
-                    cargos={cargos}
-                    setPinModal={setPinModal}
-                    setEditingEmployee={setEditingEmployee}
-                    setDeleteModal={setDeleteModal}
-                    setNome={setNome}
-                    setCpf={setCpf}
-                    setCargosSelecionados={setCargosSelecionados}
-                    abrirModal={abrirModal}
-                    getInitials={getInitials}
-                  />
+                 <EmployeeCard
+  key={emp.id}
+  emp={emp}
+  cargos={cargos}
+  setPinModal={setPinModal}
+  setEditingEmployee={setEditingEmployee}
+  setConfirmDeleteId={setConfirmDeleteId}
+  confirmDeleteId={confirmDeleteId}
+  deletarFuncionario={deletarFuncionario}
+  setNome={setNome}
+  setCpf={setCpf}
+  setCargosSelecionados={setCargosSelecionados}
+  abrirModal={abrirModal}
+  getInitials={getInitials}
+/>
                 ))
               )}
             </div>
@@ -634,7 +650,7 @@ export default function RestaurantFuncionarios() {
                   </p>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-2">
+                <div className="flex flex-row items-center gap-2">
                   <button
                     onClick={() => setPage((p: number) => Math.max(p - 1, 1))}
                     className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer bg-white"
@@ -889,39 +905,7 @@ export default function RestaurantFuncionarios() {
         </div>
       )}
 
-      {deleteModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-[400px]">
-            <h2 className="text-xl font-semibold text-[#19274b]">
-              Confirmar exclusão
-            </h2>
-
-            <p className="text-sm text-gray-500 mt-2">
-              Tem certeza que deseja excluir o funcionário:
-            </p>
-
-            <div className="mt-3 font-semibold text-(--color-primary)">
-              {deleteModal.employee?.name}
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3">
-              <button
-                onClick={deletarFuncionario}
-                className="w-full bg-(--color-primary) text-white py-3 rounded-md hover:bg-(--color-secondary) transition cursor-pointer"
-              >
-                Excluir definitivamente
-              </button>
-
-              <button
-                onClick={() => setDeleteModal({ open: false, employee: null })}
-                className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+     
 
       {credentialsModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">

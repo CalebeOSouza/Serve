@@ -345,7 +345,7 @@ export function Header() {
   };
 
   return (
-    <header className="relative">
+    <header className="relative z-9999">
       <div
         className={`fixed top-0 left-0 z-40 bg-white border-b border-gray-200 px-10 py-4 w-full flex items-center font-bold text-sm transition-all duration-300 ease-in-out ${
           showHeader || menuOpen

@@ -7,6 +7,7 @@ import {
   Users,
   Layout,
   CalendarCheck,
+  ArrowLeftRight,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -22,19 +23,18 @@ export function DashboardMenuTablet({ restaurantId }: Props) {
   return (
     <nav className="lg:hidden w-full bg-(--color-primary) text-white shadow-sm">
       <ul
-  className="
+        className="
     flex flex-col
     sm:flex-col
-    md:flex-row
+    md:flex-col
     w-full
     gap-2
     md:gap-2
     p-8
-    md:px-4 md:py-3
     md:justify-center
     md:overflow-x-auto
   "
->
+      >
         <li className="w-full md:w-auto">
           <Link href={basePath}>
             <div
@@ -109,8 +109,8 @@ export function DashboardMenuTablet({ restaurantId }: Props) {
                   : "hover:bg-(--color-secondary)/50"
               }`}
             >
-              <CalendarCheck size={19} />
-              <span>Reservas</span>
+              <ArrowLeftRight size={18} />
+              <span>Alternar perfil</span>
             </div>
           </Link>
         </li>

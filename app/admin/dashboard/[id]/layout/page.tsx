@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoaderCircle, RotateCcw } from "lucide-react";
 import { useParams } from "next/navigation";
 import {
   isRectTableVertical,
@@ -24,7 +25,6 @@ import type {
   LayoutItem,
   ElementType,
   Action,
-  ElementConfig,
   RestaurantTable,
   TableType,
   AllCanvasItem,
@@ -142,7 +142,6 @@ export default function RestaurantLayout() {
   const wallDragClientStartRef = useRef({ x: 0, y: 0 });
   const [isWallDragReady, setIsWallDragReady] = useState(false);
 
-  // ---- PISO ----
   const [isFloorModeActive, setIsFloorModeActive] = useState(false);
 
   const [floorDrawing, setFloorDrawing] = useState<{
@@ -565,34 +564,34 @@ export default function RestaurantLayout() {
     }
   }
 
-function isDoorNearWallEnd(wall: Wall, end: "start" | "end") {
-  if (wall.wallType !== "externa") return false;
+  function isDoorNearWallEnd(wall: Wall, end: "start" | "end") {
+    if (wall.wallType !== "externa") return false;
 
-  const isVertical = wall.rotation === 90;
-  const point = isVertical
-    ? { x: wall.x, y: end === "start" ? wall.y : wall.y + wall.width }
-    : { x: end === "start" ? wall.x : wall.x + wall.width, y: wall.y };
+    const isVertical = wall.rotation === 90;
+    const point = isVertical
+      ? { x: wall.x, y: end === "start" ? wall.y : wall.y + wall.width }
+      : { x: end === "start" ? wall.x : wall.x + wall.width, y: wall.y };
 
-  const THRESHOLD = 6;
+    const THRESHOLD = 6;
 
-  return items.some((item) => {
-    if (item.type !== "porta") return false;
+    return items.some((item) => {
+      if (item.type !== "porta") return false;
 
-    const doorLeft = item.x;
-    const doorRight = item.x + 50;
-    const doorTop = item.y;
-    const doorBottom = item.y + 50;
+      const doorLeft = item.x;
+      const doorRight = item.x + 50;
+      const doorTop = item.y;
+      const doorBottom = item.y + 50;
 
-    const closestX = Math.max(doorLeft, Math.min(point.x, doorRight));
-    const closestY = Math.max(doorTop, Math.min(point.y, doorBottom));
+      const closestX = Math.max(doorLeft, Math.min(point.x, doorRight));
+      const closestY = Math.max(doorTop, Math.min(point.y, doorBottom));
 
-    const dist = Math.sqrt(
-      (point.x - closestX) ** 2 + (point.y - closestY) ** 2,
-    );
+      const dist = Math.sqrt(
+        (point.x - closestX) ** 2 + (point.y - closestY) ** 2,
+      );
 
-    return dist < THRESHOLD;
-  });
-}
+      return dist < THRESHOLD;
+    });
+  }
 
   function spawnElement(type: TableType | ElementType) {
     setSelectedType(type);
@@ -2105,14 +2104,14 @@ function isDoorNearWallEnd(wall: Wall, end: "start" | "end") {
     !!previewItem || isWallModeActive !== false || isFloorModeActive;
 
   return (
-    <div className={`w-full mx-auto flex flex-col p-10`}>
-      <div className="flex flex-col text-start gap-8 px-5">
-        <div className="flex justify-between text-start flex-col gap-6 lg:flex-row lg:gap-0">
+    <div className="w-full mx-auto flex flex-col px-5 py-10 md:px-20 max-lg:landscape:px-3">
+      <div className="flex flex-col text-start gap-8">
+        <header className="flex justify-between text-start flex-col gap-6 lg:flex-row lg:gap-0">
           <div className="flex flex-col">
-            <h1 className="font-semibold text-[25px] text-[#19274b]">
+            <h1 className="font-semibold text-[27px] text-[#19274b]">
               Layout do restaurante
             </h1>
-            <p className=" text-[15px] text-[#19274b]">
+            <p className=" text-[16px] text-[#19274b]">
               Gerencie o mapa de mesas e ambientes do seu restaurante!
             </p>
           </div>
@@ -2121,552 +2120,355 @@ function isDoorNearWallEnd(wall: Wall, end: "start" | "end") {
             onRedo={redo}
             onSave={() => withLoadingOverlay("Salvando layout...", saveLayout)}
           />
-        </div>
+        </header>
+        <div className="relative">
+          {/* Div principal do gerenciamento do layout */}
+          <div className="relative w-full max-w-full min-w-0 flex flex-col md:flex-col lg:flex-row border border-[#e1e4f0] bg-[#F9F8FB] rounded-xl overflow-hidden max-lg:portrait:blur-sm max-lg:portrait:pointer-events-none max-lg:portrait:select-none">
+            {/* Div dos elementos */}
+            <ElementsSidebar
+              selectedType={selectedType}
+              onSelect={(type) => {
+                if (type === "parede") {
+                  setIsWallModeActive("externa");
+                  setIsFloorModeActive(false);
+                  setFloorDrawing(null);
+                  setPreviewItem(null);
+                  setSelectedType("parede");
+                } else if (type === "parede_interna") {
+                  setIsWallModeActive("interna");
+                  setIsFloorModeActive(false);
+                  setFloorDrawing(null);
+                  setPreviewItem(null);
+                  setSelectedType("parede_interna");
+                } else if (type === "piso") {
+                  setIsWallModeActive(false);
+                  setWallDrawing(null);
+                  setSelectedWallId(null);
 
-        {/* Div principal do gerenciamento do layout */}
-        <div className="flex border border-[#e1e4f0] bg-[#F9F8FB] rounded-xl">
-          {/* Div dos elementos */}
-          <ElementsSidebar
-            selectedType={selectedType}
-            onSelect={(type) => {
-              if (type === "parede") {
-                setIsWallModeActive("externa");
-                setIsFloorModeActive(false);
-                setFloorDrawing(null);
-                setPreviewItem(null);
-                setSelectedType("parede");
-              } else if (type === "parede_interna") {
-                setIsWallModeActive("interna");
-                setIsFloorModeActive(false);
-                setFloorDrawing(null);
-                setPreviewItem(null);
-                setSelectedType("parede_interna");
-              } else if (type === "piso") {
-                setIsWallModeActive(false);
-                setWallDrawing(null);
-                setSelectedWallId(null);
+                  setIsFloorModeActive(true);
+                  setFloorDrawing(null);
+                  setSelectedFloorId(null);
+                  setPreviewItem(null);
+                  setSelectedType("piso");
+                } else {
+                  setIsWallModeActive(false);
+                  setWallDrawing(null);
+                  setSelectedWallId(null);
 
-                setIsFloorModeActive(true);
-                setFloorDrawing(null);
-                setSelectedFloorId(null);
-                setPreviewItem(null);
-                setSelectedType("piso");
-              } else {
-                setIsWallModeActive(false);
-                setWallDrawing(null);
-                setSelectedWallId(null);
+                  setIsFloorModeActive(false);
+                  setFloorDrawing(null);
+                  setSelectedFloorId(null);
 
-                setIsFloorModeActive(false);
-                setFloorDrawing(null);
-                setSelectedFloorId(null);
+                  spawnElement(type);
+                }
+              }}
+            />
+            {/* Div layout do centro */}
+            <div className="flex-1 min-w-0 w-full max-w-full pt-5 lg:p-6 overflow-hidden">
+              <div className="w-full max-w-full min-w-0 mx-auto">
+                <div className="flex justify-between items-center pb-5">
+                  {/* ZOOM */}
+                  <ZoomControls
+                    zoom={zoom}
+                    zoomInput={zoomInput}
+                    onZoomOut={() => applyZoom(Math.max(0.4, zoom - 0.1))}
+                    onZoomIn={() => applyZoom(Math.min(3, zoom + 0.1))}
+                    onInputChange={(val) => setZoomInput(val)}
+                    onInputBlur={() => {
+                      let num = Number(zoomInput);
+                      if (isNaN(num)) {
+                        setZoomInput(String(Math.round(zoom * 100)));
+                        return;
+                      }
+                      num = Math.max(40, Math.min(300, num));
+                      applyZoom(num / 100);
+                    }}
+                    onInputKeyDown={(e) => {
+                      if (e.key === "Enter")
+                        (e.target as HTMLInputElement).blur();
+                    }}
+                    gridEnabled={gridEnabled}
+                    onToggleGrid={() => setGridEnabled((prev) => !prev)}
+                  />
+                </div>
 
-                spawnElement(type);
-              }
-            }}
-          />
-          {/* Div layout do centro */}
-          <div className="flex-1 p-6">
-            <div className="w-full max-w-[1100px] mx-auto">
-              <div className="flex justify-between items-center pb-5">
-                {/* ZOOM */}
-                <ZoomControls
-                  zoom={zoom}
-                  zoomInput={zoomInput}
-                  onZoomOut={() => applyZoom(Math.max(0.4, zoom - 0.1))}
-                  onZoomIn={() => applyZoom(Math.min(3, zoom + 0.1))}
-                  onInputChange={(val) => setZoomInput(val)}
-                  onInputBlur={() => {
-                    let num = Number(zoomInput);
-                    if (isNaN(num)) {
-                      setZoomInput(String(Math.round(zoom * 100)));
+                <div
+                  id="layout"
+                  ref={layoutRef}
+                  className={`
+  bg-[#ffffff]
+  w-full
+  max-w-full
+  h-175
+  rounded-none md:rounded-none lg:rounded-2xl
+  border-t-[1.5px] border-gray-300 md:border-none lg:border-[1.5px]
+  relative
+  overflow-hidden
+  select-none
+  ${isPanning ? "cursor-grabbing" : "cursor-grab"}
+`}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+
+                    if (e.button === 2) {
+                      if (previewItem) return;
+
+                      setIsPanning(true);
+                      setLastPanPoint({ x: e.clientX, y: e.clientY });
+
                       return;
                     }
-                    num = Math.max(40, Math.min(300, num));
-                    applyZoom(num / 100);
+
+                    // Início do desenho de parede
+                    if (isWallModeActive) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const worldX =
+                        (e.clientX - rect.left - panRef.current.x) /
+                        zoomRef.current;
+                      const worldY =
+                        (e.clientY - rect.top - panRef.current.y) /
+                        zoomRef.current;
+
+                      const anchor =
+                        isWallModeActive === "interna"
+                          ? getInternalWallAnchorPoint(worldX, worldY)
+                          : getWallAnchorPoint(worldX, worldY);
+
+                      setWallDrawing({
+                        startX: anchor.x,
+                        startY: anchor.y,
+                        currentX: anchor.x,
+                        currentY: anchor.y,
+                        isVertical: false,
+                        wallType: isWallModeActive,
+                      });
+                      return;
+                    }
+
+                    // Início do desenho do piso
+                    if (isFloorModeActive) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const worldX =
+                        (e.clientX - rect.left - panRef.current.x) /
+                        zoomRef.current;
+                      const worldY =
+                        (e.clientY - rect.top - panRef.current.y) /
+                        zoomRef.current;
+
+                      const snappedX = snapFloorToGrid(worldX);
+                      const snappedY = snapFloorToGrid(worldY);
+
+                      setFloorDrawing({
+                        startX: snappedX,
+                        startY: snappedY,
+                        currentX: snappedX,
+                        currentY: snappedY,
+                      });
+                      return;
+                    }
                   }}
-                  onInputKeyDown={(e) => {
-                    if (e.key === "Enter")
-                      (e.target as HTMLInputElement).blur();
-                  }}
-                  gridEnabled={gridEnabled}
-                  onToggleGrid={() => setGridEnabled((prev) => !prev)}
-                />
-              </div>
+                  onMouseMove={(e) => {
+                    // Preview do desenho do piso
+                    if (floorDrawing) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const worldX =
+                        (e.clientX - rect.left - panRef.current.x) /
+                        zoomRef.current;
+                      const worldY =
+                        (e.clientY - rect.top - panRef.current.y) /
+                        zoomRef.current;
 
-              <div
-                id="layout"
-                ref={layoutRef}
-                className={`
-              
-    bg-[#ffffff]
-    w-full 
-    max-w-[1100px]
-    h-175
-    
-    rounded-2xl
-    border-[1.5px] border-gray-300
-    relative
-    overflow-hidden
-    select-none
- ${isPanning ? "cursor-grabbing" : "cursor-grab"}
-    
-    
-  `}
-                onContextMenu={(e) => e.preventDefault()}
-                onMouseDown={(e) => {
-                  e.preventDefault();
+                      setFloorDrawing((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              currentX: snapFloorToGrid(worldX),
+                              currentY: snapFloorToGrid(worldY),
+                            }
+                          : null,
+                      );
+                      return;
+                    }
 
-                  if (e.button === 2) {
-                    if (previewItem) return;
+                    // Preview do desenho da parede
+                    if (wallDrawing) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const worldX =
+                        (e.clientX - rect.left - panRef.current.x) /
+                        zoomRef.current;
+                      const worldY =
+                        (e.clientY - rect.top - panRef.current.y) /
+                        zoomRef.current;
+                      const dx = Math.abs(worldX - wallDrawing.startX);
+                      const dy = Math.abs(worldY - wallDrawing.startY);
 
-                    setIsPanning(true);
-                    setLastPanPoint({ x: e.clientX, y: e.clientY });
+                      const lockThreshold = 8;
 
-                    return;
-                  }
+                      setWallDrawing((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              currentX: isAltPressedRef.current
+                                ? worldX
+                                : snapToHalfGrid(worldX),
 
-                  // Início do desenho de parede
-                  if (isWallModeActive) {
+                              currentY: isAltPressedRef.current
+                                ? worldY
+                                : snapToHalfGrid(worldY),
+                              isVertical: dx < lockThreshold ? true : dy > dx,
+                            }
+                          : null,
+                      );
+                      return;
+                    }
+
+                    if (!previewItem) {
+                      setGuides({ vertical: null, horizontal: null });
+                      return;
+                    }
+
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const worldX =
+                    const size = elementSize[previewItem.type];
+
+                    const centerX =
                       (e.clientX - rect.left - panRef.current.x) /
                       zoomRef.current;
-                    const worldY =
+                    const centerY =
                       (e.clientY - rect.top - panRef.current.y) /
                       zoomRef.current;
 
-                    const anchor =
-                      isWallModeActive === "interna"
-                        ? getInternalWallAnchorPoint(worldX, worldY)
-                        : getWallAnchorPoint(worldX, worldY);
+                    const rawX = centerX - size.w / 2;
+                    const rawY = centerY - size.h / 2;
 
-                    setWallDrawing({
-                      startX: anchor.x,
-                      startY: anchor.y,
-                      currentX: anchor.x,
-                      currentY: anchor.y,
-                      isVertical: false,
-                      wallType: isWallModeActive,
-                    });
-                    return;
-                  }
+                    const snapped = applySnap(rawX, rawY);
 
-                  // Início do desenho do piso
-                  if (isFloorModeActive) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const worldX =
-                      (e.clientX - rect.left - panRef.current.x) /
-                      zoomRef.current;
-                    const worldY =
-                      (e.clientY - rect.top - panRef.current.y) /
-                      zoomRef.current;
+                    const newX = snapped.x;
+                    const newY = snapped.y;
 
-                    const snappedX = snapFloorToGrid(worldX);
-                    const snappedY = snapFloorToGrid(worldY);
-
-                    setFloorDrawing({
-                      startX: snappedX,
-                      startY: snappedY,
-                      currentX: snappedX,
-                      currentY: snappedY,
-                    });
-                    return;
-                  }
-                }}
-                onMouseMove={(e) => {
-                  // Preview do desenho do piso
-                  if (floorDrawing) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const worldX =
-                      (e.clientX - rect.left - panRef.current.x) /
-                      zoomRef.current;
-                    const worldY =
-                      (e.clientY - rect.top - panRef.current.y) /
-                      zoomRef.current;
-
-                    setFloorDrawing((prev) =>
+                    setPreviewItem((prev) =>
                       prev
                         ? {
                             ...prev,
-                            currentX: snapFloorToGrid(worldX),
-                            currentY: snapFloorToGrid(worldY),
+                            x: newX,
+                            y: newY,
                           }
                         : null,
                     );
-                    return;
-                  }
 
-                  // Preview do desenho da parede
-                  if (wallDrawing) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const worldX =
-                      (e.clientX - rect.left - panRef.current.x) /
-                      zoomRef.current;
-                    const worldY =
-                      (e.clientY - rect.top - panRef.current.y) /
-                      zoomRef.current;
-                    const dx = Math.abs(worldX - wallDrawing.startX);
-                    const dy = Math.abs(worldY - wallDrawing.startY);
-
-                    const lockThreshold = 8;
-
-                    setWallDrawing((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            currentX: isAltPressedRef.current
-                              ? worldX
-                              : snapToHalfGrid(worldX),
-
-                            currentY: isAltPressedRef.current
-                              ? worldY
-                              : snapToHalfGrid(worldY),
-                            isVertical: dx < lockThreshold ? true : dy > dx,
-                          }
-                        : null,
+                    const deltaX = e.clientX - lastMouseX;
+                    if (!lastMouseX) {
+                      setLastMouseX(e.clientX);
+                      return;
+                    }
+                    const maxRotation = 15;
+                    const newRotation = Math.max(
+                      -maxRotation,
+                      Math.min(maxRotation, deltaX * 0.5),
                     );
-                    return;
-                  }
 
-                  if (!previewItem) {
-                    setGuides({ vertical: null, horizontal: null });
-                    return;
-                  }
-
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const size = elementSize[previewItem.type];
-
-                  const centerX =
-                    (e.clientX - rect.left - panRef.current.x) /
-                    zoomRef.current;
-                  const centerY =
-                    (e.clientY - rect.top - panRef.current.y) / zoomRef.current;
-
-                  const rawX = centerX - size.w / 2;
-                  const rawY = centerY - size.h / 2;
-
-                  const snapped = applySnap(rawX, rawY);
-
-                  const newX = snapped.x;
-                  const newY = snapped.y;
-
-                  setPreviewItem((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          x: newX,
-                          y: newY,
-                        }
-                      : null,
-                  );
-
-                  const deltaX = e.clientX - lastMouseX;
-                  if (!lastMouseX) {
+                    setRotation(newRotation);
                     setLastMouseX(e.clientX);
-                    return;
-                  }
-                  const maxRotation = 15;
-                  const newRotation = Math.max(
-                    -maxRotation,
-                    Math.min(maxRotation, deltaX * 0.5),
-                  );
+                  }}
+                  onClick={() => {
+                    if (!previewItem) {
+                      setSelectedItemId(null);
+                      setSelectedWallId(null);
+                      setSelectedFloorId(null);
+                      setSettingsTableId(null);
+                      return;
+                    }
 
-                  setRotation(newRotation);
-                  setLastMouseX(e.clientX);
-                }}
-                onClick={() => {
-                  if (!previewItem) {
-                    setSelectedItemId(null);
-                    setSelectedWallId(null);
-                    setSelectedFloorId(null);
-                    setSettingsTableId(null);
-                    return;
-                  }
+                    // const isTable = previewItem.type !== "porta";
 
-                  // const isTable = previewItem.type !== "porta";
+                    const isTable =
+                      previewItem.type === "mesa_quadrada" ||
+                      previewItem.type === "mesa_redonda" ||
+                      previewItem.type === "mesa_retangular" ||
+                      previewItem.type === "mesa_l";
 
-                  const isTable =
-                    previewItem.type === "mesa_quadrada" ||
-                    previewItem.type === "mesa_redonda" ||
-                    previewItem.type === "mesa_retangular" ||
-                    previewItem.type === "mesa_l";
+                    const item: AllCanvasItem = {
+                      ...previewItem,
 
-                  const item: AllCanvasItem = {
-                    ...previewItem,
+                      ...(isTable && {
+                        tableNumber: nextTableNumberRef.current++,
+                        capacity: 0,
+                        status: "livre",
+                      }),
+                    };
 
-                    ...(isTable && {
-                      tableNumber: nextTableNumberRef.current++,
-                      capacity: 0,
-                      status: "livre",
-                    }),
-                  };
+                    setLayoutState((s) => ({
+                      ...s,
+                      items: [...s.items, item],
+                      history: [...s.history, { type: "ADD", item }],
+                      future: [],
+                    }));
+                    setHasUnsavedChanges(true);
+                    setPreviewItem(null);
+                  }}
+                  onMouseUp={(e) => {
+                    setIsPanning(false);
 
-                  setLayoutState((s) => ({
-                    ...s,
-                    items: [...s.items, item],
-                    history: [...s.history, { type: "ADD", item }],
-                    future: [],
-                  }));
-                  setHasUnsavedChanges(true);
-                  setPreviewItem(null);
-                }}
-                onMouseUp={(e) => {
-                  setIsPanning(false);
+                    if (wallDrawing && isWallModeActive) {
+                      if (
+                        isWallTooSmall(
+                          wallDrawing.startX,
+                          wallDrawing.startY,
+                          wallDrawing.currentX,
+                          wallDrawing.currentY,
+                        )
+                      ) {
+                        setWallDrawing(null);
+                        return;
+                      }
 
-                  if (wallDrawing && isWallModeActive) {
-                    if (
-                      isWallTooSmall(
+                      const computed = wallFromDrag(
                         wallDrawing.startX,
                         wallDrawing.startY,
                         wallDrawing.currentX,
                         wallDrawing.currentY,
-                      )
-                    ) {
+                        wallDrawing.wallType,
+                      );
+
+                      const newWall: Wall = {
+                        id: crypto.randomUUID(),
+                        x: computed.x,
+                        y: computed.y,
+                        width: computed.width,
+                        rotation: computed.isVertical ? 90 : 0,
+                        side: computed.side,
+                        wallType:
+                          isWallModeActive === "interna"
+                            ? "interna"
+                            : "externa", // veja passo 4
+                      };
+
+                      setLayoutState((s) => ({
+                        ...s,
+                        walls: [...s.walls, newWall],
+                        history: [
+                          ...s.history,
+                          { type: "ADD_WALL", wall: newWall },
+                        ],
+                        future: [],
+                      }));
+                      setHasUnsavedChanges(true);
                       setWallDrawing(null);
-                      return;
                     }
 
-                    const computed = wallFromDrag(
-                      wallDrawing.startX,
-                      wallDrawing.startY,
-                      wallDrawing.currentX,
-                      wallDrawing.currentY,
-                      wallDrawing.wallType,
-                    );
+                    if (floorDrawing && isFloorModeActive) {
+                      if (
+                        isFloorTooSmall(
+                          floorDrawing.startX,
+                          floorDrawing.startY,
+                          floorDrawing.currentX,
+                          floorDrawing.currentY,
+                        )
+                      ) {
+                        setFloorDrawing(null);
+                        return;
+                      }
 
-                    const newWall: Wall = {
-                      id: crypto.randomUUID(),
-                      x: computed.x,
-                      y: computed.y,
-                      width: computed.width,
-                      rotation: computed.isVertical ? 90 : 0,
-                      side: computed.side,
-                      wallType:
-                        isWallModeActive === "interna" ? "interna" : "externa", // veja passo 4
-                    };
-
-                    setLayoutState((s) => ({
-                      ...s,
-                      walls: [...s.walls, newWall],
-                      history: [
-                        ...s.history,
-                        { type: "ADD_WALL", wall: newWall },
-                      ],
-                      future: [],
-                    }));
-                    setHasUnsavedChanges(true);
-                    setWallDrawing(null);
-                  }
-
-                  if (floorDrawing && isFloorModeActive) {
-                    if (
-                      isFloorTooSmall(
-                        floorDrawing.startX,
-                        floorDrawing.startY,
-                        floorDrawing.currentX,
-                        floorDrawing.currentY,
-                      )
-                    ) {
-                      setFloorDrawing(null);
-                      return;
-                    }
-
-                    const x = Math.min(
-                      floorDrawing.startX,
-                      floorDrawing.currentX,
-                    );
-                    const y = Math.min(
-                      floorDrawing.startY,
-                      floorDrawing.currentY,
-                    );
-                    const width = Math.abs(
-                      floorDrawing.currentX - floorDrawing.startX,
-                    );
-                    const height = Math.abs(
-                      floorDrawing.currentY - floorDrawing.startY,
-                    );
-
-                    const newFloor: Floor = {
-                      id: crypto.randomUUID(),
-                      x,
-                      y,
-                      width,
-                      height,
-                    };
-
-                    setLayoutState((s) => ({
-                      ...s,
-                      floors: [...s.floors, newFloor],
-                      history: [
-                        ...s.history,
-                        { type: "ADD_FLOOR", floor: newFloor },
-                      ],
-                      future: [],
-                    }));
-                    setHasUnsavedChanges(true);
-                    setFloorDrawing(null);
-                  }
-                }}
-                onMouseLeave={() => setIsPanning(false)}
-              >
-                {(previewItem || isWallModeActive || isFloorModeActive) && (
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-(--color-primary) text-white text-xs px-3 py-1 rounded-md shadow-md pointer-events-none flex flex-col items-center text-center z-50">
-                    <p>
-                      {isWallModeActive
-                        ? "Clique e arraste para criar uma parede"
-                        : isFloorModeActive
-                          ? "Clique e arraste para criar um piso"
-                          : "Clique para posicionar"}
-                    </p>
-                    <p>
-                      (<span className="font-bold">Esc</span> para cancelar)
-                    </p>
-                  </div>
-                )}
-
-                <div
-                  className={`
-absolute inset-0 bg-black/5 pointer-events-none
-transition-opacity duration-200
-${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacity-0"}
-`}
-                />
-
-                <div
-                  ref={worldRef}
-                  style={{
-                    width: WORLD_WIDTH,
-                    height: WORLD_HEIGHT,
-
-                    transformOrigin: "0 0",
-                    position: "absolute",
-                    border: "2px dashed #6366f1",
-                    boxShadow: "0 0 0 4px rgba(99,102,241,0.1)",
-                  }}
-                >
-                  <svg
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: WORLD_WIDTH,
-                      height: WORLD_HEIGHT,
-                      pointerEvents: "none",
-                      zIndex: 0,
-                    }}
-                  >
-                    <defs>
-                      <pattern
-                        id="grid"
-                        width="25"
-                        height="25"
-                        patternUnits="userSpaceOnUse"
-                      >
-                        <path
-                          d="M 25 0 L 0 0 0 25"
-                          fill="none"
-                          stroke="#c4c7d0" //#c4c7d0
-                          strokeWidth="1"
-                        />
-                      </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#grid)" />
-                  </svg>
-
-                  <div
-                    style={{
-                      pointerEvents: interactionsBlocked ? "none" : "auto",
-                    }}
-                  >
-                    {/* ── PISOS POSICIONADOS ───────────────────────────────── */}
-                    {floors.map((floor) => (
-                      <FloorRenderer
-                        key={floor.id}
-                        floor={floor}
-                        isSelected={selectedFloorId === floor.id}
-                        isHovered={hoveredFloorId === floor.id}
-                        isDragging={draggingFloorId === floor.id}
-                        zoom={zoom}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedFloorId(floor.id);
-                          setSelectedItemId(null);
-                          setSelectedWallId(null);
-                        }}
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          if (floorResizing) return;
-                          const container = document.getElementById("layout");
-                          if (!container) return;
-                          const rect = container.getBoundingClientRect();
-                          const mouseX =
-                            (e.clientX - rect.left - panRef.current.x) /
-                            zoomRef.current;
-                          const mouseY =
-                            (e.clientY - rect.top - panRef.current.y) /
-                            zoomRef.current;
-
-                          floorDragStartPos.current = {
-                            x: floor.x,
-                            y: floor.y,
-                          };
-                          floorDragClientStartRef.current = {
-                            x: e.clientX,
-                            y: e.clientY,
-                          };
-                          setSelectedFloorId(floor.id);
-                          setSelectedItemId(null);
-                          setSelectedWallId(null);
-
-                          floorDragTimerRef.current = setTimeout(() => {
-                            setDraggingFloorId(floor.id);
-                            setIsFloorDragReady(true);
-                            setFloorDragOffset({
-                              x: mouseX - floor.x,
-                              y: mouseY - floor.y,
-                            });
-                            floorDragTimerRef.current = null;
-                          }, 100);
-                        }}
-                        onMouseEnter={() => setHoveredFloorId(floor.id)}
-                        onMouseLeave={() => setHoveredFloorId(null)}
-                        onResizeStart={(e, handle) => {
-                          e.stopPropagation();
-                          setFloorResizing({
-                            floorId: floor.id,
-                            handle,
-                            originalFloor: { ...floor },
-                          });
-                        }}
-                        onDelete={(e) => {
-                          e.stopPropagation();
-                          setLayoutState((s) => {
-                            const floorToRemove = s.floors.find(
-                              (f) => f.id === floor.id,
-                            );
-                            if (!floorToRemove) return s;
-                            return {
-                              ...s,
-                              floors: s.floors.filter((f) => f.id !== floor.id),
-                              history: [
-                                ...s.history,
-                                {
-                                  type: "REMOVE_FLOOR",
-                                  id: floor.id,
-                                  floor: floorToRemove,
-                                },
-                              ],
-                              future: [],
-                            };
-                          });
-                          setHasUnsavedChanges(true);
-                          setSelectedFloorId(null);
-                        }}
-                      />
-                    ))}
-                  </div>
-                  {/* ── PREVIEW DO PISO SENDO DESENHADO ─────────────────── */}
-                  {floorDrawing &&
-                    (() => {
                       const x = Math.min(
                         floorDrawing.startX,
                         floorDrawing.currentX,
@@ -2682,368 +2484,582 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                         floorDrawing.currentY - floorDrawing.startY,
                       );
 
-                      return (
-                        <div
-                          className="absolute pointer-events-none"
-                          style={{
-                            left: x,
-                            top: y,
-                            width,
-                            height,
-                            backgroundColor: "#FFFFFF",
-                            opacity: 0.7,
-                            border: "1px dashed #6366f1",
-                            zIndex: -1,
-                          }}
-                        />
-                      );
-                    })()}
+                      const newFloor: Floor = {
+                        id: crypto.randomUUID(),
+                        x,
+                        y,
+                        width,
+                        height,
+                      };
 
-                  {guides.vertical !== null && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: guides.vertical,
-                        top: 0,
-                        height: "100%",
-                        borderLeft: "1px dashed #6366f1",
-                        pointerEvents: "none",
-                      }}
-                    />
+                      setLayoutState((s) => ({
+                        ...s,
+                        floors: [...s.floors, newFloor],
+                        history: [
+                          ...s.history,
+                          { type: "ADD_FLOOR", floor: newFloor },
+                        ],
+                        future: [],
+                      }));
+                      setHasUnsavedChanges(true);
+                      setFloorDrawing(null);
+                    }
+                  }}
+                  onMouseLeave={() => setIsPanning(false)}
+                >
+                  {(previewItem || isWallModeActive || isFloorModeActive) && (
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-(--color-primary) text-white text-xs px-3 py-1 rounded-md shadow-md pointer-events-none flex flex-col items-center text-center z-50">
+                      <p>
+                        {isWallModeActive
+                          ? "Clique e arraste para criar uma parede"
+                          : isFloorModeActive
+                            ? "Clique e arraste para criar um piso"
+                            : "Clique para posicionar"}
+                      </p>
+                      <p>
+                        (<span className="font-bold">Esc</span> para cancelar)
+                      </p>
+                    </div>
                   )}
 
-                  {guides.vertical !== null &&
-                    guides.distanceX !== undefined &&
-                    Math.abs(guides.distanceX) < 1 && (
-                      <div
-                        className="absolute text-xs bg-black text-white px-1 rounded pointer-events-none"
-                        style={{
-                          left: guides.vertical + 5,
-                          top: 10,
-                        }}
-                      >
-                        {guides.distanceX}px
-                      </div>
-                    )}
+                  <div
+                    className={`
+absolute inset-0 bg-black/5 pointer-events-none
+transition-opacity duration-200
+${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacity-0"}
+`}
+                  />
 
-                  {guides.horizontal !== null && (
-                    <div
+                  <div
+                    ref={worldRef}
+                    style={{
+                      width: WORLD_WIDTH,
+                      height: WORLD_HEIGHT,
+
+                      transformOrigin: "0 0",
+                      position: "absolute",
+                      border: "2px dashed #6366f1",
+                      boxShadow: "0 0 0 4px rgba(99,102,241,0.1)",
+                    }}
+                  >
+                    <svg
                       style={{
                         position: "absolute",
-                        top: guides.horizontal,
-                        left: 0,
-                        width: "100%",
-                        height: 1,
-                        background: "#6366f1",
+                        inset: 0,
+                        width: WORLD_WIDTH,
+                        height: WORLD_HEIGHT,
                         pointerEvents: "none",
-                      }}
-                    />
-                  )}
-
-                  {guides.horizontal !== null &&
-                    guides.distanceY !== undefined &&
-                    Math.abs(guides.distanceY) < 1 && (
-                      <div
-                        className="absolute text-xs bg-black text-white px-1 rounded pointer-events-none"
-                        style={{
-                          left: 10,
-                          top: guides.horizontal + 5,
-                        }}
-                      >
-                        {guides.distanceY}px
-                      </div>
-                    )}
-
-                  <div
-                    style={{
-                      pointerEvents: interactionsBlocked ? "none" : "auto",
-                    }}
-                  >
-                    {/* ── PAREDES POSICIONADAS ─────────────────────────────── */}
-                    {walls.map((wall) => (
-                      <WallRenderer
-                        key={wall.id}
-                        wall={wall}
-                        flatStart={isDoorNearWallEnd(wall, "start")}
-  flatEnd={isDoorNearWallEnd(wall, "end")}
-                        isSelected={selectedWallId === wall.id}
-                        isHovered={hoveredWallId === wall.id}
-                        isDragging={draggingWallId === wall.id}
-                        zoom={zoom}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedWallId(wall.id);
-                          setSelectedItemId(null);
-                        }}
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          if (wallResizing) return;
-                          const container = document.getElementById("layout");
-                          if (!container) return;
-                          const rect = container.getBoundingClientRect();
-                          const mouseX =
-                            (e.clientX - rect.left - panRef.current.x) /
-                            zoomRef.current;
-                          const mouseY =
-                            (e.clientY - rect.top - panRef.current.y) /
-                            zoomRef.current;
-
-                          wallDragStartPos.current = { x: wall.x, y: wall.y };
-                          wallDragClientStartRef.current = {
-                            x: e.clientX,
-                            y: e.clientY,
-                          };
-                          setSelectedWallId(wall.id);
-                          setSelectedItemId(null);
-
-                          wallDragTimerRef.current = setTimeout(() => {
-                            setDraggingWallId(wall.id);
-                            setIsWallDragReady(true);
-                            setWallDragOffset({
-                              x: mouseX - wall.x,
-                              y: mouseY - wall.y,
-                            });
-                            wallDragTimerRef.current = null;
-                          }, 100);
-                        }}
-                        onMouseEnter={() => setHoveredWallId(wall.id)}
-                        onMouseLeave={() => setHoveredWallId(null)}
-                        onResizeStart={(e, side) => {
-                          e.stopPropagation();
-                          setWallResizing({
-                            wallId: wall.id,
-                            side,
-                            originalWall: { ...wall },
-                          });
-                        }}
-                        onDelete={(e) => {
-                          e.stopPropagation();
-                          setLayoutState((s) => {
-                            const wallToRemove = s.walls.find(
-                              (w) => w.id === wall.id,
-                            );
-                            if (!wallToRemove) return s;
-                            return {
-                              ...s,
-                              walls: s.walls.filter((w) => w.id !== wall.id),
-                              history: [
-                                ...s.history,
-                                {
-                                  type: "REMOVE_WALL",
-                                  id: wall.id,
-                                  wall: wallToRemove,
-                                },
-                              ],
-                              future: [],
-                            };
-                          });
-                          setHasUnsavedChanges(true);
-                          setSelectedWallId(null);
-                        }}
-                      />
-                    ))}
-                  </div>
-                  {/* ── PREVIEW DA PAREDE SENDO DESENHADA ────────────────── */}
-                  {wallDrawing &&
-                    (() => {
-                      const computed = wallFromDrag(
-                        wallDrawing.startX,
-                        wallDrawing.startY,
-                        wallDrawing.currentX,
-                        wallDrawing.currentY,
-                        wallDrawing.wallType,
-                      );
-                      const isV = computed.isVertical;
-                      const previewLength = computed.width;
-
-                      const thickness =
-                        wallDrawing.wallType === "externa"
-                          ? WALL_THICKNESS
-                          : WALL_THICKNESS_INTERNA;
-
-                      const displayW = isV ? thickness : previewLength;
-                      const displayH = isV ? previewLength : thickness;
-                      return (
-                        <div
-                          className="absolute pointer-events-none"
-                          style={{
-                            left: computed.x,
-                            top: computed.y,
-                            width: displayW,
-                            height: displayH,
-                            backgroundColor:
-                              wallDrawing.wallType === "externa"
-                                ? "#59595B"
-                                : "#C3C5C9",
-                            opacity: 0.5,
-                            borderRadius:
-                              wallDrawing.wallType === "externa" ? 10 : 0,
-                            border: "1px dashed #6366f1",
-                            zIndex: 999,
-                          }}
-                        />
-                      );
-                    })()}
-                  <div
-                    style={{
-                      pointerEvents: interactionsBlocked ? "none" : "auto",
-                    }}
-                  >
-                    {items.map((item) => (
-                      <CanvasItem
-                        key={item.id}
-                        item={item}
-                        isSelected={selectedItemId === item.id}
-                        isHovered={hoveredItemId === item.id}
-                        isDragging={draggingItemId === item.id}
-                        isDragReady={isDragReady}
-                        panRef={panRef}
-                        zoomRef={zoomRef}
-                        dragTimerRef={dragTimerRef}
-                        dragStartPos={dragStartPos}
-                        dragStartItemPos={dragStartItemPos}
-                        rotationStartRef={rotationStartRef}
-                        onSelect={() => {
-                          setSelectedItemId(item.id);
-                          setSettingsTableId(null);
-                        }}
-                        onHoverEnter={() => setHoveredItemId(item.id)}
-                        onHoverLeave={() => setHoveredItemId(null)}
-                        onDelete={() => {
-                          setLayoutState((s) => {
-                            const itemToRemove = s.items.find(
-                              (i) => i.id === item.id,
-                            );
-                            if (!itemToRemove) return s;
-
-                            return {
-                              ...s,
-                              items: s.items.filter((i) => i.id !== item.id),
-                              history: [
-                                ...s.history,
-                                {
-                                  type: "REMOVE",
-                                  id: item.id,
-                                  item: itemToRemove,
-                                },
-                              ],
-                              future: [],
-                            };
-                          });
-                          setHasUnsavedChanges(true);
-                          setSelectedItemId(null);
-                        }}
-                        onFlipDoor={(id) => {
-                          setLayoutState((s) => {
-                            const current = s.items.find((i) => i.id === id);
-
-                            if (!current) return s;
-                            if (!isDoor(current)) return s;
-
-                            const from = current.swingDirection ?? "left";
-                            const to = from === "left" ? "right" : "left";
-
-                            return {
-                              ...s,
-
-                              items: s.items.map((i) =>
-                                i.id === id
-                                  ? {
-                                      ...i,
-                                      swingDirection: to,
-                                    }
-                                  : i,
-                              ),
-
-                              history: [
-                                ...s.history,
-                                {
-                                  type: "FLIP_DOOR",
-                                  id,
-                                  from,
-                                  to,
-                                },
-                              ],
-
-                              future: [],
-                            };
-                          });
-                          setHasUnsavedChanges(true);
-                        }}
-                        onDragStart={(itemId, offset) => {
-                          setDraggingItemId(itemId);
-                          setIsDragReady(true);
-                          setDragOffset(offset);
-                        }}
-                        onRotateStart={(itemId, rotationOffset) => {
-                          startRotateWithOffset(itemId, rotationOffset);
-                        }}
-                        onOpenSettings={(id) =>
-                          setSettingsTableId((prev) =>
-                            prev === id ? null : id,
-                          )
-                        }
-                        renderElement={renderElement}
-                      />
-                    ))}
-                  </div>
-                  {settingsTableId &&
-                    (() => {
-                      const found = items.find((i) => i.id === settingsTableId);
-
-                      if (!found || !isRestaurantTable(found)) return null;
-
-                      return (
-                        <TableSettingsPanel
-                          table={found}
-                          onClose={() => setSettingsTableId(null)}
-                          onUpdate={(id, changes) => {
-                            setLayoutState((s) => ({
-                              ...s,
-                              items: s.items.map((i) =>
-                                i.id === id ? { ...i, ...changes } : i,
-                              ),
-                            }));
-                            setHasUnsavedChanges(true);
-                          }}
-                        />
-                      );
-                    })()}
-
-                  {/* Preview */}
-                  {previewItem && (
-                    <div
-                      className="absolute opacity-60 transition-transform duration-150 ease-out"
-                      onMouseDown={(e) => e.stopPropagation()}
-                      style={{
-                        top: previewItem.y,
-                        left: previewItem.x,
-                        transform: `rotate(${(previewItem.rotation || 0) + rotation}deg)`,
-                        transformOrigin: "center center",
+                        zIndex: 0,
                       }}
                     >
-                      <div className="relative pointer-events-none">
-                        {renderElement(previewItem, true)}
+                      <defs>
+                        <pattern
+                          id="grid"
+                          width="25"
+                          height="25"
+                          patternUnits="userSpaceOnUse"
+                        >
+                          <path
+                            d="M 25 0 L 0 0 0 25"
+                            fill="none"
+                            stroke="#c4c7d0" //#c4c7d0
+                            strokeWidth="1"
+                          />
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#grid)" />
+                    </svg>
 
-                        <div className="absolute -right-13 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 h-7 bg-white border border-gray-300 rounded-full cursor-grab shadow-md hover:scale-110 transition select-none text-xs">
-                          ⟳ <span className="text-[10px] text-gray-500">R</span>
+                    <div
+                      style={{
+                        pointerEvents: interactionsBlocked ? "none" : "auto",
+                      }}
+                    >
+                      {/* ── PISOS POSICIONADOS ───────────────────────────────── */}
+                      {floors.map((floor) => (
+                        <FloorRenderer
+                          key={floor.id}
+                          floor={floor}
+                          isSelected={selectedFloorId === floor.id}
+                          isHovered={hoveredFloorId === floor.id}
+                          isDragging={draggingFloorId === floor.id}
+                          zoom={zoom}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFloorId(floor.id);
+                            setSelectedItemId(null);
+                            setSelectedWallId(null);
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            if (floorResizing) return;
+                            const container = document.getElementById("layout");
+                            if (!container) return;
+                            const rect = container.getBoundingClientRect();
+                            const mouseX =
+                              (e.clientX - rect.left - panRef.current.x) /
+                              zoomRef.current;
+                            const mouseY =
+                              (e.clientY - rect.top - panRef.current.y) /
+                              zoomRef.current;
+
+                            floorDragStartPos.current = {
+                              x: floor.x,
+                              y: floor.y,
+                            };
+                            floorDragClientStartRef.current = {
+                              x: e.clientX,
+                              y: e.clientY,
+                            };
+                            setSelectedFloorId(floor.id);
+                            setSelectedItemId(null);
+                            setSelectedWallId(null);
+
+                            floorDragTimerRef.current = setTimeout(() => {
+                              setDraggingFloorId(floor.id);
+                              setIsFloorDragReady(true);
+                              setFloorDragOffset({
+                                x: mouseX - floor.x,
+                                y: mouseY - floor.y,
+                              });
+                              floorDragTimerRef.current = null;
+                            }, 100);
+                          }}
+                          onMouseEnter={() => setHoveredFloorId(floor.id)}
+                          onMouseLeave={() => setHoveredFloorId(null)}
+                          onResizeStart={(e, handle) => {
+                            e.stopPropagation();
+                            setFloorResizing({
+                              floorId: floor.id,
+                              handle,
+                              originalFloor: { ...floor },
+                            });
+                          }}
+                          onDelete={(e) => {
+                            e.stopPropagation();
+                            setLayoutState((s) => {
+                              const floorToRemove = s.floors.find(
+                                (f) => f.id === floor.id,
+                              );
+                              if (!floorToRemove) return s;
+                              return {
+                                ...s,
+                                floors: s.floors.filter(
+                                  (f) => f.id !== floor.id,
+                                ),
+                                history: [
+                                  ...s.history,
+                                  {
+                                    type: "REMOVE_FLOOR",
+                                    id: floor.id,
+                                    floor: floorToRemove,
+                                  },
+                                ],
+                                future: [],
+                              };
+                            });
+                            setHasUnsavedChanges(true);
+                            setSelectedFloorId(null);
+                          }}
+                        />
+                      ))}
+                    </div>
+                    {/* ── PREVIEW DO PISO SENDO DESENHADO ─────────────────── */}
+                    {floorDrawing &&
+                      (() => {
+                        const x = Math.min(
+                          floorDrawing.startX,
+                          floorDrawing.currentX,
+                        );
+                        const y = Math.min(
+                          floorDrawing.startY,
+                          floorDrawing.currentY,
+                        );
+                        const width = Math.abs(
+                          floorDrawing.currentX - floorDrawing.startX,
+                        );
+                        const height = Math.abs(
+                          floorDrawing.currentY - floorDrawing.startY,
+                        );
+
+                        return (
+                          <div
+                            className="absolute pointer-events-none"
+                            style={{
+                              left: x,
+                              top: y,
+                              width,
+                              height,
+                              backgroundColor: "#FFFFFF",
+                              opacity: 0.7,
+                              border: "1px dashed #6366f1",
+                              zIndex: -1,
+                            }}
+                          />
+                        );
+                      })()}
+
+                    {guides.vertical !== null && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: guides.vertical,
+                          top: 0,
+                          height: "100%",
+                          borderLeft: "1px dashed #6366f1",
+                          pointerEvents: "none",
+                        }}
+                      />
+                    )}
+
+                    {guides.vertical !== null &&
+                      guides.distanceX !== undefined &&
+                      Math.abs(guides.distanceX) < 1 && (
+                        <div
+                          className="absolute text-xs bg-black text-white px-1 rounded pointer-events-none"
+                          style={{
+                            left: guides.vertical + 5,
+                            top: 10,
+                          }}
+                        >
+                          {guides.distanceX}px
+                        </div>
+                      )}
+
+                    {guides.horizontal !== null && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: guides.horizontal,
+                          left: 0,
+                          width: "100%",
+                          height: 1,
+                          background: "#6366f1",
+                          pointerEvents: "none",
+                        }}
+                      />
+                    )}
+
+                    {guides.horizontal !== null &&
+                      guides.distanceY !== undefined &&
+                      Math.abs(guides.distanceY) < 1 && (
+                        <div
+                          className="absolute text-xs bg-black text-white px-1 rounded pointer-events-none"
+                          style={{
+                            left: 10,
+                            top: guides.horizontal + 5,
+                          }}
+                        >
+                          {guides.distanceY}px
+                        </div>
+                      )}
+
+                    <div
+                      style={{
+                        pointerEvents: interactionsBlocked ? "none" : "auto",
+                      }}
+                    >
+                      {/* ── PAREDES POSICIONADAS ─────────────────────────────── */}
+                      {walls.map((wall) => (
+                        <WallRenderer
+                          key={wall.id}
+                          wall={wall}
+                          flatStart={isDoorNearWallEnd(wall, "start")}
+                          flatEnd={isDoorNearWallEnd(wall, "end")}
+                          isSelected={selectedWallId === wall.id}
+                          isHovered={hoveredWallId === wall.id}
+                          isDragging={draggingWallId === wall.id}
+                          zoom={zoom}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedWallId(wall.id);
+                            setSelectedItemId(null);
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            if (wallResizing) return;
+                            const container = document.getElementById("layout");
+                            if (!container) return;
+                            const rect = container.getBoundingClientRect();
+                            const mouseX =
+                              (e.clientX - rect.left - panRef.current.x) /
+                              zoomRef.current;
+                            const mouseY =
+                              (e.clientY - rect.top - panRef.current.y) /
+                              zoomRef.current;
+
+                            wallDragStartPos.current = { x: wall.x, y: wall.y };
+                            wallDragClientStartRef.current = {
+                              x: e.clientX,
+                              y: e.clientY,
+                            };
+                            setSelectedWallId(wall.id);
+                            setSelectedItemId(null);
+
+                            wallDragTimerRef.current = setTimeout(() => {
+                              setDraggingWallId(wall.id);
+                              setIsWallDragReady(true);
+                              setWallDragOffset({
+                                x: mouseX - wall.x,
+                                y: mouseY - wall.y,
+                              });
+                              wallDragTimerRef.current = null;
+                            }, 100);
+                          }}
+                          onMouseEnter={() => setHoveredWallId(wall.id)}
+                          onMouseLeave={() => setHoveredWallId(null)}
+                          onResizeStart={(e, side) => {
+                            e.stopPropagation();
+                            setWallResizing({
+                              wallId: wall.id,
+                              side,
+                              originalWall: { ...wall },
+                            });
+                          }}
+                          onDelete={(e) => {
+                            e.stopPropagation();
+                            setLayoutState((s) => {
+                              const wallToRemove = s.walls.find(
+                                (w) => w.id === wall.id,
+                              );
+                              if (!wallToRemove) return s;
+                              return {
+                                ...s,
+                                walls: s.walls.filter((w) => w.id !== wall.id),
+                                history: [
+                                  ...s.history,
+                                  {
+                                    type: "REMOVE_WALL",
+                                    id: wall.id,
+                                    wall: wallToRemove,
+                                  },
+                                ],
+                                future: [],
+                              };
+                            });
+                            setHasUnsavedChanges(true);
+                            setSelectedWallId(null);
+                          }}
+                        />
+                      ))}
+                    </div>
+                    {/* ── PREVIEW DA PAREDE SENDO DESENHADA ────────────────── */}
+                    {wallDrawing &&
+                      (() => {
+                        const computed = wallFromDrag(
+                          wallDrawing.startX,
+                          wallDrawing.startY,
+                          wallDrawing.currentX,
+                          wallDrawing.currentY,
+                          wallDrawing.wallType,
+                        );
+                        const isV = computed.isVertical;
+                        const previewLength = computed.width;
+
+                        const thickness =
+                          wallDrawing.wallType === "externa"
+                            ? WALL_THICKNESS
+                            : WALL_THICKNESS_INTERNA;
+
+                        const displayW = isV ? thickness : previewLength;
+                        const displayH = isV ? previewLength : thickness;
+                        return (
+                          <div
+                            className="absolute pointer-events-none"
+                            style={{
+                              left: computed.x,
+                              top: computed.y,
+                              width: displayW,
+                              height: displayH,
+                              backgroundColor:
+                                wallDrawing.wallType === "externa"
+                                  ? "#59595B"
+                                  : "#C3C5C9",
+                              opacity: 0.5,
+                              borderRadius:
+                                wallDrawing.wallType === "externa" ? 10 : 0,
+                              border: "1px dashed #6366f1",
+                              zIndex: 999,
+                            }}
+                          />
+                        );
+                      })()}
+                    <div
+                      style={{
+                        pointerEvents: interactionsBlocked ? "none" : "auto",
+                      }}
+                    >
+                      {items.map((item) => (
+                        <CanvasItem
+                          key={item.id}
+                          item={item}
+                          isSelected={selectedItemId === item.id}
+                          isHovered={hoveredItemId === item.id}
+                          isDragging={draggingItemId === item.id}
+                          isDragReady={isDragReady}
+                          panRef={panRef}
+                          zoomRef={zoomRef}
+                          dragTimerRef={dragTimerRef}
+                          dragStartPos={dragStartPos}
+                          dragStartItemPos={dragStartItemPos}
+                          rotationStartRef={rotationStartRef}
+                          onSelect={() => {
+                            setSelectedItemId(item.id);
+                            setSettingsTableId(null);
+                          }}
+                          onHoverEnter={() => setHoveredItemId(item.id)}
+                          onHoverLeave={() => setHoveredItemId(null)}
+                          onDelete={() => {
+                            setLayoutState((s) => {
+                              const itemToRemove = s.items.find(
+                                (i) => i.id === item.id,
+                              );
+                              if (!itemToRemove) return s;
+
+                              return {
+                                ...s,
+                                items: s.items.filter((i) => i.id !== item.id),
+                                history: [
+                                  ...s.history,
+                                  {
+                                    type: "REMOVE",
+                                    id: item.id,
+                                    item: itemToRemove,
+                                  },
+                                ],
+                                future: [],
+                              };
+                            });
+                            setHasUnsavedChanges(true);
+                            setSelectedItemId(null);
+                          }}
+                          onFlipDoor={(id) => {
+                            setLayoutState((s) => {
+                              const current = s.items.find((i) => i.id === id);
+
+                              if (!current) return s;
+                              if (!isDoor(current)) return s;
+
+                              const from = current.swingDirection ?? "left";
+                              const to = from === "left" ? "right" : "left";
+
+                              return {
+                                ...s,
+
+                                items: s.items.map((i) =>
+                                  i.id === id
+                                    ? {
+                                        ...i,
+                                        swingDirection: to,
+                                      }
+                                    : i,
+                                ),
+
+                                history: [
+                                  ...s.history,
+                                  {
+                                    type: "FLIP_DOOR",
+                                    id,
+                                    from,
+                                    to,
+                                  },
+                                ],
+
+                                future: [],
+                              };
+                            });
+                            setHasUnsavedChanges(true);
+                          }}
+                          onDragStart={(itemId, offset) => {
+                            setDraggingItemId(itemId);
+                            setIsDragReady(true);
+                            setDragOffset(offset);
+                          }}
+                          onRotateStart={(itemId, rotationOffset) => {
+                            startRotateWithOffset(itemId, rotationOffset);
+                          }}
+                          onOpenSettings={(id) =>
+                            setSettingsTableId((prev) =>
+                              prev === id ? null : id,
+                            )
+                          }
+                          renderElement={renderElement}
+                        />
+                      ))}
+                    </div>
+                    {settingsTableId &&
+                      (() => {
+                        const found = items.find(
+                          (i) => i.id === settingsTableId,
+                        );
+
+                        if (!found || !isRestaurantTable(found)) return null;
+
+                        return (
+                          <TableSettingsPanel
+                            table={found}
+                            onClose={() => setSettingsTableId(null)}
+                            onUpdate={(id, changes) => {
+                              setLayoutState((s) => ({
+                                ...s,
+                                items: s.items.map((i) =>
+                                  i.id === id ? { ...i, ...changes } : i,
+                                ),
+                              }));
+                              setHasUnsavedChanges(true);
+                            }}
+                          />
+                        );
+                      })()}
+
+                    {/* Preview */}
+                    {previewItem && (
+                      <div
+                        className="absolute opacity-60 transition-transform duration-150 ease-out"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        style={{
+                          top: previewItem.y,
+                          left: previewItem.x,
+                          transform: `rotate(${(previewItem.rotation || 0) + rotation}deg)`,
+                          transformOrigin: "center center",
+                        }}
+                      >
+                        <div className="relative pointer-events-none">
+                          {renderElement(previewItem, true)}
+
+                          <div className="absolute -right-13 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 h-7 bg-white border border-gray-300 rounded-full cursor-grab shadow-md hover:scale-110 transition select-none text-xs">
+                            ⟳{" "}
+                            <span className="text-[10px] text-gray-500">R</span>
+                          </div>
                         </div>
                       </div>
+                    )}
+                  </div>
+                  {loadingOverlay?.visible && (
+                    <div className="absolute inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-white/40 backdrop-blur-sm">
+                      <LoaderCircle className="w-10 h-10 text-(--color-primary) animate-spin" />
+                      <p className="text-sm font-medium text-[#1b325f] bg-white/80 px-4 py-1.5 rounded-full shadow-sm">
+                        {loadingOverlay.message}
+                      </p>
                     </div>
                   )}
                 </div>
-                {loadingOverlay?.visible && (
-                  <div className="absolute inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-white/40 backdrop-blur-sm">
-                    <div className="w-14 h-14 rounded-full border-8 border-white border-t-[#1b325f] animate-spin shadow-md" />
-                    <p className="text-sm font-medium text-[#1b325f] bg-white/80 px-4 py-1.5 rounded-full shadow-sm">
-                      {loadingOverlay.message}
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
+            {/*  */}
           </div>
-          {/*  */}
+
+          {/* Aviso de rotação para celular/tablet em retrato */}
+          <div className="hidden max-lg:portrait:flex absolute inset-0 z-50 flex-col items-center justify-center gap-4 bg-white/70 backdrop-blur-md rounded-xl text-center px-6 pointer-events-none">
+            <RotateCcw className="w-10 h-10 text-(--color-primary)" />
+            <p className="font-semibold text-[#19274b] text-lg">
+              Gire o celular na horizontal
+            </p>
+            <p className="text-sm text-[#19274b]/70 max-w-xs">
+              Para editar o layout do restaurante, use seu dispositivo no modo
+              paisagem.
+            </p>
+          </div>
         </div>
       </div>
     </div>

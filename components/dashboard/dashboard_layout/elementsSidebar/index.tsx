@@ -130,7 +130,7 @@ export default function ElementsSidebar({ selectedType, onSelect }: Props) {
   }
 
   return (
-    <div className="w-[300px] border-r border-[#e5e7eb] p-3 flex flex-col gap-3">
+    <div className="w-full lg:w-[300px] border-b md:border-b lg:border-r border-[#e5e7eb] p-3 flex flex-col gap-3">
       {elements.map((section) => {
         const isOpen = openSections[section.id as keyof typeof openSections];
         return (

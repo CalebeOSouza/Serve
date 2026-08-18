@@ -30,7 +30,9 @@ interface Props {
     }>
   >;
   setEditingEmployee: (emp: Employee) => void;
-  setDeleteModal: (data: { open: boolean; employee: Employee | null }) => void;
+  setConfirmDeleteId: (id: number | null) => void;
+  confirmDeleteId: number | null;
+  deletarFuncionario: (employeeId: number) => void;
   setNome: (nome: string) => void;
   setCpf: (cpf: string) => void;
   setCargosSelecionados: (cargos: CargoTipo[]) => void;
@@ -45,7 +47,9 @@ function getFirstName(name: string) {
 export default function EmployeeCard({
   emp,
   cargos,
-  setDeleteModal,
+  setConfirmDeleteId,
+  confirmDeleteId,
+  deletarFuncionario,
   setEditingEmployee,
   setNome,
   setCpf,
@@ -144,7 +148,7 @@ export default function EmployeeCard({
         </div>
       </div>
 
-      <div className="flex gap-3 mt-auto">
+      <div className="relative flex gap-3 mt-auto">
         <button
           onClick={() => {
             setEditingEmployee(emp);
@@ -153,21 +157,53 @@ export default function EmployeeCard({
             setCargosSelecionados(emp.roles);
             abrirModal();
           }}
-          className="flex-1 text-white bg-(--color-primary) hover:bg-(--color-secondary) text-sm font-semibold py-2 rounded-md  transition cursor-pointer"
+          className="flex-1 text-white bg-(--color-primary) hover:bg-(--color-secondary) text-sm font-semibold py-2 rounded-md transition cursor-pointer"
         >
           Editar
         </button>
+
         <button
           onClick={() => {
-            setDeleteModal({
-              open: true,
-              employee: emp,
-            });
+            setConfirmDeleteId(confirmDeleteId === emp.id ? null : emp.id);
           }}
-          className="flex-1 border border-red-300 hover:bg-red-100 text-red-400 text-sm font-semibold py-2 rounded-md  transition cursor-pointer"
+          className="flex-1 border border-red-300 hover:bg-red-100 text-red-400 text-sm font-semibold py-2 rounded-md transition cursor-pointer"
         >
           Excluir
         </button>
+
+        {confirmDeleteId === emp.id && (
+          <div className="absolute bottom-12 right-0 z-50 w-[280px] rounded-md bg-red-600 shadow-xl overflow-hidden">
+            <div className="p-4 text-white">
+              <p className="font-semibold text-sm">
+                Deseja excluir este funcionário?
+              </p>
+
+              <p className="text-xs mt-1 opacity-90">
+                O funcionário "{emp.name}" será excluído.
+              </p>
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => {
+                    setConfirmDeleteId(null);
+                  }}
+                  className="flex-1 bg-white text-red-600 rounded py-2 text-sm cursor-pointer hover:bg-gray-100 transition"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  onClick={() => {
+                    deletarFuncionario(emp.id);
+                  }}
+                  className="flex-1 bg-red-800 rounded py-2 text-sm cursor-pointer hover:bg-red-900 transition"
+                >
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
