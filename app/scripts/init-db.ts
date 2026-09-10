@@ -31,12 +31,8 @@ CREATE TABLE restaurants (
 
     user_id INT NOT NULL,
 
-    parent_id INT NULL,
-
     name VARCHAR(120) NOT NULL,
     description VARCHAR(255),
-
-    type ENUM('matriz','filial') NOT NULL,
 
     zipcode VARCHAR(10),
     street VARCHAR(150),
@@ -53,8 +49,7 @@ CREATE TABLE restaurants (
 
     onboarding_step INT DEFAULT 2,
 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES restaurants(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
     `);
@@ -227,8 +222,7 @@ CREATE TABLE menu_items (
 );
 
     `);
-
-
+ 
     //Tabela das paredes do layout
     await pool.query(`
 CREATE TABLE layout_walls (
@@ -359,6 +353,32 @@ CREATE TABLE table_accounts (
 );
     `);
 
+  await pool.query(`
+CREATE TABLE reservations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    restaurant_id INT NOT NULL,
+    table_id INT NOT NULL,
+
+    customer_name VARCHAR(120) NOT NULL,
+
+    people_count TINYINT UNSIGNED NOT NULL,
+
+    reservation_date DATE NULL,
+    reservation_time TIME NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (restaurant_id)
+        REFERENCES restaurants(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (table_id)
+        REFERENCES tables(id)
+        ON DELETE CASCADE
+);
+`);
+
     await pool.query(`
 CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -366,8 +386,6 @@ CREATE TABLE orders (
     account_id INT NOT NULL,
 
     waiter_employee_id INT NOT NULL,
-
-    customer_name VARCHAR(120) NOT NULL,
 
     status ENUM(
         'recebido',
@@ -377,7 +395,9 @@ CREATE TABLE orders (
     ) DEFAULT 'recebido',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     canceled_at TIMESTAMP NULL,
+
     FOREIGN KEY (account_id)
         REFERENCES table_accounts(id),
 
@@ -385,6 +405,7 @@ CREATE TABLE orders (
         REFERENCES employees(id)
 );
 `);
+
     await pool.query(`
 
 CREATE TABLE order_items (
@@ -393,6 +414,8 @@ CREATE TABLE order_items (
     order_id INT NOT NULL,
 
     menu_item_id INT NOT NULL,
+
+    customer_name VARCHAR(120) NOT NULL,
 
     quantity INT NOT NULL DEFAULT 1,
 
@@ -412,7 +435,7 @@ CREATE TABLE order_items (
   `);
     console.log("Banco e tabelas criados com sucesso!");
   } catch (error) {
-    console.error("Erro ao criar banco/tabelas:", error);
+    console.error("Erro ao criar banco:", error);
   } finally {
     await pool.end();
     process.exit();

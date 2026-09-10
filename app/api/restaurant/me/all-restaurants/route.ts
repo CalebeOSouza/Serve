@@ -7,7 +7,10 @@ export async function GET() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.email) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Não autorizado" },
+      { status: 401 },
+    );
   }
 
   const db = await mysql.createConnection({
@@ -34,40 +37,32 @@ export async function GET() {
 
     const [rows]: any = await db.execute(
       `
-      SELECT 
-  r.id,
-  r.name,
-  r.description,
-  r.city,
-  r.state,
-  r.status,
-  r.type,
-  r.parent_id,
-  r.updated_at,
-
-  COALESCE(pm.logo_url, m.logo_url)   AS logo_url,
-  COALESCE(pm.banner_url, m.banner_url) AS banner_url
-
-FROM restaurants r
-
-LEFT JOIN restaurant_media m 
-  ON m.restaurant_id = r.id
-
-LEFT JOIN restaurants parent 
-  ON parent.id = r.parent_id
-
-LEFT JOIN restaurant_media pm 
-  ON pm.restaurant_id = parent.id
-
-WHERE r.user_id = ? AND r.onboarding_step = 0
-ORDER BY r.created_at DESC 
+      SELECT
+        r.id,
+        r.name,
+        r.description,
+        r.city,
+        r.state,
+        r.status,
+        r.updated_at,
+        m.logo_url,
+        m.banner_url
+      FROM restaurants r
+      LEFT JOIN restaurant_media m
+        ON m.restaurant_id = r.id
+      WHERE r.user_id = ?
+        AND r.onboarding_step = 0
+      ORDER BY r.created_at DESC
       `,
       [userId],
     );
 
-    return NextResponse.json({ restaurants: rows });
+    return NextResponse.json({
+      restaurants: rows,
+    });
   } catch (err) {
     console.error(err);
+
     return NextResponse.json(
       { error: "Erro ao buscar restaurantes" },
       { status: 500 },

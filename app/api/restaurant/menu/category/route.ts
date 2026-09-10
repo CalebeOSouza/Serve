@@ -146,14 +146,50 @@ export async function PUT(req: Request) {
       );
     }
 
-    await db.query(
+    if (parentId !== null && parentId !== undefined) {
+      const [parentRows]: any = await db.query(
+        `
+    SELECT id
+    FROM menu_categories
+    WHERE id = ?
+      AND restaurant_id = ?
+      AND parent_id IS NULL
+    `,
+        [parentId, restaurantId],
+      );
+
+      if (parentRows.length === 0) {
+        return NextResponse.json(
+          {
+            error: "Categoria pai não pertence a este restaurante.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+    }
+
+    const [result]: any = await db.query(
       `
-      UPDATE menu_categories
-      SET name=?
-      WHERE id=?
-      `,
-      [name, id],
+  UPDATE menu_categories
+  SET name = ?
+  WHERE id = ?
+    AND restaurant_id = ?
+  `,
+      [name, id, restaurantId],
     );
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json(
+        {
+          error: "Categoria não encontrada neste restaurante.",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -172,47 +208,141 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const restaurantId = Number(
+      req.nextUrl.searchParams.get("restaurantId"),
+    );
+
     const id = Number(req.nextUrl.searchParams.get("id"));
 
+    if (!restaurantId || !id) {
+      return NextResponse.json(
+        {
+          error: "restaurantId e id são obrigatórios.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    // Busca a categoria/subcategoria
+    const [categoryRows]: any = await db.query(
+      `
+      SELECT id, parent_id
+      FROM menu_categories
+      WHERE id = ?
+        AND restaurant_id = ?
+      `,
+      [id, restaurantId],
+    );
+
+    if (categoryRows.length === 0) {
+      return NextResponse.json(
+        {
+          error: "Categoria não encontrada neste restaurante.",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
+
+    const category = categoryRows[0];
+
+    // =========================================================
+    // SUBCATEGORIA
+    // =========================================================
+
+    if (category.parent_id !== null) {
+      // Apaga todos os produtos da subcategoria
+      await db.query(
+        `
+        DELETE FROM menu_items
+        WHERE category_id = ?
+        `,
+        [id],
+      );
+
+      // Apaga a subcategoria
+      await db.query(
+        `
+        DELETE FROM menu_categories
+        WHERE id = ?
+          AND restaurant_id = ?
+        `,
+        [id, restaurantId],
+      );
+
+      return NextResponse.json({
+        success: true,
+        type: "subcategory",
+        id,
+      });
+    }
+
+    // =========================================================
+    // CATEGORIA PRINCIPAL
+    // =========================================================
+
+    // Busca todas as subcategorias
     const [subs]: any = await db.query(
       `
       SELECT id
       FROM menu_categories
-      WHERE parent_id=?
+      WHERE parent_id = ?
+        AND restaurant_id = ?
       `,
-      [id],
+      [id, restaurantId],
     );
 
+    // Apaga os produtos das subcategorias
     for (const sub of subs) {
       await db.query(
         `
         DELETE FROM menu_items
-        WHERE category_id=?
+        WHERE category_id = ?
         `,
         [sub.id],
       );
     }
 
+    // Apaga produtos que estejam diretamente na categoria
     await db.query(
       `
-      DELETE FROM menu_categories
-      WHERE parent_id=?
+      DELETE FROM menu_items
+      WHERE category_id = ?
       `,
       [id],
     );
 
+    // Apaga as subcategorias
     await db.query(
       `
       DELETE FROM menu_categories
-      WHERE id=?
+      WHERE parent_id = ?
+        AND restaurant_id = ?
       `,
-      [id],
+      [id, restaurantId],
+    );
+
+    // Apaga a categoria principal
+    await db.query(
+      `
+      DELETE FROM menu_categories
+      WHERE id = ?
+        AND restaurant_id = ?
+      `,
+      [id, restaurantId],
     );
 
     return NextResponse.json({
       success: true,
+      type: "category",
+      id,
     });
-  } catch {
+  } catch (error) {
+    console.error("Erro ao excluir categoria:", error);
+
     return NextResponse.json(
       {
         error: "Erro ao excluir categoria.",

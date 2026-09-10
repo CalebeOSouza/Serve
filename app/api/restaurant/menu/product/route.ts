@@ -105,13 +105,69 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!Number.isInteger(Number(restaurantId)) || Number(restaurantId) <= 0) {
+      return NextResponse.json(
+        {
+          error: "restaurantId inválido.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const restaurantIdNumber = Number(restaurantId);
+
     let targetCategoryId: number;
     let createdSubcategory: { id: number; name: string } | null = null;
 
     if (categoryIdRaw) {
       targetCategoryId = Number(categoryIdRaw);
+
+      const [categoryRows]: any = await db.query(
+        `
+    SELECT id
+    FROM menu_categories
+    WHERE id = ?
+      AND restaurant_id = ?
+    `,
+        [targetCategoryId, restaurantIdNumber],
+      );
+
+      if (categoryRows.length === 0) {
+        return NextResponse.json(
+          {
+            error: "Categoria não encontrada neste restaurante.",
+          },
+          {
+            status: 404,
+          },
+        );
+      }
     } else {
       const parentCategoryId = Number(parentCategoryIdRaw);
+
+      const [parentRows]: any = await db.query(
+        `
+  SELECT id
+  FROM menu_categories
+  WHERE id = ?
+    AND restaurant_id = ?
+    AND parent_id IS NULL
+  `,
+        [parentCategoryId, restaurantIdNumber],
+      );
+
+      if (parentRows.length === 0) {
+        return NextResponse.json(
+          {
+            error: "Categoria principal não encontrada neste restaurante.",
+          },
+          {
+            status: 404,
+          },
+        );
+      }
 
       const [existing]: any = await db.query(
         `
@@ -198,6 +254,18 @@ export async function PUT(req: NextRequest) {
     const formData = await req.formData();
 
     const id = Number(formData.get("id"));
+    const restaurantId = Number(formData.get("restaurantId"));
+
+    if (!restaurantId || !id) {
+      return NextResponse.json(
+        {
+          error: "restaurantId e id são obrigatórios.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
 
     if (!id) {
       return NextResponse.json(
@@ -209,19 +277,6 @@ export async function PUT(req: NextRequest) {
         },
       );
     }
-
-    /*
-     * ============================================================
-     * ATUALIZAÇÃO DA DISPONIBILIDADE
-     * ============================================================
-     *
-     * Quando o ProductCard envia:
-     *
-     * id
-     * available
-     *
-     * fazemos somente a atualização do available.
-     */
 
     const availableRaw = formData.get("available");
 
@@ -241,11 +296,14 @@ export async function PUT(req: NextRequest) {
 
       const [rows]: any = await db.query(
         `
-        SELECT id
-        FROM menu_items
-        WHERE id = ?
-        `,
-        [id],
+  SELECT mi.id
+  FROM menu_items mi
+  INNER JOIN menu_categories mc
+    ON mc.id = mi.category_id
+  WHERE mi.id = ?
+    AND mc.restaurant_id = ?
+  `,
+        [id, restaurantId],
       );
 
       if (rows.length === 0) {
@@ -261,11 +319,14 @@ export async function PUT(req: NextRequest) {
 
       await db.query(
         `
-        UPDATE menu_items
-        SET available = ?
-        WHERE id = ?
-        `,
-        [available, id],
+  UPDATE menu_items mi
+  INNER JOIN menu_categories mc
+    ON mc.id = mi.category_id
+  SET mi.available = ?
+  WHERE mi.id = ?
+    AND mc.restaurant_id = ?
+  `,
+        [available, id, restaurantId],
       );
 
       return NextResponse.json({
@@ -274,12 +335,6 @@ export async function PUT(req: NextRequest) {
         available,
       });
     }
-
-    /*
-     * ============================================================
-     * EDIÇÃO NORMAL DO PRODUTO
-     * ============================================================
-     */
 
     const name = formData.get("name") as string | null;
     const description = formData.get("description") as string | null;
@@ -300,11 +355,16 @@ export async function PUT(req: NextRequest) {
 
     const [rows]: any = await db.query(
       `
-      SELECT image_url, available
-      FROM menu_items
-      WHERE id = ?
-      `,
-      [id],
+  SELECT
+    mi.image_url,
+    mi.available
+  FROM menu_items mi
+  INNER JOIN menu_categories mc
+    ON mc.id = mi.category_id
+  WHERE mi.id = ?
+    AND mc.restaurant_id = ?
+  `,
+      [id, restaurantId],
     );
 
     if (rows.length === 0) {
@@ -319,12 +379,6 @@ export async function PUT(req: NextRequest) {
     }
 
     let imageUrl = rows[0].image_url;
-
-    /*
-     * ============================================================
-     * NOVA IMAGEM
-     * ============================================================
-     */
 
     if (image && image.size > 0) {
       const allowedTypes = [
@@ -353,11 +407,6 @@ export async function PUT(req: NextRequest) {
         );
       }
 
-      /*
-       * Remove a imagem antiga somente depois
-       * de confirmar que a nova imagem é válida.
-       */
-
       await deleteImage(imageUrl);
 
       const bytes = await image.arrayBuffer();
@@ -381,29 +430,20 @@ export async function PUT(req: NextRequest) {
       imageUrl = `/uploads/products/${fileName}`;
     }
 
-    /*
-     * ============================================================
-     * ATUALIZA PRODUTO
-     * ============================================================
-     *
-     * IMPORTANTE:
-     * Não alteramos available aqui.
-     *
-     * Assim, se o produto estiver desativado e o usuário
-     * apenas editar nome/preço/imagem, ele continua desativado.
-     */
-
     await db.query(
       `
-      UPDATE menu_items
-      SET
-        name = ?,
-        description = ?,
-        price = ?,
-        image_url = ?
-      WHERE id = ?
+     UPDATE menu_items mi
+INNER JOIN menu_categories mc
+  ON mc.id = mi.category_id
+SET
+  mi.name = ?,
+  mi.description = ?,
+  mi.price = ?,
+  mi.image_url = ?
+WHERE mi.id = ?
+  AND mc.restaurant_id = ?
       `,
-      [name, description || null, price, imageUrl, id],
+      [name, description || null, price, imageUrl, id, restaurantId],
     );
 
     return NextResponse.json({
@@ -434,6 +474,18 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const id = Number(searchParams.get("id"));
+    const restaurantId = Number(searchParams.get("restaurantId"));
+
+    if (!id || !restaurantId) {
+      return NextResponse.json(
+        {
+          error: "restaurantId e id são obrigatórios.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
 
     if (!id) {
       return NextResponse.json(
@@ -448,11 +500,14 @@ export async function DELETE(req: NextRequest) {
 
     const [rows]: any = await db.query(
       `
-      SELECT image_url
-      FROM menu_items
-      WHERE id=?
+      SELECT mi.image_url
+FROM menu_items mi
+INNER JOIN menu_categories mc
+  ON mc.id = mi.category_id
+WHERE mi.id = ?
+  AND mc.restaurant_id = ?
       `,
-      [id],
+      [id, restaurantId],
     );
 
     if (rows.length === 0) {
@@ -470,10 +525,14 @@ export async function DELETE(req: NextRequest) {
 
     await db.query(
       `
-      DELETE FROM menu_items
-      WHERE id=?
+      DELETE mi
+FROM menu_items mi
+INNER JOIN menu_categories mc
+  ON mc.id = mi.category_id
+WHERE mi.id = ?
+  AND mc.restaurant_id = ?
       `,
-      [id],
+      [id, restaurantId],
     );
 
     return NextResponse.json({

@@ -1,7 +1,5 @@
-"use client";
+import RestaurantLayout from "@/components/restaurant/layout/index";
 
-import { useEffect, useState } from "react";
-
-export default function RestaurantLayout() {
-  return <div></div>;
+export default function LayoutPage() {
+    return <RestaurantLayout role="gerente" />;
 }

@@ -12,7 +12,6 @@ type Restaurant = {
   city: string;
   state: string;
   status: "operacional" | "configurando" | "pausado";
-  type: "matriz" | "filial";
   media?: {
     logo_url?: string | null;
     banner_url?: string | null;
@@ -55,7 +54,7 @@ export default function DashboardLayout({
     <section className="min-h-screen flex bg-(--color-background)">
       <DashboardMenu restaurantId={id} />
 
-      <div className="flex flex-1 flex-col lg:pl-60 pt-16">
+      <div className="flex flex-1 flex-col lg:pl-55 pt-16">
         <div className="relative h-40 w-full overflow-hidden shadow-sm">
           {!loading && (
             <Image

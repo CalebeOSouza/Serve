@@ -40,7 +40,7 @@ export default function RestaurantDashboard() {
       </div>
       <section className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-[360px] w-full max-w-7xl px-5 ">
         {/* CARD 1 */}
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col hover:shadow-md transition-all items-center">
+        <div className="bg-white border border-gray-100 shadow-sm rounded-lg overflow-hidden flex flex-col transition-all items-center">
           <div className="relative w-120 h-48">
             <Image
               src="/chef6.png"
@@ -71,7 +71,7 @@ export default function RestaurantDashboard() {
         </div>
 
         {/* CARD 2 */}
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col hover:shadow-md transition-all items-center">
+        <div className="bg-white border border-gray-100 shadow-sm rounded-lg overflow-hidden flex flex-col transition-all items-center">
           <div className="relative w-60 h-48">
             
           </div>
@@ -96,8 +96,8 @@ export default function RestaurantDashboard() {
         </div>
 
         {/* CARD 3 */}
-        {/* <div className="bg-white shadow-sm rounded-2xl p-5 flex flex-col justify-between hover:shadow-md transition-all"></div> */}
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col hover:shadow-md transition-all items-center">
+        {/* <div className="bg-white shadow-sm rounded-lg p-5 flex flex-col justify-between transition-all"></div> */}
+        <div className="bg-white border border-gray-100 shadow-sm rounded-lg overflow-hidden flex flex-col transition-all items-center">
 
 <div className="relative w-60 h-48">
             
@@ -124,7 +124,7 @@ export default function RestaurantDashboard() {
 
         </div>
         {/* CARD 4*/}
-        <div className="bg-white shadow-sm rounded-2xl p-5 col-span-1 sm:col-span-2 xl:col-span-3 hover:shadow-md transition-all"></div>
+        <div className="bg-white shadow-sm rounded-lg p-5 col-span-1 sm:col-span-2 xl:col-span-3 transition-all"></div>
       </section>
     </div>
   );

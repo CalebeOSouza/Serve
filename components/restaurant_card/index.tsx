@@ -2,17 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+
 import {
   Settings,
   Settings2,
-  Search,
   CircleCheck,
   MapPin,
-  Building2,
-  Store,
-  AlertCircle,
   PauseCircle,
-  Type,
 } from "lucide-react";
 
 type Restaurant = {
@@ -21,8 +17,6 @@ type Restaurant = {
   city: string;
   state: string;
   status: "operacional" | "configurando" | "pausado";
-  type: "matriz" | "filial";
-
   logo_url?: string | null;
   banner_url?: string | null;
   updated_at: string;
@@ -33,8 +27,15 @@ interface Props {
 }
 
 export default function RestaurantCard({ restaurant }: Props) {
-  const { name, city, state, status, type, logo_url, banner_url, updated_at } =
-    restaurant;
+  const {
+    name,
+    city,
+    state,
+    status,
+    logo_url,
+    banner_url,
+    updated_at,
+  } = restaurant;
 
   const formattedDate = new Date(updated_at).toLocaleString("pt-BR", {
     day: "2-digit",
@@ -46,11 +47,7 @@ export default function RestaurantCard({ restaurant }: Props) {
 
   return (
     <>
-      {/* Card */}
-
-      <div className="flex flex-col border border-[#e1e1e7] rounded-lg w-full bg-white relative shadow-md ">
-        {/* Banner e logo */}
-
+      <div className="flex flex-col border border-[#e1e1e7] rounded-lg w-full bg-white relative shadow-md">
         <div className="relative w-full h-32 overflow-hidden">
           <Image
             src={banner_url || "/no_banner2.png"}
@@ -72,42 +69,29 @@ export default function RestaurantCard({ restaurant }: Props) {
           </div>
         </div>
 
-        {/* Card infos */}
-
         <div className="flex flex-col justify-center px-5 gap-5 py-5 mt-8">
           <div className="flex flex-col items-start gap-2">
             <h1 className="text-2xl font-bold text-[#35393a]">{name}</h1>
 
             <div className="flex gap-3">
               {status === "operacional" && (
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[14px] font-bold bg-(--color-badge-1) text-(--color-secondary)">
-                  <CircleCheck className="w-4 h-4 text-(--color-primary)" />{" "}
+                <span className="inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[14px] font-bold bg-(--color-badge-1) text-(--color-secondary)">
+                  <CircleCheck className="w-4 h-4 text-(--color-primary)" />
                   Operacional
                 </span>
               )}
-              {/* [#ffdc9c] */}
+
               {status === "configurando" && (
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[14px] font-bold bg-(--color-badge-3) text-[#292929]">
-                  <Settings className="w-4 h-4 text-[#292929]" /> Configurando
+                <span className="inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[14px] font-bold bg-(--color-badge-3) text-[#292929]">
+                  <Settings className="w-4 h-4 text-[#292929]" />
+                  Configurando
                 </span>
               )}
 
               {status === "pausado" && (
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[14px] font-bold bg-(--color-badge-3) text-[#292929]">
-                  <PauseCircle className="w-4 h-4 text-[#292929]" /> Pausado
-                </span>
-              )}
-
-              {type === "matriz" && (
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[14px] font-bold border border-[#1b325f] text-[#1b325f] bg-white">
-                  <Building2 className="w-4 h-4 text-(--color-secondary)" />{" "}
-                  Matriz
-                </span>
-              )}
-
-              {type === "filial" && (
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[14px] font-bold border border-[#1b325f] text-[#1b325f] bg-white">
-                  <Store className="w-4 h-4 text-(--color-secondary)" /> Filial
+                <span className="inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[14px] font-bold bg-(--color-badge-3) text-[#292929]">
+                  <PauseCircle className="w-4 h-4 text-[#292929]" />
+                  Pausado
                 </span>
               )}
             </div>
@@ -120,10 +104,8 @@ export default function RestaurantCard({ restaurant }: Props) {
             </div>
           </div>
 
-          {/* Botão */}
-
           <div className="border-t border-gray-100 flex flex-col gap-4 pt-4 items-start text-start">
-            <p className="">Ultíma edição: {formattedDate}</p>
+            <p>Ultíma edição: {formattedDate}</p>
           </div>
 
           <Link

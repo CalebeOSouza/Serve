@@ -9,33 +9,31 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
 
-      credentials: {
-        email: {
-          label: "Email",
-          type: "email",
-        },
-
-        password: {
-          label: "Senha",
-          type: "password",
-        },
-      },
+     credentials: {
+  identifier: {
+    label: "Email ou usuário",
+    type: "text",
+  },
+  password: {
+    label: "Senha",
+    type: "password",
+  },
+},
 
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
 
-        const { email, password } = credentials;
+  if (!credentials?.identifier || !credentials?.password) {
+    return null;
+  }
 
-        // =========================
-        // USERS (ADMIN PRINCIPAL)
-        // =========================
+  const { identifier, password } = credentials;
+
+        //ADMIN
 
         const [users]: any = await db.query(
-          "SELECT * FROM users WHERE email = ? LIMIT 1",
-          [email]
-        );
+  "SELECT * FROM users WHERE email = ? LIMIT 1",
+  [identifier]
+);
 
         if (users.length) {
           const user = users[0];
@@ -61,40 +59,38 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        // =========================
-        // ROLES (CONTAS OPERACIONAIS)
-        // =========================
+        // CONTAS OPERACIONAIS
 
         const [roles]: any = await db.query(
-          "SELECT * FROM roles WHERE username = ? LIMIT 1",
-          [email]
-        );
+  "SELECT * FROM roles WHERE username = ? LIMIT 1",
+  [identifier]
+);
 
         if (roles.length) {
-          const role = roles[0];
+  const role = roles[0];
 
-          const passwordMatch = await bcrypt.compare(
-            password,
-            role.password
-          );
+  if (!role.password) {
+    return null;
+  }
 
-          if (!passwordMatch) {
-            return null;
-          }
+  const passwordMatch = await bcrypt.compare(
+    password,
+    role.password
+  );
 
-          return {
-            id: String(role.id),
+  if (!passwordMatch) {
+    return null;
+  }
 
-            name: role.type,
-            email: role.username,
-
-            role: role.type,
-
-            restaurantId: role.restaurant_id,
-
-            accountType: "role",
-          };
-        }
+  return {
+    id: String(role.id),
+    name: role.type,
+    email: role.username,
+    role: role.type,
+    restaurantId: role.restaurant_id,
+    accountType: "role",
+  };
+}
 
         return null;
       },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { Plus, GripVertical, Trash2, Inbox, LoaderCircle } from "lucide-react";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
 import CategoryCard from "@/components/dashboard/dashboard_menu/categoryCard";
@@ -21,6 +22,10 @@ type CategoryModalState = {
 };
 
 export default function RestaurantCardapio() {
+  const params = useParams();
+
+  const restaurantId = Number(params.id);
+
   const [categoryModal, setCategoryModal] = useState<CategoryModalState>({
     open: false,
     mode: "create" as "create" | "edit",
@@ -82,11 +87,13 @@ export default function RestaurantCardapio() {
   });
 
   useEffect(() => {
+    if (!restaurantId || Number.isNaN(restaurantId)) return;
+
     async function fetchMenu() {
       try {
         const [catResponse, prodResponse] = await Promise.all([
-          fetch("/api/restaurant/menu/category?restaurantId=1"),
-          fetch("/api/restaurant/menu/product?restaurantId=1"),
+          fetch(`/api/restaurant/menu/category?restaurantId=${restaurantId}`),
+          fetch(`/api/restaurant/menu/product?restaurantId=${restaurantId}`),
         ]);
 
         if (!catResponse.ok || !prodResponse.ok) return;
@@ -109,7 +116,7 @@ export default function RestaurantCardapio() {
     }
 
     fetchMenu();
-  }, []);
+  }, [restaurantId]);
 
   function handleProductCreated(
     topCategoryId: number,
@@ -202,7 +209,7 @@ export default function RestaurantCardapio() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          restaurantId: 1,
+          restaurantId,
           id: categoryModal.categoryId,
           name: categoryModal.form.name,
           parentId: categoryModal.parentId,
@@ -271,7 +278,7 @@ export default function RestaurantCardapio() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        restaurantId: 1,
+        restaurantId,
         name: categoryModal.form.name,
       }),
     });
@@ -290,7 +297,7 @@ export default function RestaurantCardapio() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurantId: 1,
+          restaurantId,
           name: sub.name,
           parentId: data.id,
         }),
@@ -393,10 +400,26 @@ export default function RestaurantCardapio() {
   function handleDragEnd() {
     setDraggingIndex(null);
   }
-
+function handleSubcategoryDeleted(
+  categoryId: number,
+  subcategoryId: number,
+) {
+  setCategories((prev) =>
+    prev.map((category) =>
+      category.id === categoryId
+        ? {
+            ...category,
+            subcategories: category.subcategories.filter(
+              (sub) => sub.id !== subcategoryId,
+            ),
+          }
+        : category,
+    ),
+  );
+}
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-x-hidden">
-      <header className={`w-full mx-auto flex flex-col pt-10 px-5 lg:px-20`}>
+      <header className={`w-full mx-auto flex flex-col pt-10 px-5 lg:px-10`}>
         <div className="flex justify-between text-start mb-3 flex-col gap-6 lg:flex-row lg:gap-0">
           <div className="flex flex-col">
             <h1 className="font-semibold text-[27px] text-[#19274b]">
@@ -557,14 +580,16 @@ export default function RestaurantCardapio() {
         )}
       </header>
 
-      <main className="flex w-full min-w-0 p-5 lg:px-20 mt-5">
-  <div className="grid w-full min-w-0 grid-cols-1 min-[1530px]:grid-cols-2 gap-6 items-start">
+      <main className="flex w-full min-w-0 p-5 lg:px-10 mt-5">
+        <div className="grid w-full min-w-0 grid-cols-1 min-[1530px]:grid-cols-2 gap-6 items-start">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-30 w-full col-span-full gap-3">
               <LoaderCircle className="w-10 h-10 text-(--color-primary) animate-spin" />
               <p className="text-gray-500">Carregando cardápio...</p>
             </div>
           ) : categories.length === 0 ? (
+
+            
             <div className="flex flex-col items-center justify-center gap-3 py-30 w-full border border-gray-200 rounded-md col-span-full">
               <div className="bg-[#F5F5F6] p-6 rounded-full flex items-center justify-center">
                 <Inbox className="w-14 h-14 text-[#CCCFD4]" />
@@ -597,6 +622,7 @@ export default function RestaurantCardapio() {
                 key={category.id}
                 id={category.id}
                 name={category.name}
+                restaurantId={restaurantId}
                 subcategories={category.subcategories}
                 onSubcategoriesCreated={(categoryId, created) => {
                   setCategories((prev) =>
@@ -637,6 +663,7 @@ export default function RestaurantCardapio() {
                 onDelete={(id) => {
                   setCategories((prev) => prev.filter((c) => c.id !== id));
                 }}
+                onSubcategoryDeleted={handleSubcategoryDeleted}
                 onProductUpdated={handleProductUpdated}
                 onProductDeleted={handleProductDeleted}
               />

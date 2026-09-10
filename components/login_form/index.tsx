@@ -13,48 +13,81 @@ type Props = {
 export function LoginForm({ activeContainer }: Props) {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  function isValidEmail(email: string) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!email || !password) {
-      setErrorMessage("Preencha email e senha.");
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      setErrorMessage("Digite um email válido.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setErrorMessage("A senha precisa ter no mínimo 6 caracteres.");
-      return;
-    }
-
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (res?.error) {
-      setErrorMessage("Email ou senha inválidos.");
-      return;
-    } else {
-      router.push("/admin/my-restaurants");
-    }
+  if (!identifier || !password) {
+    setErrorMessage("Preencha usuário/email e senha.");
+    return;
   }
+
+  if (password.length < 6) {
+    setErrorMessage("A senha precisa ter no mínimo 6 caracteres.");
+    return;
+  }
+
+  setErrorMessage(null);
+
+  const res = await signIn("credentials", {
+    identifier,
+    password,
+    redirect: false,
+  });
+
+  if (res?.error) {
+    setErrorMessage("Usuário/email ou senha inválidos.");
+    return;
+  }
+
+  const sessionRes = await fetch("/api/auth/session");
+
+  if (!sessionRes.ok) {
+    setErrorMessage("Não foi possível recuperar a sessão.");
+    return;
+  }
+
+  const session = await sessionRes.json();
+
+  if (session.user?.role === "admin") {
+    router.push("/admin/my-restaurants");
+    return;
+  }
+
+  const restaurantId = session.user?.restaurantId;
+  const role = session.user?.role;
+
+  if (!restaurantId || !role) {
+    setErrorMessage("Não foi possível identificar a conta.");
+    return;
+  }
+
+  switch (role) {
+    case "gerente":
+      router.push(`/roles/gerente/dashboard/${restaurantId}/funcionarios`);
+      break;
+
+    case "garcom":
+      router.push(`/roles/garcom/dashboard/${restaurantId}/salao`);
+      break;
+
+    case "cozinha":
+      router.push(`/roles/cozinha/dashboard/${restaurantId}/pedidos_cozinha`);
+      break;
+
+    case "caixa":
+      router.push(`/roles/caixa/dashboard/${restaurantId}/caixa`);
+      break;
+
+    default:
+      setErrorMessage("Cargo de usuário não reconhecido.");
+  }
+}
 
   return (
-    // Form box
 
     <div
       className={`absolute w-full h-[70%] bottom-0 md:w-1/2 md:h-full bg-white flex items-center text-center text-[#333] p-10 transition-all duration-0 delay-500 ${
@@ -81,14 +114,14 @@ export function LoginForm({ activeContainer }: Props) {
             onChange={(e) => setEmail(e.target.value)}
           /> */}
           <input
-            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white
+  className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white
     autofill:text-black
     autofill:shadow-[inset_0_0_0px_1000px_white]"
-            type="text"
-            name="email"
-            placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
-          />
+  type="text"
+  name="identifier"
+  placeholder="Email ou usuário"
+  onChange={(e) => setIdentifier(e.target.value)}
+/>
           <i className="bi bi-envelope-fill absolute right-5 top-1/2 -translate-y-1/2 text-[#888] text-[20px]"></i>
         </div>
         <div className="relative my-7.5">
@@ -118,7 +151,7 @@ export function LoginForm({ activeContainer }: Props) {
           Entrar
         </button>
 
-        <div className="flex items-center my-6 w-full">
+        {/* <div className="flex items-center my-6 w-full">
           <div className="grow h-px bg-gray-300"></div>
 
           <span className="mx-3 text-[12px] text-gray-400 uppercase">ou</span>
@@ -144,7 +177,7 @@ export function LoginForm({ activeContainer }: Props) {
             <img src="/google-icon.svg" alt="Google" className="w-4 h-4" />
             Continuar com o Google
           </Link>
-        </div>
+        </div> */}
       </form>
     </div>
   );

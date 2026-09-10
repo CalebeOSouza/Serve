@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { DashboardMenu } from "@/components/dashboard/dashboard_sidebar";
 import { DashboardMenuTablet } from "@/components/dashboard/dashboard_sidebar_tablet";
 import Image from "next/image";
+import EmployeeIdentifier from "@/components/restaurant/employee_identifier/";
 
 type Restaurant = {
   id: number;
@@ -12,7 +13,6 @@ type Restaurant = {
   city: string;
   state: string;
   status: "operacional" | "configurando" | "pausado";
-  type: "matriz" | "filial";
   media?: {
     logo_url?: string | null;
     banner_url?: string | null;
@@ -52,27 +52,35 @@ export default function DashboardLayout({
   if (!id || Array.isArray(id)) return null;
 
   return (
-    <section className="min-h-screen flex bg-(--color-background)">
-      <DashboardMenu restaurantId={id} />
+    <EmployeeIdentifier
+      restaurantId={id}
+      role="garcom"
+    >
+      <section className="min-h-screen flex bg-(--color-background)">
+        <DashboardMenu restaurantId={id} />
 
-      <div className="flex flex-1 flex-col lg:pl-60 pt-16">
-        <div className="relative h-40 w-full overflow-hidden shadow-sm">
-          {!loading && (
-            <Image
-              src={restaurant?.media?.banner_url || "/no_banner2.png"}
-              alt="Banner do restaurante"
-              fill
-              className="object-cover"
-              priority
-            />
-          )}
+        <div className="flex flex-1 flex-col lg:pl-55 pt-16">
+          <div className="relative h-40 w-full overflow-hidden shadow-sm">
+            {!loading && (
+              <Image
+                src={restaurant?.media?.banner_url || "/no_banner2.png"}
+                alt="Banner do restaurante"
+                fill
+                className="object-cover"
+                priority
+              />
+            )}
 
-          <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-black/20" />
+          </div>
+
+          <DashboardMenuTablet restaurantId={id} />
+
+          <main className="flex-1 flex flex-col">
+            {children}
+          </main>
         </div>
-
-        <DashboardMenuTablet restaurantId={id} />
-        <main className="flex-1 flex flex-col">{children}</main>
-      </div>
-    </section>
+      </section>
+    </EmployeeIdentifier>
   );
 }

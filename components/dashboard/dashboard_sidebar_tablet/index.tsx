@@ -6,115 +6,211 @@ import {
   Utensils,
   Users,
   Layout,
-  CalendarCheck,
-  ArrowLeftRight,
+  CalendarDays,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import EmployeeProfileMenu from "@/components/dashboard/employee_profile_menu";
 
 type Props = {
   restaurantId: string;
 };
 
+type MenuItem = {
+  label: string;
+  path: string;
+  icon: React.ElementType;
+  exact?: boolean;
+};
+
 export function DashboardMenuTablet({ restaurantId }: Props) {
   const pathname = usePathname();
 
-  const basePath = `/admin/dashboard/${restaurantId}`;
+  const isGerente = pathname.includes("/roles/gerente");
+  const isGarcom = pathname.includes("/roles/garcom");
+  const isCozinha = pathname.includes("/roles/cozinha");
+  const isCaixa = pathname.includes("/roles/caixa");
+
+  const isAdmin =
+    !isGerente &&
+    !isGarcom &&
+    !isCozinha &&
+    !isCaixa;
+
+  let basePath = `/admin/dashboard/${restaurantId}`;
+
+  if (isGerente) {
+    basePath = `/roles/gerente/dashboard/${restaurantId}`;
+  }
+
+  if (isGarcom) {
+    basePath = `/roles/garcom/dashboard/${restaurantId}`;
+  }
+
+  if (isCozinha) {
+    basePath = `/roles/cozinha/dashboard/${restaurantId}`;
+  }
+
+  if (isCaixa) {
+    basePath = `/roles/caixa/dashboard/${restaurantId}`;
+  }
+
+  const adminMenu: MenuItem[] = [
+    {
+      label: "Dashboard",
+      path: basePath,
+      icon: LayoutDashboard,
+      exact: true,
+    },
+    {
+      label: "Funcionários",
+      path: `${basePath}/funcionarios`,
+      icon: Users,
+    },
+    {
+      label: "Cardápio",
+      path: `${basePath}/cardapio`,
+      icon: Utensils,
+    },
+    {
+      label: "Layout",
+      path: `${basePath}/layout`,
+      icon: Layout,
+    },
+  ];
+
+  const gerenteMenu: MenuItem[] = [
+    {
+      label: "Funcionários",
+      path: `${basePath}/funcionarios`,
+      icon: Users,
+    },
+    {
+      label: "Layout",
+      path: `${basePath}/layout`,
+      icon: Layout,
+    },
+    {
+      label: "Reservas",
+      path: `${basePath}/reservas`,
+      icon: CalendarDays,
+    },
+  ];
+
+  const garcomMenu: MenuItem[] = [
+    {
+      label: "Salão",
+      path: `${basePath}/salao`,
+      icon: Layout,
+    },
+    {
+      label: "Reservas",
+      path: `${basePath}/reservas`,
+      icon: CalendarDays,
+    },
+  ];
+
+  const cozinhaMenu: MenuItem[] = [
+    {
+      label: "Pedidos",
+      path: `${basePath}/pedidos`,
+      icon: Utensils,
+    },
+  ];
+
+  const caixaMenu: MenuItem[] = [
+    {
+      label: "Pedidos",
+      path: `${basePath}/pedidos`,
+      icon: Utensils,
+    },
+  ];
+
+  let menuItems: MenuItem[] = [];
+
+  if (isAdmin) {
+    menuItems = adminMenu;
+  } else if (isGerente) {
+    menuItems = gerenteMenu;
+  } else if (isGarcom) {
+    menuItems = garcomMenu;
+  } else if (isCozinha) {
+    menuItems = cozinhaMenu;
+  } else if (isCaixa) {
+    menuItems = caixaMenu;
+  }
+
+  const employeeRole =
+    isGerente
+      ? "gerente"
+      : isGarcom
+        ? "garcom"
+        : isCozinha
+          ? "cozinha"
+          : isCaixa
+            ? "caixa"
+            : null;
 
   return (
-    <nav className="lg:hidden w-full bg-(--color-primary) text-white shadow-sm">
-      <ul
-        className="
-    flex flex-col
-    sm:flex-col
-    md:flex-col
-    w-full
-    gap-2
-    md:gap-2
-    p-8
-    md:justify-center
-    md:overflow-x-auto
-  "
-      >
-        <li className="w-full md:w-auto">
-          <Link href={basePath}>
-            <div
-              className={`flex items-center gap-3 px-3 py-2 text-[15px] rounded-md w-full md:w-auto whitespace-nowrap transition-all
-              ${
-                pathname === basePath
-                  ? "bg-(--color-secondary)"
-                  : "hover:bg-(--color-secondary)/50"
-              }`}
-            >
-              <LayoutDashboard size={19} />
-              <span>Dashboard</span>
-            </div>
-          </Link>
-        </li>
+    <nav className="lg:hidden w-full bg-[#F9F9FC] text-[#253E6F] border-b border-[#ECEDF4]">
+      <div className="flex flex-col w-full">
 
-        <li className="w-full md:w-auto">
-          <Link href={`${basePath}/funcionarios`}>
-            <div
-              className={`flex items-center gap-3 px-3 py-2 text-[15px] rounded-md w-full md:w-auto whitespace-nowrap transition-all
-              ${
-                pathname.startsWith(`${basePath}/funcionarios`)
-                  ? "bg-(--color-secondary)"
-                  : "hover:bg-(--color-secondary)/50"
-              }`}
-            >
-              <Users size={19} />
-              <span>Funcionários</span>
-            </div>
-          </Link>
-        </li>
+        <ul className="flex flex-col w-full gap-2 p-5">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
 
-        <li className="w-full md:w-auto">
-          <Link href={`${basePath}/cardapio`}>
-            <div
-              className={`flex items-center gap-3 px-3 py-2 text-[15px] rounded-md w-full md:w-auto whitespace-nowrap transition-all
-              ${
-                pathname.startsWith(`${basePath}/cardapio`)
-                  ? "bg-(--color-secondary)"
-                  : "hover:bg-(--color-secondary)/50"
-              }`}
-            >
-              <Utensils size={19} />
-              <span>Cardápio</span>
-            </div>
-          </Link>
-        </li>
+            const isActive = item.exact
+              ? pathname === item.path
+              : pathname.startsWith(item.path);
 
-        <li className="w-full md:w-auto">
-          <Link href={`${basePath}/layout`}>
-            <div
-              className={`flex items-center gap-3 px-3 py-2 text-[15px] rounded-md w-full md:w-auto whitespace-nowrap transition-all
-              ${
-                pathname.startsWith(`${basePath}/layout`)
-                  ? "bg-(--color-secondary)"
-                  : "hover:bg-(--color-secondary)/50"
-              }`}
-            >
-              <Layout size={19} />
-              <span>Layout</span>
-            </div>
-          </Link>
-        </li>
+            return (
+              <li key={item.path} className="w-full">
+                <Link
+                  href={item.path}
+                  className="block w-full"
+                >
+                  <div
+                    className={`
+                      flex
+                      items-center
+                      gap-4
+                      px-4
+                      py-3
+                      text-[15px]
+                      rounded-md
+                      w-full
+                      whitespace-nowrap
+                      transition-all
+                      ${
+                        isActive
+                          ? "bg-[#E2EAFA]"
+                          : "hover:bg-[#E2EAFA]"
+                      }
+                    `}
+                  >
+                    <Icon
+                      size={18}
+                      className="shrink-0"
+                    />
 
-        <li className="w-full md:w-auto">
-          <Link href={`${basePath}/reservas`}>
-            <div
-              className={`flex items-center gap-3 px-3 py-2 text-[15px] rounded-md w-full md:w-auto whitespace-nowrap transition-all
-              ${
-                pathname.startsWith(`${basePath}/reservas`)
-                  ? "bg-(--color-secondary)"
-                  : "hover:bg-(--color-secondary)/50"
-              }`}
-            >
-              <ArrowLeftRight size={18} />
-              <span>Alternar perfil</span>
-            </div>
-          </Link>
-        </li>
-      </ul>
+                    <span>
+                      {item.label}
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+
+        {employeeRole && (
+          <div className="mt-2">
+            <EmployeeProfileMenu
+              role={employeeRole}
+            />
+          </div>
+        )}
+
+      </div>
     </nav>
   );
 }

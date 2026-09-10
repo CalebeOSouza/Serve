@@ -14,8 +14,6 @@ interface ProfileBody {
   neighborhood: string;
   city: string;
   state: string;
-  type: "matriz" | "filial";
-  parentId?: number | null;
 }
 
 export async function POST(req: Request) {
@@ -52,8 +50,6 @@ export async function POST(req: Request) {
       neighborhood,
       city,
       state,
-      type,
-      parentId,
     } = body;
 
     if (
@@ -63,8 +59,7 @@ export async function POST(req: Request) {
       !state ||
       !neighborhood ||
       !street ||
-      !number ||
-      !type
+      !number
     ) {
       return NextResponse.json(
         { error: "Preencha todos os campos obrigatórios" },
@@ -73,70 +68,6 @@ export async function POST(req: Request) {
     }
 
     const safeDescription = description || null;
-
-    if (type === "matriz") {
-      const [existingMatrix]: any = await db.query(
-        `SELECT id FROM restaurants 
-         WHERE type='matriz' 
-         AND user_id=? 
-         AND LOWER(TRIM(name)) = LOWER(TRIM(?)) 
-         ${id ? "AND id != ?" : ""}`,
-        id ? [userId, name, id] : [userId, name]
-      );
-
-      if (existingMatrix.length > 0) {
-        return NextResponse.json(
-          { error: "Você já possui uma matriz com esse nome" },
-          { status: 400 }
-        );
-      }
-    }
-
-    if (type === "filial") {
-      if (!parentId) {
-        return NextResponse.json(
-          { error: "Filial precisa de uma matriz" },
-          { status: 400 }
-        );
-      }
-
-      const [matrix]: any = await db.query(
-        `SELECT id, name, user_id, status
-         FROM restaurants 
-         WHERE id=? AND type='matriz'`,
-        [parentId]
-      );
-
-      if (!matrix.length) {
-        return NextResponse.json(
-          { error: "Matriz não encontrada" },
-          { status: 400 }
-        );
-      }
-
-      const m = matrix[0];
-
-      if (m.user_id !== userId) {
-        return NextResponse.json(
-          { error: "Matriz não pertence ao usuário" },
-          { status: 403 }
-        );
-      }
-
-      if (m.status !== "operacional") {
-        return NextResponse.json(
-          { error: "Matriz precisa estar operacional" },
-          { status: 400 }
-        );
-      }
-
-      if (m.name.trim().toLowerCase() !== name.trim().toLowerCase()) {
-        return NextResponse.json(
-          { error: "Nome da filial deve ser igual ao da matriz" },
-          { status: 400 }
-        );
-      }
-    }
 
     const [sameAddress]: any = await db.query(
       `SELECT id FROM restaurants 
@@ -161,14 +92,12 @@ export async function POST(req: Request) {
     if (id) {
       await db.query(
         `UPDATE restaurants SET 
-          name=?, description=?, type=?, parent_id=?,
+          name=?, description=?,
           zipcode=?, street=?, number=?, neighborhood=?, city=?, state=?
          WHERE id=? AND user_id=?`,
         [
           name,
           safeDescription,
-          type,
-          type === "filial" ? parentId : null,
           zipcode,
           street,
           number,
@@ -190,14 +119,12 @@ export async function POST(req: Request) {
 
     const [result]: any = await db.query(
       `INSERT INTO restaurants
-      (user_id, name, description, type, parent_id, zipcode, street, number, neighborhood, city, state)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (user_id, name, description, zipcode, street, number, neighborhood, city, state)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         name,
         safeDescription,
-        type,
-        type === "filial" ? parentId : null,
         zipcode,
         street,
         number,
@@ -212,16 +139,10 @@ export async function POST(req: Request) {
     revalidatePath("/my-restaurants");
 
     return NextResponse.json({
-      message:
-        type === "matriz"
-          ? "Matriz criada com sucesso"
-          : "Filial criada com sucesso",
+      message: "Restaurante criado com sucesso",
       restaurantId,
     });
-
   } catch (err: any) {
-    console.error("ERRO REAL:", err);
-
     return NextResponse.json(
       {
         error: err.message || "Erro interno",

@@ -16,8 +16,8 @@ export default function RestaurantSuccess({
 
   return (
     <section className="min-h-screen flex items-center justify-center">
-      <div className="relative w-full max-w-[560px] pt-15">
-        <div className="bg-white border border-[#E4EAF2] shadow-[0_12px_40px_rgba(27,50,95,0.08)] rounded-[34px] p-10 md:p-12">
+      <div className="relative w-full max-w-[800px] pt-15">
+        <div className="bg-white border border-[#E4EAF2] shadow-[0_12px_40px_rgba(27,50,95,0.08)] rounded-lg p-10 md:p-12">
           {/* Ícone */}
           <div className="flex justify-center mb-8">
             {logoPreview ? (

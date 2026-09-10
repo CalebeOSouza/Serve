@@ -60,7 +60,7 @@ export default function EmployeeCard({
 }: Props) {
   return (
     <div
-      className={`relative rounded-2xl bg-white shadow-md hover:shadow-lg transition-all p-5 flex flex-col gap-5 border border-gray-200`}
+      className={`relative rounded-lg bg-white transition-all p-5 flex flex-col gap-5 shadow-sm`}
     >
       <div className="flex justify-between items-start w-full">
         <div className="relative flex gap-2">
@@ -162,14 +162,15 @@ export default function EmployeeCard({
           Editar
         </button>
 
-        <button
-          onClick={() => {
+       
+<button
+     onClick={() => {
             setConfirmDeleteId(confirmDeleteId === emp.id ? null : emp.id);
           }}
-          className="flex-1 border border-red-300 hover:bg-red-100 text-red-400 text-sm font-semibold py-2 rounded-md transition cursor-pointer"
-        >
-          Excluir
-        </button>
+    className="flex-1 px-2.5 py-2 items-center justify-center rounded-lg text-[#636976] hover:bg-[#fff1f1] hover:bg-gray-100 border border-gray-200 cursor-pointer"
+  >
+    Excluir
+  </button>
 
         {confirmDeleteId === emp.id && (
           <div className="absolute bottom-12 right-0 z-50 w-[280px] rounded-md bg-red-600 shadow-xl overflow-hidden">

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 
 import RestaurantProfile from "@/components/restaurant_settings/restaurant_profile";
 import RestaurantMedia from "@/components/restaurant_settings/restaurant_media";
@@ -21,9 +19,6 @@ type ProfileForm = {
   neighborhood: string;
   city: string;
   state: string;
-
-  type: "matriz" | "filial" | null;
-  parentId: number | null;
 };
 
 export default function AdminMenu() {
@@ -41,9 +36,6 @@ export default function AdminMenu() {
     neighborhood: "",
     city: "",
     state: "",
-
-    type: null,
-    parentId: null,
   });
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -51,7 +43,7 @@ export default function AdminMenu() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [restaurantId, setRestaurantId] = useState<number | null>(null);
-  //Redirecionar para o passo correto caso haja um onboarding em andamento
+
   useEffect(() => {
     async function loadRestaurant() {
       const res = await fetch("/api/restaurant/onboarding-status");
@@ -65,20 +57,14 @@ export default function AdminMenu() {
       const r = data.restaurant;
 
       setRestaurantId(r.id);
-
       setProfileData(r.profile);
-
       setLogoPreview(r.media.logo);
       setBannerPreview(r.media.banner);
 
       if (r.onboarding_step === 1) {
         setStep("profile");
       } else if (r.onboarding_step === 2) {
-        if (r.profile.type === "filial") {
-          setStep("hours");
-        } else {
-          setStep("media");
-        }
+        setStep("media");
       } else if (r.onboarding_step === 3) {
         setStep("hours");
       }
@@ -86,7 +72,7 @@ export default function AdminMenu() {
 
     loadRestaurant();
   }, []);
-  // Atualizar o updated at do onboarding a cada 1 minuto para evitar que seja considerado abandonado
+
   useEffect(() => {
     if (!restaurantId) return;
 
@@ -114,9 +100,9 @@ export default function AdminMenu() {
   const channelRef = useRef<BroadcastChannel | null>(null);
   const router = useRouter();
 
-  // Canal de comunicação para evitar que o mesmo onboarding seja aberto em múltiplas abas
   useEffect(() => {
     const channel = new BroadcastChannel("onboarding_channel");
+
     channelRef.current = channel;
 
     let isOwner = true;
@@ -144,15 +130,16 @@ export default function AdminMenu() {
     return () => {
       channel.close();
     };
-  }, []);
+  }, [router]);
 
   function goBack() {
     if (step === "media") {
       setStep("profile");
     } else if (step === "hours") {
-      if (profileData.type === "filial") setStep("profile");
-      else setStep("media");
-    } else if (step === "success") setStep("hours");
+      setStep("media");
+    } else if (step === "success") {
+      setStep("hours");
+    }
   }
 
   if (!step) return null;
@@ -167,8 +154,7 @@ export default function AdminMenu() {
           restaurantId={restaurantId}
           setRestaurantId={setRestaurantId}
           onNext={() => {
-            if (profileData.type === "filial") setStep("hours");
-            else setStep("media");
+            setStep("media");
           }}
         />
       )}
@@ -203,10 +189,10 @@ export default function AdminMenu() {
       )}
 
       {step === "success" && (
-  <RestaurantSuccess
-    logoPreview={logoPreview}
-  />
-)}
+        <RestaurantSuccess
+          logoPreview={logoPreview}
+        />
+      )}
     </section>
   );
 }

@@ -30,7 +30,7 @@ export async function GET(req: Request) {
 
     const [restaurants]: any = await db.execute(
       `
-  SELECT id, name, description, city, state, status, type, parent_id
+  SELECT id, name, description, city, state, status
   FROM restaurants
   WHERE id = ?
   LIMIT 1
@@ -47,11 +47,6 @@ export async function GET(req: Request) {
 
     const restaurant = restaurants[0];
 
-    const mediaRestaurantId =
-      restaurant.type === "filial" && restaurant.parent_id
-        ? restaurant.parent_id
-        : restaurant.id;
-
     const [mediaRows]: any = await db.execute(
       `
   SELECT logo_url, banner_url
@@ -59,7 +54,7 @@ export async function GET(req: Request) {
   WHERE restaurant_id = ?
   LIMIT 1
   `,
-      [mediaRestaurantId],
+      [restaurant.id],
     );
 
     const [hoursRows]: any = await db.execute(
@@ -93,3 +88,4 @@ export async function GET(req: Request) {
     await db.end();
   }
 }
+

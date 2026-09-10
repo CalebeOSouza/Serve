@@ -74,7 +74,7 @@ export function RegisterForm({ activeContainer }: Props) {
   };
 
   return (
-    // Form box
+   
     <div
       className={`absolute w-full h-[70%] bottom-0 md:w-1/2 md:h-full flex items-center text-center text-[#333] p-10 transition-all duration-0 delay-500 ${
         activeContainer ? "opacity-0 z-0 right-1/2" : "opacity-100 z-10 right-0"
@@ -138,7 +138,7 @@ export function RegisterForm({ activeContainer }: Props) {
           Cadastrar
         </button>
 
-        <div className="flex items-center my-6 w-full">
+        {/* <div className="flex items-center my-6 w-full">
           <div className="grow h-px bg-gray-300"></div>
 
           <span className="mx-3 text-[12px] text-gray-400 uppercase">ou</span>
@@ -164,7 +164,7 @@ export function RegisterForm({ activeContainer }: Props) {
             <img src="/google-icon.svg" alt="Google" className="w-4 h-4" />
             Continuar com o Google
           </Link>
-        </div>
+        </div> */}
       </form>
     </div>
   );

@@ -29,6 +29,7 @@ type Product = {
 interface Props {
   id: number;
   name: string;
+   restaurantId: number;
   subcategories: { id: number; name: string; products: Product[] }[];
   onSubcategoriesCreated: (
     categoryId: number,
@@ -47,7 +48,10 @@ interface Props {
     type: "category" | "subcategory",
   ) => void;
   onDelete: (id: number) => void;
-
+onSubcategoryDeleted: (
+  categoryId: number,
+  subcategoryId: number,
+) => void;
   onProductUpdated: (
     topCategoryId: number,
     targetCategoryId: number,
@@ -58,16 +62,19 @@ interface Props {
     targetCategoryId: number,
     productId: number,
   ) => void;
+  
 }
 
 export default function CategoryCard({
   id,
   name,
   subcategories,
+  restaurantId,
   onSubcategoriesCreated,
   onProductCreated,
   onEdit,
   onDelete,
+   onSubcategoryDeleted,
   onProductUpdated,
   onProductDeleted,
 }: Props) {
@@ -88,7 +95,7 @@ export default function CategoryCard({
 
   async function handleCreateProduct(data: ProductFormData) {
     const formData = new FormData();
-    formData.append("restaurantId", "1");
+    formData.append("restaurantId", String(restaurantId));
     formData.append("parentCategoryId", String(id));
     formData.append("name", data.name);
     formData.append("description", data.description);
@@ -219,7 +226,7 @@ export default function CategoryCard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurantId: 1,
+          restaurantId,
           name: item.name,
           parentId: id,
         }),
@@ -247,7 +254,7 @@ export default function CategoryCard({
   );
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-hidden border border-gray-200 bg-white rounded-md px-6 py-5 flex flex-col justify-between gap-4">
+    <div className="w-full min-w-0 max-w-full overflow-hidden border border-gray-200 bg-white rounded-lg px-6 py-5 flex flex-col justify-between gap-4">
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <p className="font-semibold text-[17px]">{name}</p>
@@ -330,25 +337,36 @@ export default function CategoryCard({
                           Cancelar
                         </button>
 
-                        <button
-                          onClick={async () => {
-                            await fetch(
-                              `/api/restaurant/menu/category?id=${id}`,
-                              {
-                                method: "DELETE",
-                              },
-                            );
+                     <button
+  onClick={async () => {
+    try {
+      const response = await fetch(
+        `/api/restaurant/menu/category?id=${id}&restaurantId=${restaurantId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
-                            onDelete(id);
+      const result = await response.json();
 
-                            setConfirmDelete(false);
+      if (!response.ok) {
+        console.error("Erro ao excluir categoria:", result);
+        return;
+      }
 
-                            setMenuOpen(false);
-                          }}
-                          className="flex-1 bg-red-800 rounded py-2 text-sm cursor-pointer hover:bg-red-900 transition"
-                        >
-                          Excluir
-                        </button>
+      // Remove imediatamente da tela
+      onDelete(id);
+
+      setConfirmDelete(false);
+      setMenuOpen(false);
+    } catch (error) {
+      console.error("Erro ao excluir categoria:", error);
+    }
+  }}
+  className="flex-1 bg-red-800 rounded py-2 text-sm cursor-pointer hover:bg-red-900 transition"
+>
+  Excluir
+</button>
                       </div>
                     </div>
                   )}
@@ -385,6 +403,7 @@ export default function CategoryCard({
               key={sub.id}
               id={sub.id}
               name={sub.name}
+              restaurantId={restaurantId}
               products={sub.products}
               onProductCreated={(product) =>
                 onProductCreated(id, sub.id, product, null)
@@ -398,7 +417,7 @@ export default function CategoryCard({
               onEdit={(subId, subName) =>
                 onEdit(subId, subName, id, "subcategory")
               }
-              onDelete={onDelete}
+              onDelete={(subId) => onSubcategoryDeleted(id, subId)}
             />
           ))
         )}

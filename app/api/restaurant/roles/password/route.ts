@@ -10,7 +10,7 @@ function gerarUsername(name: string, type: string, role: string) {
     .replace(/\s+/g, "_")
     .replace(/[^\w]/g, "");
 
-  return `${role}_${normalizedName}_${type}`.slice(0, 50);
+  return `${role}_${normalizedName}`.slice(0, 50);
 }
 
 export async function POST(req: Request) {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     const [restaurants]: any = await db.query(
-      `SELECT name, type FROM restaurants WHERE id = ?`,
+      `SELECT name FROM restaurants WHERE id = ?`,
       [restaurantId],
     );
 

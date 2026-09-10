@@ -73,6 +73,9 @@ export function Header() {
       if (pathname.startsWith("/admin/dashboard")) {
         setshowHeader(true);
         return;
+      } else if (pathname.startsWith("/roles")) {
+        setshowHeader(true);
+        return;
       }
 
       const current = window.scrollY;

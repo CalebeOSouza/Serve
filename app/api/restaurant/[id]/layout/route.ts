@@ -56,7 +56,7 @@ export async function POST(
   const connection = await db.getConnection();
 
   try {
-    // Trava de segurança: não apaga mesas com conta aberta (ver observação abaixo)
+
     const [openAccounts] = await connection.query(
       `SELECT ta.id FROM table_accounts ta
        INNER JOIN tables t ON t.id = ta.table_id
@@ -135,19 +135,6 @@ export async function POST(
     return NextResponse.json({ success: true });
   } catch (err: any) {
     await connection.rollback();
-
-    console.error("======================================");
-    console.error("ERRO AO SALVAR LAYOUT");
-    console.error("======================================");
-    console.error("Mensagem:", err?.message);
-    console.error("Código:", err?.code);
-    console.error("Errno:", err?.errno);
-    console.error("SQL State:", err?.sqlState);
-    console.error("SQL Message:", err?.sqlMessage);
-    console.error("SQL:", err?.sql);
-    console.error("Stack:", err?.stack);
-    console.error("Erro completo:", err);
-    console.error("======================================");
 
     return NextResponse.json(
       {

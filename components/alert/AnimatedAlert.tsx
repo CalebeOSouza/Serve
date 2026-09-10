@@ -50,15 +50,15 @@ export default function AnimatedAlert({
   const styles = {
     error: {
       box: "border-red-300 bg-red-50 text-red-700",
-      icon: <AlertCircle className="w-5 h-5" />,
+      icon: <AlertCircle className="w-5 h-5 shrink-0" />,
     },
     success: {
       box: "border-green-300 bg-green-50 text-green-700",
-      icon: <CheckCircle2 className="w-5 h-5" />,
+      icon: <CheckCircle2 className="w-5 h-5 shrink-0" />,
     },
     warning: {
       box: "border-yellow-300 bg-yellow-50 text-yellow-700",
-      icon: <AlertTriangle className="w-5 h-5" />,
+      icon: <AlertTriangle className="w-5 h-5 shrink-0" />,
     },
   };
 

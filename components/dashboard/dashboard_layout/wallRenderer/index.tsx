@@ -1,6 +1,7 @@
 // /components/WallRenderer.tsx
 import React from "react";
 import { Trash2 } from "lucide-react";
+import { Role } from "@/components/restaurant/layout";
 
 export type Wall = {
   id: string;
@@ -14,7 +15,8 @@ export type Wall = {
 
 type Props = {
   wall: Wall;
-   flatStart?: boolean;
+  role: Role;
+  flatStart?: boolean;
   flatEnd?: boolean;
   isSelected: boolean;
   isHovered: boolean;
@@ -33,7 +35,8 @@ const WALL_THICKNESS_INTERNA = 6.25;
 
 export default function WallRenderer({
   wall,
-    flatStart = false,
+  role,
+  flatStart = false,
   flatEnd = false,
   isSelected,
   isHovered,
@@ -52,12 +55,12 @@ export default function WallRenderer({
   const displayH = isVertical ? wall.width : thickness;
   const baseRadius = wall.wallType === "interna" ? 0 : 10;
 
-const cornerRadius =
-  wall.wallType === "interna"
-    ? "0px"
-    : isVertical
-      ? `${flatStart ? 0 : baseRadius}px ${flatStart ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px`
-      : `${flatStart ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatStart ? 0 : baseRadius}px`;
+  const cornerRadius =
+    wall.wallType === "interna"
+      ? "0px"
+      : isVertical
+        ? `${flatStart ? 0 : baseRadius}px ${flatStart ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px`
+        : `${flatStart ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatEnd ? 0 : baseRadius}px ${flatStart ? 0 : baseRadius}px`;
 
   return (
     <div
@@ -67,28 +70,24 @@ const cornerRadius =
         top: wall.y,
         width: displayW,
         height: displayH,
-        zIndex: isSelected
-      ? 9999
-      : wall.wallType === "externa"
-        ? 20
-        : 10,
-        cursor: "move",
+        zIndex: isSelected ? 9999 : wall.wallType === "externa" ? 20 : 10,
       }}
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onClick}
     >
-      {(isSelected || isHovered) && (
-        <div
-          className="absolute pointer-events-none rounded-sm"
-          style={{
-            inset: -3,
-            border: "2px solid #253e6f",
-            borderRadius: cornerRadius,
-          }}
-        />
-      )}
+      {(isSelected || isHovered) &&
+        (role !== "admin" ? null : (
+          <div
+            className="absolute pointer-events-none rounded-sm"
+            style={{
+              inset: -3,
+              border: "2px solid #253e6f",
+              borderRadius: cornerRadius,
+            }}
+          />
+        ))}
 
       {/* CORPO DA PAREDE */}
       <div
@@ -96,37 +95,38 @@ const cornerRadius =
           width: "100%",
           height: "100%",
           backgroundColor: wall.wallType === "externa" ? "#59595B" : "#C3C5C9",
-           borderRadius: cornerRadius,
+          borderRadius: cornerRadius,
           opacity: isDragging ? 0.7 : 1,
           boxSizing: "border-box",
-          
         }}
       />
 
       {/* BOTÃO DELETE */}
-      {isSelected && (
-        <div
-          className="absolute flex items-center gap-2 bg-white border border-gray-300 shadow-md rounded-md px-2 py-1"
-          style={{
-            left: "50%",
-            transform: "translateX(-50%)",
-            top: isVertical ? -43 : -40,
-            bottom: isVertical ? "auto" : "auto",
-            whiteSpace: "nowrap",
-            zIndex: 10000,
-          }}
-        >
-          <button
-            onClick={onDelete}
-            className="text-red-500 hover:bg-gray-50 p-1 rounded transition cursor-pointer"       
+      {isSelected &&
+        (role !== "admin" ? null : (
+          <div
+            className="absolute flex items-center gap-2 bg-white border border-gray-300 shadow-md rounded-md px-2 py-1"
+            style={{
+              left: "50%",
+              transform: "translateX(-50%)",
+              top: isVertical ? -43 : -40,
+              bottom: isVertical ? "auto" : "auto",
+              whiteSpace: "nowrap",
+              zIndex: 10000,
+            }}
           >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+            <button
+              onClick={onDelete}
+              className="text-red-500 hover:bg-gray-50 p-1 rounded transition cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
 
-      {/* Botão de resize - inicio*/}
-      {isSelected && (
+      {/* Botão de resize da ponta do inicio*/}
+      {isSelected && 
+      (role !== "admin" ? null : (
         <div
           onMouseDown={(e) => {
             e.stopPropagation();
@@ -148,10 +148,11 @@ const cornerRadius =
               : "translate(-50%, -50%)",
           }}
         />
-      )}
+      ))}
 
-      {/* Botão de resize - final */}
-      {isSelected && (
+      {/* Botão de resize da ponta do final */}
+      {isSelected && 
+      (role !== "admin" ? null : (
         <div
           onMouseDown={(e) => {
             e.stopPropagation();
@@ -174,7 +175,7 @@ const cornerRadius =
               : "translate(-50%, -50%)",
           }}
         />
-      )}
+      ))}
     </div>
   );
 }

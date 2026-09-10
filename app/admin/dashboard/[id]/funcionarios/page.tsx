@@ -8,6 +8,7 @@ import {
   UserRoundKey,
   Lock,
   LoaderCircle,
+  Search,
 } from "lucide-react";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
 import EmployeeCard, {
@@ -52,7 +53,7 @@ export default function RestaurantFuncionarios() {
   });
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
- const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const [credentialsModal, setCredentialsModal] = useState<{
     open: boolean;
@@ -382,30 +383,30 @@ export default function RestaurantFuncionarios() {
     }
   }
 
- async function deletarFuncionario(employeeId: number) {
-  const res = await fetch(
-    `/api/restaurant/employees?employeeId=${employeeId}`,
-    {
-      method: "DELETE",
-    },
-  );
+  async function deletarFuncionario(employeeId: number) {
+    const res = await fetch(
+      `/api/restaurant/employees?employeeId=${employeeId}`,
+      {
+        method: "DELETE",
+      },
+    );
 
-  if (res.ok) {
-    setConfirmDeleteId(null);
-    await fetchEmployees();
-  } else {
-    const data = await res.json();
+    if (res.ok) {
+      setConfirmDeleteId(null);
+      await fetchEmployees();
+    } else {
+      const data = await res.json();
 
-    setAlert({
-      message: data.error || "Erro ao excluir",
-      type: "error",
-    });
+      setAlert({
+        message: data.error || "Erro ao excluir",
+        type: "error",
+      });
+    }
   }
-}
 
   return (
     <div
-      className={`${openModal ? "lg:px-10 px-5" : "px-5 lg:px-20 md:px-10"} py-10 w-full mx-auto flex flex-col gap-6 transition-all duration-400`}
+      className={`${openModal ? "lg:px-10 px-5" : "px-5 lg:px-10 md:px-10"} py-10 w-full mx-auto flex flex-col gap-6 transition-all duration-400`}
     >
       <div className="flex flex-col text-start gap-2">
         <div className="flex flex-col text-start">
@@ -444,7 +445,7 @@ export default function RestaurantFuncionarios() {
           </button>
         </div>
       </div>
-      {/* Div que engloba o formulario e os cards */}
+   
       <section className={`layout-container`}>
         <div className={`layout-main ${openModal ? "is-open" : ""}`}>
           <div className="flex flex-col">
@@ -452,7 +453,7 @@ export default function RestaurantFuncionarios() {
               {cargos.map((cargo) => (
                 <div
                   key={cargo.tipo}
-                  className="relative rounded-2xl bg-white flex flex-col items-center shadow-sm hover:shadow-md transition-all"
+                  className="relative rounded-lg bg-white flex flex-col items-center shadow-sm transition-all"
                 >
                   <div className="absolute top-4 left-4">
                     <div className="relative group flex-col items-center cursor-pointer flex justify-center p-2 rounded-full hover:bg-gray-100 transition">
@@ -520,13 +521,17 @@ export default function RestaurantFuncionarios() {
               </div>
 
               <div className="mt-4 flex flex-col items-start lg:flex-row gap-5">
-                <input
-                  type="text"
-                  placeholder="Buscar funcionário..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="border border-gray-300 bg-white px-4 py-2 rounded-md outline-none w-full md:w-[300px]"
-                />
+                <div className="relative w-[280px]">
+                  <input
+                    type="text"
+                    placeholder="Buscar funcionário..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full h-11 rounded-lg border border-gray-200 px-4 pr-10 text-sm text-[#19274b] outline-none focus:border-[#1b325f]"
+                  />
+
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                </div>
 
                 <div className="flex gap-2 flex-wrap">
                   {cargos.map((cargo) => (
@@ -555,12 +560,6 @@ export default function RestaurantFuncionarios() {
                     </div>
                   ))}
 
-                  <button
-                    onClick={() => setCargoFiltro(null)}
-                    className="px-3 py-1.5 rounded-md text-sm border border-gray-300 hover:bg-gray-100 cursor-pointer bg-white"
-                  >
-                    Limpar
-                  </button>
                 </div>
               </div>
             </div>
@@ -622,21 +621,21 @@ export default function RestaurantFuncionarios() {
                 </div>
               ) : (
                 visibleEmployees.map((emp) => (
-                 <EmployeeCard
-  key={emp.id}
-  emp={emp}
-  cargos={cargos}
-  setPinModal={setPinModal}
-  setEditingEmployee={setEditingEmployee}
-  setConfirmDeleteId={setConfirmDeleteId}
-  confirmDeleteId={confirmDeleteId}
-  deletarFuncionario={deletarFuncionario}
-  setNome={setNome}
-  setCpf={setCpf}
-  setCargosSelecionados={setCargosSelecionados}
-  abrirModal={abrirModal}
-  getInitials={getInitials}
-/>
+                  <EmployeeCard
+                    key={emp.id}
+                    emp={emp}
+                    cargos={cargos}
+                    setPinModal={setPinModal}
+                    setEditingEmployee={setEditingEmployee}
+                    setConfirmDeleteId={setConfirmDeleteId}
+                    confirmDeleteId={confirmDeleteId}
+                    deletarFuncionario={deletarFuncionario}
+                    setNome={setNome}
+                    setCpf={setCpf}
+                    setCargosSelecionados={setCargosSelecionados}
+                    abrirModal={abrirModal}
+                    getInitials={getInitials}
+                  />
                 ))
               )}
             </div>
@@ -829,7 +828,7 @@ export default function RestaurantFuncionarios() {
 
       {pinModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-[400px]">
+          <div className="bg-white rounded-lg shadow-xl p-8 w-[400px]">
             <h2 className="text-xl font-semibold text-[#19274b]">
               Gerenciar PIN
             </h2>
@@ -873,7 +872,7 @@ export default function RestaurantFuncionarios() {
                     onClick={() =>
                       navigator.clipboard.writeText(pinModal.pin || "")
                     }
-                    className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition"
+                    className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
                   >
                     Copiar PIN
                   </button>
@@ -904,8 +903,6 @@ export default function RestaurantFuncionarios() {
           </div>
         </div>
       )}
-
-     
 
       {credentialsModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">

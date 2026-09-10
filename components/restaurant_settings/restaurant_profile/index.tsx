@@ -2,13 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
-import {
-  CheckCircle,
-  AlertCircle,
-  PauseCircle,
-  MapPin,
-  Settings,
-} from "lucide-react";
 
 type ProfileForm = {
   name: string;
@@ -19,8 +12,6 @@ type ProfileForm = {
   neighborhood: string;
   city: string;
   state: string;
-  type: "matriz" | "filial" | null;
-  parentId: number | null;
 };
 
 interface RestaurantProfileProps {
@@ -42,37 +33,19 @@ export default function RestaurantProfile({
   setRestaurantId,
   onNext,
 }: RestaurantProfileProps) {
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
-
-  const [showMatrixPanel, setShowMatrixPanel] = useState(false);
-  const [matrices, setMatrices] = useState<any[]>([]);
-  const [selectedMatrix, setSelectedMatrix] = useState<any | null>(null);
-
   const [alert, setAlert] = useState<{
     message: string | null;
     type?: "error" | "success" | "warning";
   }>({ message: null });
 
+  const alertRef = useRef<HTMLDivElement | null>(null);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
+
   async function handleSubmit() {
     try {
-      if (!form.type) {
-        setAlert({
-          message: "Escolha se o restaurante é Matriz ou Filial",
-          type: "error",
-        });
-        return;
-      }
-
-      if (form.type === "filial" && !form.parentId) {
-        setAlert({
-          message: "Selecione qual matriz essa filial pertence",
-          type: "error",
-        });
-        return;
-      }
-
       const response = await fetch("/api/restaurant/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -105,8 +78,6 @@ export default function RestaurantProfile({
     }
   }
 
-  const alertRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     if (alert.message && alertRef.current) {
       alertRef.current.scrollIntoView({
@@ -119,8 +90,6 @@ export default function RestaurantProfile({
   return (
     <section className="min-h-screen flex items-center justify-center pt-15">
       <div className="flex flex-col items-center gap-10">
-        {/* Cabeçalho */}
-
         <div className="relative w-full max-w-xl bg-white rounded-sm shadow-sm overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1.5 bg-(--color-primary)" />
 
@@ -129,6 +98,7 @@ export default function RestaurantProfile({
               <h1 className="text-[26px] text-gray-800">
                 Informações do restaurante
               </h1>
+
               <p className="text-sm text-gray-500 mt-2">
                 Faça com que as pessoas conheçam seu negócio!
               </p>
@@ -152,19 +122,17 @@ export default function RestaurantProfile({
                   <div>
                     <label className="text-sm text-gray-600">
                       Nome do restaurante{" "}
-                      <span className="text-red-600 font-bold text-sm">*</span>
+                      <span className="text-red-600 font-bold text-sm">
+                        *
+                      </span>
                     </label>
+
                     <input
                       name="name"
                       value={form.name}
                       onChange={handleChange}
                       type="text"
-                      disabled={form.type === "filial"}
-                      className={`w-full mt-1 px-4 py-3 rounded-md outline-none focus:ring-black/10 ${
-                        form.type === "filial"
-                          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                          : "border border-gray-300 outline-none"
-                      }`}
+                      className="w-full mt-1 px-4 py-3 rounded-md focus:ring-black/10 border border-gray-300 outline-none"
                       placeholder="Restaurante Exemplo"
                       required
                     />
@@ -174,10 +142,10 @@ export default function RestaurantProfile({
                     <label className="text-sm text-gray-600">
                       Descrição{" "}
                       <span className="font-semi text-[12.5px] italic text-gray-500">
-                        {" "}
                         - Opcional
                       </span>
                     </label>
+
                     <input
                       name="description"
                       value={form.description}
@@ -187,67 +155,7 @@ export default function RestaurantProfile({
                       placeholder="Descrição Exemplo"
                     />
                   </div>
-
-                  <div className="flex flex-col gap-5">
-                    <label className="text-sm text-gray-600">
-                      Matriz ou filial{" "}
-                      <span className="text-red-600 font-bold text-sm">*</span>
-                    </label>
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedMatrix(null);
-                          setForm((prev) => ({
-                            ...prev,
-                            type: "matriz",
-                            parentId: null,
-                          }));
-                        }}
-                        className={`flex-1 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
-                          form.type === "matriz"
-                            ? "bg-(--color-primary) text-white"
-                            : "border border-gray-300 text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        Matriz
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          setShowMatrixPanel(true);
-
-                          setForm((prev) => ({
-                            ...prev,
-                            type: "filial",
-                          }));
-
-                          const res = await fetch(
-                            "/api/restaurant/my-matrices",
-                          );
-                          const data = await res.json();
-                          setMatrices(data.matrices || []);
-                        }}
-                        className={`flex-1 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
-                          form.type === "filial"
-                            ? "bg-(--color-primary) text-white"
-                            : "border border-gray-300 text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        Filial
-                      </button>
-                    </div>
-                    {form.type === "filial" && selectedMatrix && (
-                      <p className="text-xs text-gray-500 mt-2 break-all">
-                        Esta unidade será uma filial de{" "}
-                        <b>{selectedMatrix.name}</b>
-                      </p>
-                    )}
-                  </div>
                 </div>
-
-                {/* Coluna 2 */}
 
                 <div className="flex flex-col gap-5">
                   <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -257,8 +165,11 @@ export default function RestaurantProfile({
                   <div>
                     <label className="text-sm text-gray-600">
                       CEP{" "}
-                      <span className="text-red-600 font-bold text-sm">*</span>
+                      <span className="text-red-600 font-bold text-sm">
+                        *
+                      </span>
                     </label>
+
                     <input
                       name="zipcode"
                       value={form.zipcode}
@@ -274,8 +185,11 @@ export default function RestaurantProfile({
                   <div>
                     <label className="text-sm text-gray-600">
                       Rua{" "}
-                      <span className="text-red-600 font-bold text-sm">*</span>
+                      <span className="text-red-600 font-bold text-sm">
+                        *
+                      </span>
                     </label>
+
                     <input
                       name="street"
                       value={form.street}
@@ -295,6 +209,7 @@ export default function RestaurantProfile({
                           *
                         </span>
                       </label>
+
                       <input
                         name="number"
                         value={form.number}
@@ -313,6 +228,7 @@ export default function RestaurantProfile({
                           *
                         </span>
                       </label>
+
                       <input
                         name="neighborhood"
                         value={form.neighborhood}
@@ -333,6 +249,7 @@ export default function RestaurantProfile({
                           *
                         </span>
                       </label>
+
                       <input
                         name="city"
                         value={form.city}
@@ -351,6 +268,7 @@ export default function RestaurantProfile({
                           *
                         </span>
                       </label>
+
                       <input
                         name="state"
                         value={form.state}
@@ -366,6 +284,7 @@ export default function RestaurantProfile({
               </div>
             </form>
           </div>
+
           {mode === "onboarding" && (
             <div className="mt-auto">
               <button
@@ -379,88 +298,6 @@ export default function RestaurantProfile({
           )}
         </div>
       </div>
-
-      {showMatrixPanel && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-md rounded-xl p-6 shadow-xl">
-            <h3 className="text-lg font-semibold ">Escolha a matriz</h3>
-            <p className="text-xs text-gray-500 mb-4">
-              Apenas matrizes <b>operacionais</b> podem receber filiais.
-            </p>
-            {matrices.length === 0 && (
-              <p className="text-sm text-gray-500">
-                Você ainda não possui nenhuma matriz cadastrada.
-              </p>
-            )}
-
-            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-              {matrices.map((m) => {
-                const isOperational = m.status === "operacional";
-
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    disabled={!isOperational}
-                    onClick={() => {
-                      if (!isOperational) return;
-
-                      setSelectedMatrix(m);
-                      setShowMatrixPanel(false);
-
-                      setForm((prev) => ({
-                        ...prev,
-                        parentId: m.id,
-
-                        name: m.name || prev.name,
-                        description: m.description || prev.description,
-                      }));
-                    }}
-                    className={`
-        text-left px-3 py-2 rounded-md border
-        transition-all
-        ${
-          isOperational
-            ? "border-gray-300 hover:bg-gray-100 cursor-pointer"
-            : "border-gray-200 bg-gray-100 cursor-not-allowed opacity-60"
-        }
-      `}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-medium break-all">{m.name}</span>
-                        <span className="text-sm flex items-center gap-1">
-                          <MapPin size={14} />
-                          {m.city}
-                        </span>
-                      </div>
-
-                      <div>
-                        {m.status === "operacional" && (
-                          <CheckCircle size={18} className="text-green-600" />
-                        )}
-                        {m.status === "configurando" && (
-                          <AlertCircle size={18} className="text-yellow-500" />
-                        )}
-                        {m.status === "pausado" && (
-                          <PauseCircle size={18} className="text-gray-500" />
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              onClick={() => setShowMatrixPanel(false)}
-              className="mt-4 text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

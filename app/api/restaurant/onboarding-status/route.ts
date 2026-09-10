@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+
 import { getServerSession } from "next-auth";
+
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
 import mysql from "mysql2/promise";
 
 const NOTIFICATION_DELAY_HOURS = 0.05; //0.001 -> 3,6s //1
+
 const DELETE_DELAY_HOURS = 24; //0.01 -> 1m48s //24
 
 export async function GET() {
@@ -34,17 +38,17 @@ export async function GET() {
 
     await db.execute(
       `
-DELETE FROM restaurants
-WHERE user_id = ?
-AND onboarding_step != 0
-AND updated_at < NOW() - INTERVAL ? HOUR - INTERVAL 2 MINUTE
-`,
+      DELETE FROM restaurants
+      WHERE user_id = ?
+        AND onboarding_step != 0
+        AND updated_at < NOW() - INTERVAL ? HOUR - INTERVAL 2 MINUTE
+      `,
       [userId, DELETE_DELAY_HOURS],
     );
 
     const [rows]: any = await db.execute(
       `
-      SELECT 
+      SELECT
         r.id,
         r.name,
         r.description,
@@ -54,22 +58,16 @@ AND updated_at < NOW() - INTERVAL ? HOUR - INTERVAL 2 MINUTE
         r.neighborhood,
         r.city,
         r.state,
-        r.type,
-        r.parent_id,
         r.onboarding_step,
         r.updated_at,
         m.logo_url,
         m.banner_url
-
       FROM restaurants r
-
       LEFT JOIN restaurant_media m
-      ON m.restaurant_id = r.id
-
+        ON m.restaurant_id = r.id
       WHERE r.user_id = ?
-      AND r.onboarding_step != 0
-      AND r.updated_at < NOW() - INTERVAL ? HOUR - INTERVAL 2 MINUTE
-
+        AND r.onboarding_step != 0
+        AND r.updated_at < NOW() - INTERVAL ? HOUR - INTERVAL 2 MINUTE
       ORDER BY r.updated_at DESC
       LIMIT 1
       `,
@@ -98,8 +96,6 @@ AND updated_at < NOW() - INTERVAL ? HOUR - INTERVAL 2 MINUTE
           neighborhood: restaurant.neighborhood || "",
           city: restaurant.city || "",
           state: restaurant.state || "",
-          type: restaurant.type || null,
-          parentId: restaurant.parent_id || null,
         },
 
         media: {
@@ -110,7 +106,11 @@ AND updated_at < NOW() - INTERVAL ? HOUR - INTERVAL 2 MINUTE
     });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+
+    return NextResponse.json(
+      { error: "Erro interno" },
+      { status: 500 },
+    );
   } finally {
     await db.end();
   }

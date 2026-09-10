@@ -1,5 +1,6 @@
 "use client";
 
+import { Role } from "@/components/restaurant/layout";
 import { Trash2 } from "lucide-react";
 
 export type Floor = {
@@ -14,6 +15,7 @@ export type FloorHandle = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
 type Props = {
   floor: Floor;
+  role: Role;
   isSelected: boolean;
   isHovered: boolean;
   isDragging: boolean;
@@ -53,6 +55,7 @@ const ALL_HANDLES: FloorHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
 
 export default function FloorRenderer({
   floor,
+  role,
   isSelected,
   isHovered,
   isDragging,
@@ -92,17 +95,20 @@ export default function FloorRenderer({
       }}
     >
       {/* Borda de seleção/hover */}
-      {(isSelected || isHovered) && (
-        <div
-          className="absolute inset-0 pointer-events-none rounded-[2px]"
-          style={{
-            border: `${borderWidth}px solid var(--color-secondary)`,
-          }}
-        />
-      )}
+
+      {(isSelected || isHovered) &&
+        (role !== "admin" ? null : (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-[2px]"
+            style={{
+              border: `${borderWidth}px solid var(--color-secondary)`,
+            }}
+          />
+        ))}
 
       {/* Botão de excluir */}
-      {isSelected && (
+      {isSelected && 
+      (role !== "admin" ? null : (
         <div
           className="absolute left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white border border-gray-300 shadow-md rounded-md px-2 py-1 cursor-pointer"
           style={{ top: -deleteButtonOffset }}
@@ -118,35 +124,37 @@ export default function FloorRenderer({
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
-      )}
+      ))}
 
       {/* Handles de resize */}
       {isSelected &&
-        ALL_HANDLES.map((handle) => {
-          const pos = HANDLE_POSITION[handle];
-          return (
-            <div
-              key={handle}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                onResizeStart(e, handle);
-              }}
-              className="absolute bg-white border border-(--color-secondary) rounded-[2px] z-50"
-              style={{
-                top: pos.top,
-                left: pos.left,
+        (role !== "admin"
+          ? null
+          : ALL_HANDLES.map((handle) => {
+              const pos = HANDLE_POSITION[handle];
+              return (
+                <div
+                  key={handle}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    onResizeStart(e, handle);
+                  }}
+                  className="absolute bg-white border border-(--color-secondary) rounded-[2px] z-50"
+                  style={{
+                    top: pos.top,
+                    left: pos.left,
 
-                width: 12,
-                height: 12,
-                backgroundColor: "white",
-                border: "2px solid #253e6f",
-                borderRadius: 2,
-                transform: "translate(-50%, -50%)",
-                cursor: CURSOR_BY_HANDLE[handle],
-              }}
-            />
-          );
-        })}
+                    width: 12,
+                    height: 12,
+                    backgroundColor: "white",
+                    border: "2px solid #253e6f",
+                    borderRadius: 2,
+                    transform: "translate(-50%, -50%)",
+                    cursor: CURSOR_BY_HANDLE[handle],
+                  }}
+                />
+              );
+            }))}
     </div>
   );
 }

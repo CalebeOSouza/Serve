@@ -2,6 +2,7 @@ import { Trash2, FlipHorizontal2, Users, Settings } from "lucide-react";
 import type { MutableRefObject } from "react";
 
 import type { AllCanvasItem } from "@/app/admin/dashboard/[id]/layout/types";
+import { Role } from "@/components/restaurant/layout";
 const elementSize = {
   mesa_quadrada: { w: 75, h: 75 },
   mesa_redonda: { w: 75, h: 75 },
@@ -23,7 +24,7 @@ function getRotatedBoundingBox(w: number, h: number, rotationDeg: number) {
 
 type Props = {
   item: AllCanvasItem;
-
+  role: Role;
   isSelected: boolean;
   isHovered: boolean;
   isDragging: boolean;
@@ -52,6 +53,7 @@ type Props = {
 
 export default function CanvasItem({
   item,
+  role,
   isSelected,
   isHovered,
   isDragging,
@@ -158,12 +160,14 @@ export default function CanvasItem({
           {renderElement(item)}
         </div>
 
-        {(isSelected || isHovered) && (
-          <div className="absolute -inset-2 border-2 border-(--color-secondary) rounded-md pointer-events-none" />
-        )}
+        {(isSelected || isHovered) &&
+          (role !== "admin" && !("tableNumber" in item) ? null : (
+            <div className="absolute -inset-1 border-2 border-(--color-secondary) rounded-md pointer-events-none" />
+          ))}
       </div>
 
-      {isSelected && (
+      {isSelected && 
+      (role !== "admin" ? null : (
         <div
           className="absolute flex items-center gap-1 px-2 h-7 bg-white border border-gray-300 rounded-full cursor-grab shadow-md hover:scale-110 transition select-none text-xs z-50"
           style={{
@@ -175,9 +179,10 @@ export default function CanvasItem({
         >
           ⟳ <span className="text-[10px] text-gray-500">R</span>
         </div>
-      )}
+      ))}
 
-      {isSelected && (
+      {isSelected && 
+      (role !== "admin" ? null : (
         <div
           className="absolute flex items-center gap-2 bg-white border border-gray-300 shadow-md rounded-md px-2 py-1 cursor-pointer z-50"
           style={{
@@ -220,7 +225,7 @@ export default function CanvasItem({
             </button>
           )}
         </div>
-      )}
+      ))}
     </div>
   );
 }

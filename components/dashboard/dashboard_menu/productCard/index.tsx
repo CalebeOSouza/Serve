@@ -16,6 +16,7 @@ import { createPortal } from "react-dom";
 type Props = {
   id: number;
   name: string;
+  restaurantId: number;
   description: string | null;
   price: string;
   imageUrl: string | null;
@@ -27,6 +28,7 @@ type Props = {
 export default function ProductCard({
   id,
   name,
+   restaurantId,
   description,
   price,
   imageUrl,
@@ -76,7 +78,7 @@ export default function ProductCard({
       setUpdatingAvailable(true);
 
       const formData = new FormData();
-
+formData.append("restaurantId", String(restaurantId));
       formData.append("id", String(id));
       formData.append("available", String(newAvailable));
 
