@@ -160,11 +160,11 @@ export default function ProductModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-[450px]">
+      <div className="bg-white rounded-lg shadow-sm p-8 w-[450px]">
         <h2 className="text-xl font-semibold text-[#19274b]">
           {mode === "create" ? "Novo produto" : "Editar produto"}
         </h2>
-        <p className="text-sm text-gray-500 mt-2 mb-6">
+        <p className="text-sm text-gray-500 mt-2 mb-3">
           {mode === "create"
             ? `Adicione um novo produto em "${contextName}".`
             : `Edite os dados do produto em "${contextName}".`}
@@ -176,7 +176,7 @@ export default function ProductModal({
           onClose={() => setAlert((prev) => ({ ...prev, message: null }))}
         />
 
-        <div>
+        <div className="mt-3">
           <label className="block mb-1 text-sm font-medium text-[#19274b]">
             Foto do produto
           </label>

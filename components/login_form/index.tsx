@@ -79,7 +79,7 @@ export function LoginForm({ activeContainer }: Props) {
       break;
 
     case "caixa":
-      router.push(`/roles/caixa/dashboard/${restaurantId}/caixa`);
+      router.push(`/roles/caixa/dashboard/${restaurantId}/painel_caixa`);
       break;
 
     default:

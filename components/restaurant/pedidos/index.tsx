@@ -79,9 +79,6 @@ type Props = {
   onClose: () => void;
 };
 
-
-
-
 function TablePreview({
   type,
   tableNumber,
@@ -89,12 +86,8 @@ function TablePreview({
   type: TableType;
   tableNumber: number;
 }) {
-
-
   const fill = "#EBF5FF";
   const stroke = "#6388b2";
-
-
 
   return (
     <div className="flex items-center gap-4">
@@ -228,7 +221,15 @@ export function Pedidos({
   const [customerName, setCustomerName] = useState("");
   const [observation, setObservation] = useState("");
   const [quantity, setQuantity] = useState(1);
-const [alert, setAlert] = useState<{
+  const [formAlert, setFormAlert] = useState<{
+    message: string | null;
+    type: "error" | "success";
+  }>({
+    message: null,
+    type: "error",
+  });
+
+  const [orderAlert, setOrderAlert] = useState<{
     message: string | null;
     type: "error" | "success";
   }>({
@@ -249,10 +250,7 @@ const [alert, setAlert] = useState<{
         );
 
         const data = await res.json();
-
-        console.log("STATUS DA API:", res.status);
-        console.log("RESPOSTA DA API:", data);
-
+                                                                                                       
         if (!res.ok) {
           throw new Error(
             data?.error ||
@@ -321,109 +319,101 @@ const [alert, setAlert] = useState<{
   }
 
   function handleAddPendingItem() {
-  if (!selectedItem) return;
+    if (!selectedItem) return;
 
-  if (!customerName.trim()) {
-    setAlert({
-      type: "error",
-      message: "Informe o nome do cliente.",
-    });
-    return;
+    if (!customerName.trim()) {
+      setFormAlert({
+        type: "error",
+        message: "Informe o nome do cliente.",
+      });
+      return;
+    }
+
+    const newItem: PendingOrderItem = {
+      id: `${selectedItem.id}-${Date.now()}`,
+      menuItem: selectedItem,
+      quantity: quantity,
+      observation,
+      customerName: customerName.trim(),
+    };
+
+    setPendingItems((current) => [...current, newItem]);
+
+    setSelectedItem(null);
+    setCustomerName("");
+    setObservation("");
+    setQuantity(1);
   }
-
-  const newItem: PendingOrderItem = {
-    id: `${selectedItem.id}-${Date.now()}`,
-    menuItem: selectedItem,
-    quantity: quantity,
-    observation,
-    customerName: customerName.trim(),
-  };
-
-  setPendingItems((current) => [...current, newItem]);
-
-  setSelectedItem(null);
-  setCustomerName("");
-  setObservation("");
-  setQuantity(1);
-}
 
   function handleRemovePendingItem(id: string) {
     setPendingItems((current) => current.filter((item) => item.id !== id));
   }
-//observação no waiter id
-async function handleSubmitOrder() {
-  if (pendingItems.length === 0) {
-    return;
-  }
 
-  try {
-    setSendingOrder(true);
+  async function handleSubmitOrder() {
+    if (pendingItems.length === 0) {
+      return;
+    }
 
-    const response = await fetch(
-      `/api/restaurant/${restaurantId}/garcom/orders`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    try {
+      setSendingOrder(true);
+
+      const response = await fetch(
+        `/api/restaurant/${restaurantId}/garcom/orders`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tableId,
+
+            items: pendingItems.map((item) => ({
+              menuItemId: item.menuItem.id,
+              quantity: item.quantity,
+              observation: item.observation,
+              customerName: item.customerName,
+            })),
+          }),
         },
-        body: JSON.stringify({
-          tableId,
-
-          items: pendingItems.map((item) => ({
-            menuItemId: item.menuItem.id,
-            quantity: item.quantity,
-            observation: item.observation,
-            customerName: item.customerName,
-          })),
-        }),
-      },
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data?.error ||
-          "Não foi possível realizar o pedido.",
       );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Não foi possível realizar o pedido.");
+      }
+
+      setPendingItems([]);
+
+      const ordersResponse = await fetch(
+        `/api/restaurant/${restaurantId}/garcom/orders?tableId=${tableId}`,
+        {
+          cache: "no-store",
+        },
+      );
+
+      if (ordersResponse.ok) {
+        const ordersData = await ordersResponse.json();
+
+        setOrders(ordersData.orders ?? []);
+      }
+
+      setOrderAlert({
+        type: "success",
+        message: "Pedido realizado com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao fazer pedido:", error);
+
+      setOrderAlert({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Erro ao realizar pedido.",
+      });
+    } finally {
+      setSendingOrder(false);
     }
-
-    setPendingItems([]);
-
-    const ordersResponse = await fetch(
-      `/api/restaurant/${restaurantId}/garcom/orders?tableId=${tableId}`,
-      {
-        cache: "no-store",
-      },
-    );
-
-    if (ordersResponse.ok) {
-      const ordersData = await ordersResponse.json();
-
-      setOrders(ordersData.orders ?? []);
-    }
-
-    setAlert({
-      type: "success",
-      message: "Pedido realizado com sucesso!",
-    });
-  } catch (error) {
-    console.error(
-      "Erro ao fazer pedido:",
-      error,
-    );
-
-    setAlert({
-      type: "error",
-      message:
-        error instanceof Error
-          ? error.message
-          : "Erro ao realizar pedido.",
-    });
-  } finally {
-    setSendingOrder(false);
   }
-}
 
   const pendingTotal = pendingItems.reduce(
     (total, item) => total + item.menuItem.price * item.quantity,
@@ -432,7 +422,6 @@ async function handleSubmitOrder() {
 
   return (
     <div className="fixed inset-0 z-10000 bg-[#f8fafc] flex flex-col">
-     
       <header className="h-[72px] shrink-0 border-b border-[#e5e9f0] bg-white px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
@@ -465,17 +454,23 @@ async function handleSubmitOrder() {
         </div>
       </header>
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 flex-col min-[1170px]:flex-row">
         <aside
-          className="
-            w-[350px]
-            shrink-0
-            border-r border-[#e5e9f0]
-            bg-white
-            flex
-            flex-col
-          "
-        >
+  className="
+    w-full
+    min-[1170px]:w-[350px]
+    shrink-0
+    border-b
+    min-[1170px]:border-b-0
+    min-[1170px]:border-r
+    border-[#e5e9f0]
+    bg-white
+    flex
+    flex-col
+    max-h-[420px]
+    min-[1170px]:max-h-none
+  "
+>
           <div className="px-5 pt-5 pb-5 border-b border-[#e5e9f0]">
             <TablePreview type={tableType} tableNumber={tableNumber} />
 
@@ -540,7 +535,6 @@ async function handleSubmitOrder() {
                       key={pendingItem.id}
                       className="overflow-hidden rounded-lg border border-[#e1e5eb] bg-white"
                     >
-
                       <div className="p-3">
                         <div className="flex items-start gap-3">
                           {/* Quantidade */}
@@ -570,7 +564,9 @@ async function handleSubmitOrder() {
                                 </p>
 
                                 <p className="mt-0.5 text-[12px] font-medium text-[#7b8497]">
-                                  {pendingItem.customerName.trim().split(/\s+/)[0] || "Sem nome"}
+                                  {pendingItem.customerName
+                                    .trim()
+                                    .split(/\s+/)[0] || "Sem nome"}
                                 </p>
                               </div>
 
@@ -602,10 +598,10 @@ async function handleSubmitOrder() {
                           </p>
 
                           <div className="mt-1 w-full">
-  <p className="whitespace-pre-wrap break-words text-[12px] font-semibold leading-5 text-[#1b325f]">
-    {pendingItem.observation}
-  </p>
-</div>
+                            <p className="whitespace-pre-wrap break-words text-[12px] font-semibold leading-5 text-[#1b325f]">
+                              {pendingItem.observation}
+                            </p>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -616,7 +612,18 @@ async function handleSubmitOrder() {
           </div>
 
           <div className="shrink-0 bg-white px-4 pb-4 pt-3">
-            <div className="flex items-center justify-between">
+            <AnimatedAlert
+              message={orderAlert.message}
+              type={orderAlert.type}
+              onClose={() =>
+                setOrderAlert({
+                  message: null,
+                  type: "error",
+                })
+              }
+            />
+
+            <div className="flex items-center justify-between mt-3">
               <span className="text-sm font-medium text-[#536078]">Total</span>
 
               <span className="text-lg font-bold text-[#19274b]">
@@ -624,22 +631,15 @@ async function handleSubmitOrder() {
               </span>
             </div>
 
-           
-<button
-  type="button"
-  onClick={handleSubmitOrder}
-  disabled={
-    pendingItems.length === 0 ||
-    sendingOrder
-  }
-  className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#1b325f] text-sm font-medium text-white hover:bg-[#16294d] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
->
-  <Send className="h-4 w-4" />
-
-    Fazer pedido
-</button>
-
-
+            <button
+              type="button"
+              onClick={handleSubmitOrder}
+              disabled={pendingItems.length === 0 || sendingOrder}
+              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#1b325f] text-sm font-medium text-white hover:bg-[#16294d] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            >
+              <Send className="h-4 w-4" />
+              Fazer pedido
+            </button>
           </div>
         </aside>
 
@@ -775,7 +775,7 @@ async function handleSubmitOrder() {
                 </div>
               )}
 
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 min-[1170px]:grid-cols-2 min-[1450px]:grid-cols-3 gap-5">
               {filteredItems.map((item) => (
                 <div
                   key={item.id}
@@ -786,10 +786,10 @@ async function handleSubmitOrder() {
                     <img
                       src={item.image_url}
                       alt={item.name}
-                      className="w-full h-[400px] object-cover"
+                      className="w-full h-100 object-cover"
                     />
                   ) : (
-                    <div className="w-full h-[180px] bg-gray-100 flex items-center justify-center">
+                    <div className="w-full h-45 bg-gray-100 flex items-center justify-center">
                       <Utensils className="w-10 h-10 text-gray-300" />
                     </div>
                   )}
@@ -800,7 +800,7 @@ async function handleSubmitOrder() {
                     </h3>
 
                     {item.description && (
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                         {item.description}
                       </p>
                     )}
@@ -832,140 +832,144 @@ async function handleSubmitOrder() {
 
       {selectedItem && (
         <div
-          className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-hidden"
           onClick={() => setSelectedItem(null)}
         >
           <div
-            className="relative w-full max-w-[480px] rounded-lg bg-white shadow-xl"
+            className="relative flex max-h-[calc(100vh-2rem)] w-full max-w-[480px] flex-col overflow-hidden rounded-lg bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setSelectedItem(null)}
-              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-md text-[#8a93a5] hover:bg-[#f3f5f8] hover:text-[#19274b] cursor-pointer"
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-md text-[#8a93a5] hover:text-[#19274b] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="px-6 pt-6 pr-16">
-              <h2 className="text-lg font-semibold text-[#19274b]">
-                Adicionar pedido
-              </h2>
-disabled={pendingItems.length === 0}
-              <p className="mt-1 text-sm text-[#818598]">
-                Informe quem pediu e alguma observação.
-              </p>
-            </div>
-
-            <div className="mx-6 mt-5 flex gap-4 mb-2">
-              {selectedItem.image_url ? (
-                <img
-                  src={selectedItem.image_url}
-                  alt={selectedItem.name}
-                  className="h-20 w-20 shrink-0 rounded-md object-cover"
-                />
-              ) : (
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-gray-100">
-                  <Utensils className="h-7 w-7 text-gray-300" />
-                </div>
-              )}
-
-              <div className="min-w-0">
-                <p className="text-[15px] font-semibold text-[#19274b]">
-                  {selectedItem.name}
-                </p>
-
-                <p className="mt-1 text-sm font-medium text-[#1b325f]">
-                  {formatPrice(selectedItem.price)}
+            <div className="flex-1 overflow-y-auto">
+              <div className="px-6 pt-6 pr-16">
+                <h2 className="text-lg font-semibold text-[#19274b]">
+                  Adicionar pedido
+                </h2>
+               
+                <p className="mt-1 text-sm text-[#818598]">
+                  Informe quem pediu e alguma observação.
                 </p>
               </div>
-            </div>
 
-            <div className="px-6 py-5">
-               <AnimatedAlert
-  message={alert.message}
-  type={alert.type}
-  onClose={() =>
-    setAlert({
-      message: null,
-      type: "error",
-    })
-  }
-/>
-              <div >
-                <label className="mb-1.5 block text-sm font-medium text-[#273453]">
-                  Quantidade
-                </label>
+              <div className="mx-6 mt-5 flex gap-4">
+                {selectedItem.image_url ? (
+                  <img
+                    src={selectedItem.image_url}
+                    alt={selectedItem.name}
+                    className="h-20 w-20 shrink-0 rounded-md object-cover"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-gray-100">
+                    <Utensils className="h-7 w-7 text-gray-300" />
+                  </div>
+                )}
 
-                <div className="flex items-center h-11 w-full rounded-lg border border-[#dfe4eb] overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setQuantity((current) => Math.max(1, current - 1))
-                    }
-                    className="h-full w-11 flex items-center justify-center text-lg text-[#536078] hover:bg-[#f5f7fa] cursor-pointer"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold text-[#19274b]">
+                    {selectedItem.name}
+                  </p>
+
+                  <p className="mt-1 text-[15px] font-medium text-[#1b325f]">
+                    {formatPrice(selectedItem.price)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-6 py-5">
+                <AnimatedAlert
+                  message={formAlert.message}
+                  type={formAlert.type}
+                  onClose={() =>
+                    setFormAlert({
+                      message: null,
+                      type: "error",
+                    })
+                  }
+                />
+                <div className="mt-3.5">
+                  <label className="mb-1.5 block text-sm font-medium text-[#273453]">
+                    Quantidade
+                  </label>
+
+                  <div className="flex items-center h-11 w-full rounded-lg border border-[#dfe4eb] overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setQuantity((current) => Math.max(1, current - 1))
+                      }
+                      className="h-full w-11 flex items-center justify-center text-lg text-[#536078] hover:bg-[#f5f7fa] cursor-pointer"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+
+                    <input
+                      type="number"
+                      min={1}
+                      value={quantity}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setQuantity(
+                          Number.isNaN(value) ? 1 : Math.max(1, value),
+                        );
+                      }}
+                      className="h-full flex-1 text-center text-sm font-semibold text-[#19274b] outline-none"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setQuantity((current) => current + 1)}
+                      className="h-full w-11 flex items-center justify-center text-lg text-[#536078] hover:bg-[#f5f7fa] cursor-pointer"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="mb-1.5 block text-sm font-medium text-[#273453]">
+                    Nome do cliente
+                  </label>
 
                   <input
-                    type="number"
-                    min={1}
-                    value={quantity}
-                    onChange={(e) => {
-                      const value = Number(e.target.value);
-                      setQuantity(Number.isNaN(value) ? 1 : Math.max(1, value));
-                    }}
-                    className="h-full flex-1 text-center text-sm font-semibold text-[#19274b] outline-none"
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Digite o nome do cliente"
+                    className="h-11 w-full rounded-lg border border-[#dfe4eb] px-3.5 text-sm text-[#19274b] outline-none"
                   />
+                </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((current) => current + 1)}
-                    className="h-full w-11 flex items-center justify-center text-lg text-[#536078] hover:bg-[#f5f7fa] cursor-pointer"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
+                <div className="mt-4">
+                  <label className="mb-1.5 block text-sm font-medium text-[#273453]">
+                    Observação
+                  </label>
+
+                  <textarea
+                    value={observation}
+                    onChange={(e) => setObservation(e.target.value)}
+                    placeholder="Ex.: sem cebola, ponto da carne..."
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-[#dfe4eb] px-3.5 py-3 text-sm text-[#19274b] outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="mt-4">
-                <label className="mb-1.5 block text-sm font-medium text-[#273453]">
-                  Nome do cliente
-                </label>
-
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Digite o nome do cliente"
-                  className="h-11 w-full rounded-lg border border-[#dfe4eb] px-3.5 text-sm text-[#19274b] outline-none focus:border-[#6388b2]"
-                />
+              <div className="px-6 pb-6">
+                <button
+                  type="button"
+                  onClick={handleAddPendingItem}
+                  className="h-11 w-full rounded-md bg-[#1b325f] text-sm font-medium text-white hover:bg-[#16294d] cursor-pointer"
+                >
+                  Adicionar pedido
+                </button>
               </div>
-
-              <div className="mt-4">
-                <label className="mb-1.5 block text-sm font-medium text-[#273453]">
-                  Observação
-                </label>
-
-                <textarea
-                  value={observation}
-                  onChange={(e) => setObservation(e.target.value)}
-                  placeholder="Ex.: sem cebola, ponto da carne..."
-                  rows={3}
-                  className="w-full resize-none rounded-lg border border-[#dfe4eb] px-3.5 py-3 text-sm text-[#19274b] outline-none focus:border-[#6388b2]"
-                />
-              </div>
-            </div>
-
-            <div className="px-6 pb-6">
-              <button
-                type="button"
-                onClick={handleAddPendingItem}
-                className="h-11 w-full rounded-md bg-[#1b325f] text-sm font-medium text-white hover:bg-[#16294d] cursor-pointer"
-              >
-                Adicionar pedido
-              </button>
             </div>
           </div>
         </div>

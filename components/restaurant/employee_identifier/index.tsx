@@ -9,10 +9,7 @@ type EmployeeRole = "gerente" | "cozinha" | "caixa" | "garcom";
 interface EmployeeIdentifierProps {
   restaurantId: string;
   role: EmployeeRole;
-  onIdentified?: (employee: {
-    id: number;
-    name: string;
-  }) => void;
+  onIdentified?: (employee: { id: number; name: string }) => void;
   children: React.ReactNode;
 }
 
@@ -37,7 +34,9 @@ export default function EmployeeIdentifier({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    async function checkEmployeeSession() {
+    let mounted = true;
+
+    async function checkEmployeeSession(initialCheck = false) {
       try {
         const response = await fetch(
           `/api/restaurant/employees/identify?restaurantId=${restaurantId}&role=${role}`,
@@ -49,22 +48,38 @@ export default function EmployeeIdentifier({
 
         const data = await response.json();
 
+        if (!mounted) return;
+
         if (response.ok && data.employee) {
           setIdentified(true);
           onIdentified?.(data.employee);
+        } else {
+          setIdentified(false);
         }
       } catch {
-        setIdentified(false);
+        if (mounted) {
+          setIdentified(false);
+        }
       } finally {
-        setChecking(false);
+        if (mounted && initialCheck) {
+          setChecking(false);
+        }
       }
     }
 
-    if (restaurantId && role) {
-      checkEmployeeSession();
-    }
-  }, [restaurantId, role, onIdentified]);
+    if (!restaurantId || !role) return;
 
+    checkEmployeeSession(true);
+
+    const interval = setInterval(() => {
+      checkEmployeeSession(false);
+    }, 10000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [restaurantId, role, onIdentified]);
   useEffect(() => {
     if (!identified && !checking) {
       setTimeout(() => {
@@ -131,9 +146,8 @@ export default function EmployeeIdentifier({
 
   if (checking) {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white">
-        <LoaderCircle className="w-8 h-8 text-(--color-primary) animate-spin" />
-      </div>
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center" />
+        
     );
   }
 

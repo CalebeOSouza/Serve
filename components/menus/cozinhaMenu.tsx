@@ -19,7 +19,7 @@ export default function CozinhaMenu() {
         </Link>
 
         <Link
-          href="#"
+          href="/roles/cozinha/dashboard/4/pedidos_cozinha"
           className="border-y border-y-gray-300 flex items-center py-5 gap-2 w-full relative transition-all hover:text-(--color-secondary)"
         >
           <li className={`flex items-center`}>

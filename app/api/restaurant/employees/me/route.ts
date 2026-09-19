@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import mysql from "mysql2/promise";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../../auth/[...nextauth]/route";
 import { getEmployeeSession } from "../../../../lib/employeeSession";
-
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -9,12 +10,7 @@ const pool = mysql.createPool({
   database: "db_serve",
 });
 
-const VALID_ROLES = [
-  "gerente",
-  "cozinha",
-  "caixa",
-  "garcom",
-] as const;
+const VALID_ROLES = ["gerente", "cozinha", "caixa", "garcom"] as const;
 
 type EmployeeRole = (typeof VALID_ROLES)[number];
 
@@ -23,15 +19,36 @@ export async function GET(req: NextRequest) {
     const role = req.nextUrl.searchParams.get("role");
 
     if (!role || !VALID_ROLES.includes(role as EmployeeRole)) {
-      return NextResponse.json(
-        { error: "Cargo inválido." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Cargo inválido." }, { status: 400 });
     }
 
-    const session = await getEmployeeSession(
-      role as EmployeeRole,
-    );
+    if (role === "gerente") {
+      const nextAuthSession = await getServerSession(authOptions);
+
+      if (
+        !nextAuthSession ||
+        !(
+          (nextAuthSession.user.accountType === "user" &&
+            String(nextAuthSession.user.role).toLowerCase() === "admin") ||
+          (nextAuthSession.user.accountType === "role" &&
+            String(nextAuthSession.user.role).toLowerCase() === "gerente")
+        )
+      ) {
+        return NextResponse.json(
+          { error: "Funcionário não identificado." },
+          { status: 401 },
+        );
+      }
+
+      return NextResponse.json({
+        id: nextAuthSession.user.id,
+        name: "Gerente",
+        role: "gerente",
+        active: true,
+      });
+    }
+
+    const session = await getEmployeeSession(role as EmployeeRole);
 
     if (!session) {
       return NextResponse.json(
@@ -62,12 +79,7 @@ export async function GET(req: NextRequest) {
 
         LIMIT 1
       `,
-      [
-        session.employeeId,
-        session.restaurantId,
-        session.restaurantId,
-        role,
-      ],
+      [session.employeeId, session.restaurantId, session.restaurantId, role],
     );
 
     const employees = rows as {
@@ -93,10 +105,7 @@ export async function GET(req: NextRequest) {
       active: employee.status === "ativo",
     });
   } catch (error) {
-    console.error(
-      "Erro ao carregar funcionário atual:",
-      error,
-    );
+    console.error("Erro ao carregar funcionário atual:", error);
 
     return NextResponse.json(
       { error: "Erro interno ao carregar funcionário." },

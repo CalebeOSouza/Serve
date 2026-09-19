@@ -32,6 +32,8 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const connection = await pool.getConnection();
+
   try {
     const { id } = await params;
 
@@ -49,7 +51,7 @@ export async function GET(
       );
     }
 
-    const [categoryRows] = await pool.query(
+    const [categoryRows] = await connection.query(
       `
       SELECT
         id,
@@ -64,7 +66,7 @@ export async function GET(
       [restaurantId],
     );
 
-    const [subcategoryRows] = await pool.query(
+    const [subcategoryRows] = await connection.query(
       `
       SELECT
         id,
@@ -80,7 +82,7 @@ export async function GET(
       [restaurantId],
     );
 
-    const [itemRows] = await pool.query(
+    const [itemRows] = await connection.query(
       `
       SELECT
         id,
@@ -140,45 +142,50 @@ export async function GET(
     const view = searchParams.get("view");
 
     if (view === "panel") {
-      const [panelRows] = await pool.query(
+      const [panelRows] = await connection.query(
         `
-    SELECT
+  SELECT
   t.id AS table_id,
   t.number AS table_number,
 
   o.id AS order_id,
-      o.status AS order_status,
-      o.created_at AS order_created_at,
+  o.status AS order_status,
+  o.created_at AS order_created_at,
+  e.name AS waiter_name,
 
-      oi.id AS order_item_id,
-      oi.menu_item_id,
-      oi.customer_name,
-      oi.quantity,
-      oi.unit_price,
-      oi.observation,
+  oi.id AS order_item_id,
+  oi.menu_item_id,
+  oi.customer_name,
+  oi.quantity,
+  oi.unit_price,
+  oi.observation,
 
-      mi.name AS menu_item_name
+  mi.name AS menu_item_name
 
-    FROM table_accounts ta
+FROM table_accounts ta
 
-    INNER JOIN tables t
-      ON t.id = ta.table_id
+INNER JOIN tables t
+  ON t.id = ta.table_id
 
-    INNER JOIN orders o
-      ON o.account_id = ta.id
+INNER JOIN orders o
+  ON o.account_id = ta.id
 
-    LEFT JOIN order_items oi
-      ON oi.order_id = o.id
+LEFT JOIN employees e
+  ON e.id = o.waiter_employee_id
 
-    LEFT JOIN menu_items mi
-      ON mi.id = oi.menu_item_id
+LEFT JOIN order_items oi
+  ON oi.order_id = o.id
 
-    WHERE ta.status = 'aberta'
-      AND t.restaurant_id = ?
+LEFT JOIN menu_items mi
+  ON mi.id = oi.menu_item_id
 
-    ORDER BY
-      o.created_at ASC,
-      oi.id ASC
+WHERE ta.status = 'aberta'
+AND o.status IN ('recebido', 'em_preparo', 'pronto')
+AND t.restaurant_id = ?
+
+ORDER BY
+  o.created_at ASC,
+  oi.id ASC
     `,
         [restaurantId],
       );
@@ -207,6 +214,7 @@ export async function GET(
             id: orderId,
             status: row.order_status,
             created_at: row.order_created_at,
+            waiter_name: row.waiter_name || "Garçom",
             items: [],
           };
 
@@ -239,7 +247,7 @@ export async function GET(
       });
     }
 
-    const [accountRows] = await pool.query(
+    const [accountRows] = await connection.query(
       `
       SELECT
         id
@@ -261,7 +269,7 @@ export async function GET(
       });
     }
 
-    const [orderRows] = await pool.query(
+    const [orderRows] = await connection.query(
       `
       SELECT
         o.id,
@@ -336,6 +344,8 @@ export async function GET(
       },
       { status: 500 },
     );
+  } finally {
+    connection.release();
   }
 }
 
@@ -606,6 +616,387 @@ FROM menu_items mi
           error instanceof Error
             ? error.message
             : "Erro interno ao criar pedido.",
+      },
+      { status: 500 },
+    );
+  } finally {
+    connection.release();
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const connection = await pool.getConnection();
+
+  try {
+    const { id: restaurantId } = await params;
+
+    const body = await req.json();
+
+    const { orderId, status } = body;
+
+    if (!restaurantId) {
+      return NextResponse.json(
+        {
+          error: "restaurantId é obrigatório.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!orderId) {
+      return NextResponse.json(
+        {
+          error: "orderId é obrigatório.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!["em_preparo", "pronto"].includes(status)) {
+      return NextResponse.json(
+        {
+          error: "Status inválido.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const employeeSession = await getEmployeeSession("cozinha");
+
+    if (!employeeSession) {
+      return NextResponse.json(
+        {
+          error: "Sessão da cozinha não encontrada. Informe o PIN novamente.",
+        },
+        { status: 401 },
+      );
+    }
+
+    if (employeeSession.restaurantId !== Number(restaurantId)) {
+      return NextResponse.json(
+        {
+          error: "O funcionário não pertence a este restaurante.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const employeeId = employeeSession.employeeId;
+
+    await connection.beginTransaction();
+
+    const [employeeRows] = await connection.query(
+      `
+      SELECT
+        id
+      FROM employees
+      WHERE id = ?
+        AND restaurant_id = ?
+        AND status = 'ativo'
+      LIMIT 1
+      `,
+      [employeeId, restaurantId],
+    );
+
+    const employee = (employeeRows as any[])[0];
+
+    if (!employee) {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error: "Funcionário inválido ou inativo.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const [orderRows] = await connection.query(
+      `
+      SELECT
+        o.id,
+        o.status,
+        t.restaurant_id,
+        t.number AS table_number
+      FROM orders o
+
+      INNER JOIN table_accounts ta
+        ON ta.id = o.account_id
+
+      INNER JOIN tables t
+        ON t.id = ta.table_id
+
+      WHERE o.id = ?
+        AND t.restaurant_id = ?
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [orderId, restaurantId],
+    );
+
+    const order = (orderRows as any[])[0];
+
+    if (!order) {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error: "Pedido não encontrado.",
+        },
+        { status: 404 },
+      );
+    }
+
+    if (order.status === "pronto") {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error: "Este pedido já está pronto.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (status === "em_preparo" && order.status !== "recebido") {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error: "O pedido precisa estar recebido para começar o preparo.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (status === "pronto" && order.status !== "em_preparo") {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error: "O pedido precisa estar em preparo para ser concluído.",
+        },
+        { status: 400 },
+      );
+    }
+
+    await connection.query(
+      `
+      UPDATE orders
+      SET status = ?
+      WHERE id = ?
+      `,
+      [status, orderId],
+    );
+
+    await connection.query(
+      `
+      INSERT INTO employee_logs (
+        restaurant_id,
+        employee_id,
+        system_account,
+        action_description
+      )
+      VALUES (?, ?, 'cozinha', ?)
+      `,
+      [
+        restaurantId,
+        employeeId,
+        status === "em_preparo"
+          ? `Iniciou o preparo do pedido #${orderId} da mesa ${order.table_number}.`
+          : `Concluiu o pedido #${orderId} da mesa ${order.table_number}.`,
+      ],
+    );
+
+    await connection.commit();
+
+    return NextResponse.json({
+      success: true,
+      orderId: Number(orderId),
+      status,
+    });
+  } catch (error) {
+    await connection.rollback();
+
+    console.error("Erro ao atualizar status do pedido:", error);
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erro interno ao atualizar pedido.",
+      },
+      { status: 500 },
+    );
+  } finally {
+    connection.release();
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const connection = await pool.getConnection();
+
+  try {
+    const { id: restaurantId } = await params;
+
+    const body = await req.json();
+
+    const { orderId } = body;
+
+    if (!restaurantId) {
+      return NextResponse.json(
+        {
+          error: "restaurantId é obrigatório.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!orderId) {
+      return NextResponse.json(
+        {
+          error: "orderId é obrigatório.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const employeeSession = await getEmployeeSession("garcom");
+
+    if (!employeeSession) {
+      return NextResponse.json(
+        {
+          error: "Sessão do garçom não encontrada. Informe o PIN novamente.",
+        },
+        { status: 401 },
+      );
+    }
+
+    if (employeeSession.restaurantId !== Number(restaurantId)) {
+      return NextResponse.json(
+        {
+          error: "O garçom não pertence a este restaurante.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const employeeId = employeeSession.employeeId;
+
+    await connection.beginTransaction();
+
+    const [employeeRows] = await connection.query(
+      `
+      SELECT
+        id
+      FROM employees
+      WHERE id = ?
+        AND restaurant_id = ?
+        AND status = 'ativo'
+      LIMIT 1
+      `,
+      [employeeId, restaurantId],
+    );
+
+    const employee = (employeeRows as any[])[0];
+
+    if (!employee) {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error: "Garçom inválido ou inativo.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const [orderRows] = await connection.query(
+      `
+      SELECT
+        o.id,
+        o.status,
+        t.number AS table_number
+      FROM orders o
+
+      INNER JOIN table_accounts ta
+        ON ta.id = o.account_id
+
+      INNER JOIN tables t
+        ON t.id = ta.table_id
+
+      WHERE o.id = ?
+        AND t.restaurant_id = ?
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [orderId, restaurantId],
+    );
+
+    const order = (orderRows as any[])[0];
+
+    if (!order) {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error: "Pedido não encontrado.",
+        },
+        { status: 404 },
+      );
+    }
+
+    if (order.status !== "pronto") {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error: "Apenas pedidos prontos podem ser marcados como entregues.",
+        },
+        { status: 400 },
+      );
+    }
+
+    await connection.query(
+      `
+  UPDATE orders
+  SET status = 'entregue'
+  WHERE id = ?
+  `,
+      [orderId],
+    );
+
+    await createEmployeeLog(
+      connection,
+      restaurantId,
+      employeeId,
+      `Entregou o pedido #${orderId} da mesa ${order.table_number}.`,
+    );
+
+    await connection.commit();
+
+    return NextResponse.json({
+      success: true,
+      message: "Pedido marcado como entregue.",
+    });
+  } catch (error) {
+    await connection.rollback();
+
+    console.error("Erro ao marcar pedido como entregue:", error);
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erro interno ao marcar pedido como entregue.",
       },
       { status: 500 },
     );

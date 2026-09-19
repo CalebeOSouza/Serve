@@ -42,8 +42,6 @@ export function isWallTooSmall(ax: number, ay: number, bx: number, by: number) {
   return Math.max(dx, dy) < GRID_SIZE_WALL;
 }
 
-// NOVO — mesma lógica de dois candidatos que já existe pra parede
-// interna, só que usando a espessura da parede externa.
 function snapExternalWallColumn(raw: number): number {
   const nearestLine = Math.round(raw / GRID_SIZE_WALL) * GRID_SIZE_WALL;
   const side: "near" | "far" = raw >= nearestLine ? "far" : "near";

@@ -44,13 +44,146 @@ export default function RestaurantProfile({
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  function cleanCep(value: string) {
+    return value.replace(/\D/g, "").slice(0, 8);
+  }
+
+  function formatCep(value: string) {
+    const numbers = cleanCep(value);
+
+    if (numbers.length <= 5) {
+      return numbers;
+    }
+
+    return `${numbers.slice(0, 5)}-${numbers.slice(5)}`;
+  }
+
+  function handleCepChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setForm({
+      ...form,
+      zipcode: formatCep(e.target.value),
+    });
+  }
+
+  function isValidText(value: string) {
+    return /^[A-Za-zÀ-ÿ\s]+$/.test(value.trim());
+  }
+
+  function isValidNumber(value: string) {
+    return /^\d+[A-Za-z]?$/.test(value.trim());
+  }
+
   async function handleSubmit() {
     try {
+      const name = form.name.trim();
+      const description = form.description.trim();
+      const zipcode = cleanCep(form.zipcode);
+      const street = form.street.trim();
+      const number = form.number.trim();
+      const neighborhood = form.neighborhood.trim();
+      const city = form.city.trim();
+      const state = form.state.trim().toUpperCase();
+
+      if (!name) {
+        setAlert({
+          message: "Informe o nome do restaurante.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (name.length < 2) {
+        setAlert({
+          message: "O nome do restaurante precisa ter pelo menos 2 caracteres.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (zipcode.length !== 8) {
+        setAlert({
+          message: "Informe um CEP válido com 8 números.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!street || street.length < 2) {
+        setAlert({
+          message: "Informe uma rua válida.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!isValidText(street)) {
+        setAlert({
+          message: "O nome da rua possui caracteres inválidos.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!isValidNumber(number)) {
+        setAlert({
+          message: "Informe um número de endereço válido.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!neighborhood || neighborhood.length < 2) {
+        setAlert({
+          message: "Informe um bairro válido.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!isValidText(neighborhood)) {
+        setAlert({
+          message: "O bairro possui caracteres inválidos.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!city || city.length < 2) {
+        setAlert({
+          message: "Informe uma cidade válida.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!isValidText(city)) {
+        setAlert({
+          message: "A cidade possui caracteres inválidos.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!/^[A-Z]{2}$/.test(state)) {
+        setAlert({
+          message: "Informe uma sigla de estado válida, como RS ou SP.",
+          type: "error",
+        });
+        return;
+      }
+
       const response = await fetch("/api/restaurant/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          name,
+          description,
+          zipcode: formatCep(zipcode),
+          street,
+          number,
+          neighborhood,
+          city,
+          state,
           id: restaurantId,
         }),
       });
@@ -69,7 +202,9 @@ export default function RestaurantProfile({
         return;
       }
 
-      if (mode === "onboarding" && onNext) onNext();
+      if (mode === "onboarding" && onNext) {
+        onNext();
+      }
     } catch (err) {
       setAlert({
         message: "Erro inesperado. Tente novamente.",
@@ -77,7 +212,6 @@ export default function RestaurantProfile({
       });
     }
   }
-
   useEffect(() => {
     if (alert.message && alertRef.current) {
       alertRef.current.scrollIntoView({
@@ -94,7 +228,7 @@ export default function RestaurantProfile({
           <div className="absolute top-0 left-0 w-full h-1.5 bg-(--color-primary)" />
 
           <div className="p-8 pb-13">
-            <div className="text-center flex flex-col gap-1 mb-10">
+            <div className="text-center flex flex-col gap-1 mb-6">
               <h1 className="text-[26px] text-gray-800">
                 Informações do restaurante
               </h1>
@@ -112,7 +246,7 @@ export default function RestaurantProfile({
               />
             </div>
 
-            <form className="flex flex-col gap-8">
+            <form className="flex flex-col gap-8 mt-6">
               <div className="grid md:grid-cols-2 gap-10">
                 <div className="flex flex-col gap-5">
                   <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
@@ -122,9 +256,7 @@ export default function RestaurantProfile({
                   <div>
                     <label className="text-sm text-gray-600">
                       Nome do restaurante{" "}
-                      <span className="text-red-600 font-bold text-sm">
-                        *
-                      </span>
+                      <span className="text-red-600 font-bold text-sm">*</span>
                     </label>
 
                     <input
@@ -165,19 +297,18 @@ export default function RestaurantProfile({
                   <div>
                     <label className="text-sm text-gray-600">
                       CEP{" "}
-                      <span className="text-red-600 font-bold text-sm">
-                        *
-                      </span>
+                      <span className="text-red-600 font-bold text-sm">*</span>
                     </label>
 
                     <input
                       name="zipcode"
                       value={form.zipcode}
-                      onChange={handleChange}
+                      onChange={handleCepChange}
                       type="text"
+                      inputMode="numeric"
                       className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                       placeholder="00000-000"
-                      maxLength={8}
+                      maxLength={9}
                       required
                     />
                   </div>
@@ -185,9 +316,7 @@ export default function RestaurantProfile({
                   <div>
                     <label className="text-sm text-gray-600">
                       Rua{" "}
-                      <span className="text-red-600 font-bold text-sm">
-                        *
-                      </span>
+                      <span className="text-red-600 font-bold text-sm">*</span>
                     </label>
 
                     <input
@@ -195,6 +324,7 @@ export default function RestaurantProfile({
                       value={form.street}
                       onChange={handleChange}
                       type="text"
+                      pattern="[A-Za-zÀ-ÿ\s]+"
                       className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                       placeholder="Rua Exemplo"
                       required
@@ -234,6 +364,7 @@ export default function RestaurantProfile({
                         value={form.neighborhood}
                         onChange={handleChange}
                         type="text"
+                        pattern="[A-Za-zÀ-ÿ\s]+"
                         className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                         placeholder="Centro"
                         required
@@ -255,6 +386,7 @@ export default function RestaurantProfile({
                         value={form.city}
                         onChange={handleChange}
                         type="text"
+                        pattern="[A-Za-zÀ-ÿ\s]+"
                         className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
                         placeholder="São Paulo"
                         required
@@ -272,10 +404,19 @@ export default function RestaurantProfile({
                       <input
                         name="state"
                         value={form.state}
-                        onChange={handleChange}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            state: e.target.value
+                              .replace(/[^a-zA-Z]/g, "")
+                              .slice(0, 2)
+                              .toUpperCase(),
+                          })
+                        }
                         type="text"
+                        maxLength={2}
                         className="w-full mt-1 px-4 py-3 rounded-md border border-gray-300 outline-none focus:ring-black/10"
-                        placeholder="SP"
+                        placeholder="RS"
                         required
                       />
                     </div>

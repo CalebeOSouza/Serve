@@ -7,6 +7,8 @@ import {
   Users,
   Layout,
   CalendarDays,
+  ListTodo,
+  ScrollText
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import EmployeeProfileMenu from "@/components/dashboard/employee_profile_menu";
@@ -76,6 +78,16 @@ export function DashboardMenuTablet({ restaurantId }: Props) {
       path: `${basePath}/layout`,
       icon: Layout,
     },
+    {
+      label: "Reservas",
+      path: `${basePath}/reservas`,
+      icon: CalendarDays,
+    },
+    {
+      label: "Logs",
+      path: `${basePath}/logs`,
+      icon: ScrollText,
+    },
   ];
 
   const gerenteMenu: MenuItem[] = [
@@ -83,11 +95,6 @@ export function DashboardMenuTablet({ restaurantId }: Props) {
       label: "Funcionários",
       path: `${basePath}/funcionarios`,
       icon: Users,
-    },
-    {
-      label: "Layout",
-      path: `${basePath}/layout`,
-      icon: Layout,
     },
     {
       label: "Reservas",
@@ -113,7 +120,7 @@ export function DashboardMenuTablet({ restaurantId }: Props) {
     {
       label: "Pedidos",
       path: `${basePath}/pedidos`,
-      icon: Utensils,
+      icon: ListTodo,
     },
   ];
 

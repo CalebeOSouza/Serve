@@ -11,6 +11,7 @@ import {
   UserRound,
   MessageSquareText,
   LoaderCircle,
+  ScrollText,
 } from "lucide-react";
 
 import Salao from "@/components/restaurant/salao";
@@ -73,6 +74,36 @@ export default function LayoutPage() {
       setLoadingOrders(false);
     }
   };
+
+  async function handleDeliverOrder(orderId: number) {
+    try {
+      const response = await fetch(
+        `/api/restaurant/${restaurantId}/garcom/orders`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderId,
+          }),
+        },
+      );
+
+      if (!response.ok) return;
+
+      setTables((prev) =>
+        prev
+          .map((table) => ({
+            ...table,
+            orders: table.orders.filter((order) => order.id !== orderId),
+          }))
+          .filter((table) => table.orders.length > 0),
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -209,9 +240,10 @@ export default function LayoutPage() {
           <div className="px-3 pb-3">
             <button
               type="button"
-              className="w-full rounded-lg bg-[#244995] hover:bg-[#1d3d7d] text-white text-[12px] font-semibold py-2.5 transition"
+              className="w-full rounded-lg bg-(--color-primary) hover:bg-[#1d3d7d] text-white text-[13.5px] font-semibold py-2.5 cursor-pointer"
+              onClick={() => handleDeliverOrder(order.id)}
             >
-              Entregar pedido
+              Marcar como entregue
             </button>
           </div>
         )}
@@ -232,10 +264,7 @@ export default function LayoutPage() {
     const expanded = expandedTables[table.table_id] ?? true;
 
     return (
-      <div
-        key={table.table_id}
-        className="bg-white overflow-hidden"
-      >
+      <div key={table.table_id} className="bg-white overflow-hidden">
         {/* MESA */}
         <button
           type="button"
@@ -297,11 +326,11 @@ export default function LayoutPage() {
         </div>
       </header>
 
-      <div className="flex gap-5 items-start">
+      <div className="flex flex-col min-[1100px]:flex-row gap-5 items-start">
         <Salao role="garcom" />
 
         {/* PAINEL DE PEDIDOS */}
-        <div className="flex flex-col w-[40%] h-full">
+        <div className="flex flex-col w-full min-[1100px]:w-[40%] h-full">
           <div className="bg-white border border-[#E4E6EB] rounded-xl overflow-hidden">
             {/* HEADER */}
             <div className="px-5 pt-5 pb-4">
@@ -316,7 +345,6 @@ export default function LayoutPage() {
                   </p>
                 </div>
               </div>
-       
             </div>
 
             <div className="border-t border-[#EEF0F4]" />
@@ -332,45 +360,20 @@ export default function LayoutPage() {
                 </div>
               ) : tables.length === 0 ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center">
-                  <div className="w-11 h-11 rounded-xl bg-[#F3F5F8] flex items-center justify-center">
-                    <CookingPot className="w-5 h-5 text-[#89909F]" />
+                  <div className="w-12 h-12 rounded-full bg-[#F3F5F8] flex items-center justify-center">
+                    <ScrollText className="w-6 h-6 text-[#89909F]" />
                   </div>
 
-                  <p className="text-[13px] font-semibold text-[#555B6B] mt-3">
+                  <p className="text-[14px] font-semibold text-[#555B6B] mt-3">
                     Nenhum pedido ativo
                   </p>
 
-                  <p className="text-[11px] text-[#8A8F9F] mt-1 max-w-[210px]">
+                  <p className="text-[13px] text-[#8A8F9F] mt-1 max-w-[250px]">
                     Os pedidos das mesas aparecerão aqui automaticamente.
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-5">
-                  {/* EM PREPARO */}
-                  {preparingTables.length > 0 && (
-                    <section>
-                      <div className="flex items-center justify-between mb-2.5 px-3">
-                        <div className="flex items-center gap-2">
-                          
-
-                          <h3 className="text-[14px] font-bold text-[#FC811D]">
-                            EM PREPARO
-                          </h3>
-                        </div>
-
-                        <span className="text-[14px] font-semibold text-[#FC811D] bg-[#FFF0E1] px-3 py-1 rounded-md">
-                          {preparingOrders}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-2.5">
-                        {preparingTables.map((table) =>
-                          renderTable(table, false),
-                        )}
-                      </div>
-                    </section>
-                  )}
-
                   {/* PRONTOS */}
                   {readyTables.length > 0 && (
                     <section>
@@ -390,6 +393,29 @@ export default function LayoutPage() {
 
                       <div className="flex flex-col gap-2.5">
                         {readyTables.map((table) => renderTable(table, true))}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* EM PREPARO */}
+                  {preparingTables.length > 0 && (
+                    <section>
+                      <div className="flex items-center justify-between mb-2.5 px-3">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-[14px] font-bold text-[#FC811D]">
+                            EM PREPARO
+                          </h3>
+                        </div>
+
+                        <span className="text-[14px] font-semibold text-[#FC811D] bg-[#FFF0E1] px-3 py-1 rounded-md">
+                          {preparingOrders}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-2.5">
+                        {preparingTables.map((table) =>
+                          renderTable(table, false),
+                        )}
                       </div>
                     </section>
                   )}

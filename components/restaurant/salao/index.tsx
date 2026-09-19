@@ -100,9 +100,9 @@ export default function Salao({ role }: Props) {
   const [reservationDate, setReservationDate] = useState("");
   const [reservationTime, setReservationTime] = useState("");
 
-const [occupationPeopleCount, setOccupationPeopleCount] = useState("");
+  const [occupationPeopleCount, setOccupationPeopleCount] = useState("");
 
-const [reservationPeopleCount, setReservationPeopleCount] = useState("");
+  const [reservationPeopleCount, setReservationPeopleCount] = useState("");
 
   const [alert, setAlert] = useState<{
     message: string | null;
@@ -120,7 +120,18 @@ const [reservationPeopleCount, setReservationPeopleCount] = useState("");
       reservation_date: string;
       reservation_time: string;
     }[]
+
+    
   >([]);
+
+const [tableCustomers, setTableCustomers] = useState<
+  {
+    table_id: string;
+    name: string;
+    people_count: number;
+  }[]
+>([]);
+
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
     if (!restaurantId) return;
@@ -138,7 +149,8 @@ const [reservationPeopleCount, setReservationPeopleCount] = useState("");
 
         const data = await res.json();
 
-        setReservations(data.reservations);
+setReservations(data.reservations);
+setTableCustomers(data.tableCustomers ?? []);
 
         setItems((currentItems) =>
           currentItems.map((item) => {
@@ -190,7 +202,7 @@ const [reservationPeopleCount, setReservationPeopleCount] = useState("");
         const data = await res.json();
 
         setReservations(data.reservations);
-
+setTableCustomers(data.tableCustomers ?? []);
         setItems((currentItems) =>
           currentItems.map((item) => {
             if (!isRestaurantTable(item)) {
@@ -231,12 +243,12 @@ const [reservationPeopleCount, setReservationPeopleCount] = useState("");
           headers: {
             "Content-Type": "application/json",
           },
-         body: JSON.stringify({
-  action: "occupy",
-  name: occupationName,
-  tableId: occupationTable.id,
-  peopleCount: Number(occupationPeopleCount),
-}),
+          body: JSON.stringify({
+            action: "occupy",
+            name: occupationName,
+            tableId: occupationTable.id,
+            peopleCount: Number(occupationPeopleCount),
+          }),
         },
       );
 
@@ -300,7 +312,7 @@ const [reservationPeopleCount, setReservationPeopleCount] = useState("");
       setOccupationModal(false);
       setOccupationTable(null);
       setOccupationName("");
-setOccupationTable(null);
+      setOccupationTable(null);
       setAlert({
         message: null,
         type: "error",
@@ -607,15 +619,27 @@ setOccupationTable(null);
     }
   }
 
-function getTodayLocal() {
-  const today = new Date();
+  function getPreviousDateStr(dateStr: string) {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() - 1);
 
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
 
-  return `${year}-${month}-${day}`;
-}
+    return `${y}-${m}-${d}`;
+  }
+
+  function getTodayLocal() {
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -1041,6 +1065,13 @@ function getTodayLocal() {
     ? getNextReservation(selectedTable.id)
     : null;
 
+const mainCustomer = selectedTable
+  ? tableCustomers.find(
+      (customer) =>
+        String(customer.table_id) === String(selectedTable.id),
+    ) ?? null
+  : null;
+
   function getDayOfWeekFromDate(date: string) {
     if (!date) return null;
 
@@ -1104,26 +1135,31 @@ function getTodayLocal() {
       ? selectedDayHours.close_time.slice(0, 5)
       : undefined;
 
-  function isReservationTimeValid() {
-    if (!reservationDate || !reservationTime) {
-      return false;
-    }
+ function isReservationTimeValid() {
+  if (!reservationDate || !reservationTime) {
+    return false;
+  }
 
-    const hours = getSelectedDayHours(reservationDate);
+  const hours = getSelectedDayHours(reservationDate);
 
-    if (!hours || !hours.enabled) {
-      return false;
-    }
+  if (!hours || !hours.enabled) {
+    return false;
+  }
 
-    if (!hours.open_time || !hours.close_time) {
-      return false;
-    }
+  if (!hours.open_time || !hours.close_time) {
+    return false;
+  }
 
-    const openTime = hours.open_time.slice(0, 5);
-    const closeTime = hours.close_time.slice(0, 5);
+  const openTime = hours.open_time.slice(0, 5);
+  const closeTime = hours.close_time.slice(0, 5);
 
+  const crossesMidnight = closeTime <= openTime;
+
+  if (!crossesMidnight) {
     return reservationTime >= openTime && reservationTime <= closeTime;
   }
+  return reservationTime >= openTime || reservationTime <= closeTime;
+}
 
   async function CreateReservation() {
     if (!reservationTable) return;
@@ -1136,13 +1172,13 @@ function getTodayLocal() {
           headers: {
             "Content-Type": "application/json",
           },
-        body: JSON.stringify({
-  name: reservationName,
-  date: reservationDate,
-  time: reservationTime,
-  tableId: reservationTable.id,
-  peopleCount: Number(reservationPeopleCount),
-}),
+          body: JSON.stringify({
+            name: reservationName,
+            date: reservationDate,
+            time: reservationTime,
+            tableId: reservationTable.id,
+            peopleCount: Number(reservationPeopleCount),
+          }),
         },
       );
 
@@ -1211,7 +1247,7 @@ function getTodayLocal() {
       setReservationName("");
       setReservationDate("");
       setReservationTime("");
-setReservationPeopleCount("");
+      setReservationPeopleCount("");
       setAlert({
         message: null,
         type: "error",
@@ -1386,6 +1422,7 @@ setReservationPeopleCount("");
                   role={role}
                   table={selectedTable}
                   nextReservation={nextReservation}
+                  mainCustomer={mainCustomer}
                   onClose={() => {
                     setOrdersModal(false);
                     setSelectedTableId(null);
@@ -1399,7 +1436,7 @@ setReservationPeopleCount("");
                     setReservationName("");
                     setReservationDate("");
                     setReservationTime("");
-setReservationPeopleCount("");
+                    setReservationPeopleCount("");
                     setReservationModal(true);
 
                     setAlert({
@@ -1427,7 +1464,7 @@ setReservationPeopleCount("");
       {reservationModal && reservationTable && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex flex-col gap-1">
                 <h2 className="text-lg font-semibold text-[#19274b]">
                   Reservar Mesa {reservationTable.tableNumber}
@@ -1462,7 +1499,7 @@ setReservationPeopleCount("");
                 }))
               }
             />
-            <div>
+            <div className="mt-3">
               <label className="block mb-1 text-sm font-medium text-[#19274b]">
                 Nome do reservante
               </label>
@@ -1476,27 +1513,27 @@ setReservationPeopleCount("");
               />
             </div>
 
-<div className="mt-5">
-  <label className="block mb-1.5 text-sm font-medium text-[#19274b]">
-    Quantidade de pessoas
-  </label>
+            <div className="mt-5">
+              <label className="block mb-1.5 text-sm font-medium text-[#19274b]">
+                Quantidade de pessoas
+              </label>
 
-  <input
-    type="number"
-    min={1}
-    max={reservationTable.capacity}
-    value={reservationPeopleCount}
-    onChange={(e) => {
-      setReservationPeopleCount(e.target.value);
-      setAlert({
-        message: null,
-        type: "error",
-      });
-    }}
-    placeholder={`Ex: 4 (máx. ${reservationTable.capacity})`}
-    className="w-full h-[52px] border border-gray-200 rounded-lg px-4 text-[16px] text-[#19274b] outline-none transition focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
-  />
-</div>
+              <input
+                type="number"
+                min={1}
+                max={reservationTable.capacity}
+                value={reservationPeopleCount}
+                onChange={(e) => {
+                  setReservationPeopleCount(e.target.value);
+                  setAlert({
+                    message: null,
+                    type: "error",
+                  });
+                }}
+                placeholder={`Ex: 4 (máx. ${reservationTable.capacity})`}
+                className="w-full h-[52px] border border-gray-200 rounded-lg px-4 text-[16px] text-[#19274b] outline-none transition focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
+              />
+            </div>
 
             <div className="mt-5">
               <label className="block mb-1.5 text-sm font-medium text-[#19274b]">
@@ -1615,26 +1652,26 @@ setReservationPeopleCount("");
                     return;
                   }
 
-const peopleCount = Number(reservationPeopleCount);
+                  const peopleCount = Number(reservationPeopleCount);
 
-if (!reservationPeopleCount || peopleCount < 1) {
-  setAlert({
-    message: "Informe a quantidade de pessoas.",
-    type: "error",
-  });
-  return;
-}
+                  if (!reservationPeopleCount || peopleCount < 1) {
+                    setAlert({
+                      message: "Informe a quantidade de pessoas.",
+                      type: "error",
+                    });
+                    return;
+                  }
 
-if (
-  reservationTable.capacity !== undefined &&
-  peopleCount > reservationTable.capacity
-) {
-  setAlert({
-    message: `Esta mesa comporta no máximo ${reservationTable.capacity} pessoas.`,
-    type: "error",
-  });
-  return;
-}
+                  if (
+                    reservationTable.capacity !== undefined &&
+                    peopleCount > reservationTable.capacity
+                  ) {
+                    setAlert({
+                      message: `Esta mesa comporta no máximo ${reservationTable.capacity} pessoas.`,
+                      type: "error",
+                    });
+                    return;
+                  }
 
                   if (!reservationDate) {
                     setAlert({
@@ -1702,7 +1739,7 @@ if (
                   setOccupationModal(false);
                   setOccupationTable(null);
                   setOccupationName("");
-setOccupationPeopleCount("");
+                  setOccupationPeopleCount("");
                   setAlert({
                     message: null,
                     type: "error",
@@ -1742,27 +1779,27 @@ setOccupationPeopleCount("");
               />
             </div>
 
-<div className="mt-5">
-  <label className="block mb-1.5 text-sm font-medium text-[#19274b]">
-    Quantidade de pessoas
-  </label>
+            <div className="mt-5">
+              <label className="block mb-1.5 text-sm font-medium text-[#19274b]">
+                Quantidade de pessoas
+              </label>
 
-  <input
-    type="number"
-    min={1}
-    max={occupationTable.capacity}
-    value={occupationPeopleCount}
-    onChange={(e) => {
-      setOccupationPeopleCount(e.target.value);
-      setAlert({
-        message: null,
-        type: "error",
-      });
-    }}
-    placeholder={`Ex: 4 (máx. ${occupationTable.capacity})`}
-    className="w-full h-[52px] border border-gray-200 rounded-lg px-4 text-[16px] text-[#19274b] outline-none transition focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
-  />
-</div>
+              <input
+                type="number"
+                min={1}
+                max={occupationTable.capacity}
+                value={occupationPeopleCount}
+                onChange={(e) => {
+                  setOccupationPeopleCount(e.target.value);
+                  setAlert({
+                    message: null,
+                    type: "error",
+                  });
+                }}
+                placeholder={`Ex: 4 (máx. ${occupationTable.capacity})`}
+                className="w-full h-[52px] border border-gray-200 rounded-lg px-4 text-[16px] text-[#19274b] outline-none transition focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)"
+              />
+            </div>
 
             {/* BOTÕES */}
             <div className="flex gap-3 mt-6">
@@ -1775,38 +1812,38 @@ setOccupationPeopleCount("");
                   });
 
                   if (!occupationName.trim()) {
-  setAlert({
-    message: "Informe o nome do cliente principal.",
-    type: "error",
-  });
+                    setAlert({
+                      message: "Informe o nome do cliente principal.",
+                      type: "error",
+                    });
 
-  return;
-}
+                    return;
+                  }
 
-const peopleCount = Number(occupationPeopleCount);
+                  const peopleCount = Number(occupationPeopleCount);
 
-if (!occupationPeopleCount || peopleCount < 1) {
-  setAlert({
-    message: "Informe a quantidade de pessoas.",
-    type: "error",
-  });
+                  if (!occupationPeopleCount || peopleCount < 1) {
+                    setAlert({
+                      message: "Informe a quantidade de pessoas.",
+                      type: "error",
+                    });
 
-  return;
-}
+                    return;
+                  }
 
-if (
-  occupationTable.capacity !== undefined &&
-  peopleCount > occupationTable.capacity
-) {
-  setAlert({
-    message: `Esta mesa comporta no máximo ${occupationTable.capacity} pessoas.`,
-    type: "error",
-  });
+                  if (
+                    occupationTable.capacity !== undefined &&
+                    peopleCount > occupationTable.capacity
+                  ) {
+                    setAlert({
+                      message: `Esta mesa comporta no máximo ${occupationTable.capacity} pessoas.`,
+                      type: "error",
+                    });
 
-  return;
-}
+                    return;
+                  }
 
-await OccupyTable();
+                  await OccupyTable();
 
                   await OccupyTable();
                 }}

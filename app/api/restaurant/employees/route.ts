@@ -6,14 +6,29 @@ import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
 
-    if (!session || session.user.accountType !== "user") {
+    if (
+      !session ||
+      !(
+        (session.user.accountType === "user" &&
+          String(session.user.role).toLowerCase() === "admin") ||
+        (session.user.accountType === "role" &&
+          String(session.user.role).toLowerCase() === "gerente")
+      )
+    ) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const body = await req.json();
     const { name, roles, cpf, restaurantId } = body;
+
+    if (
+      String(session.user.role).toLowerCase() === "gerente" &&
+      String(session.user.restaurantId) !== String(restaurantId)
+    ) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    }
 
     if (!name || !roles || !cpf || roles.length === 0) {
       return NextResponse.json(
@@ -33,8 +48,7 @@ export async function POST(req: Request) {
     if (rolesWithPassword.length === 0) {
       return NextResponse.json(
         {
-          error:
-            "Defina a senha dos cargos antes de cadastrar funcionários.",
+          error: "Defina a senha dos cargos antes de cadastrar funcionários.",
         },
         { status: 400 },
       );
@@ -145,20 +159,50 @@ VALUES (?, ?, ?)`,
 }
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+   const session = await getServerSession(authOptions);
 
-    if (!session || session.user.accountType !== "user") {
+    if (
+      !session ||
+      !(
+        (session.user.accountType === "user" &&
+          String(session.user.role).toLowerCase() === "admin") ||
+        (session.user.accountType === "role" &&
+          String(session.user.role).toLowerCase() === "gerente")
+      )
+    ) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
-
     const { searchParams } = new URL(req.url);
-    const restaurantId = searchParams.get("restaurantId");
+    const requestedRestaurantId = searchParams.get("restaurantId");
 
-    if (!restaurantId) {
+    if (!requestedRestaurantId) {
       return NextResponse.json(
         { error: "restaurantId é obrigatório" },
         { status: 400 },
       );
+    }
+
+    const restaurantId =
+      session.user.role === "admin"
+        ? requestedRestaurantId
+        : String(session.user.restaurantId);
+
+    if (
+      !restaurantId ||
+      restaurantId === "undefined" ||
+      restaurantId === "null"
+    ) {
+      return NextResponse.json(
+        { error: "Restaurante não identificado" },
+        { status: 400 },
+      );
+    }
+
+    if (
+      String(session.user.role).toLowerCase() === "gerente" &&
+      String(session.user.restaurantId) !== String(requestedRestaurantId)
+    ) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     }
 
     const [employees]: any = await db.query(
@@ -205,12 +249,27 @@ export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.accountType !== "user") {
+    if (
+      !session ||
+      !(
+        (session.user.accountType === "user" &&
+          String(session.user.role).toLowerCase() === "admin") ||
+        (session.user.accountType === "role" &&
+          String(session.user.role).toLowerCase() === "gerente")
+      )
+    ) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const body = await req.json();
     const { employeeId, name, roles, cpf, restaurantId } = body;
+
+    if (
+      String(session.user.role).toLowerCase() === "gerente" &&
+      String(session.user.restaurantId) !== String(restaurantId)
+    ) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+    }
 
     if (!employeeId || !name || !roles || !cpf || roles.length === 0) {
       return NextResponse.json(
@@ -270,8 +329,7 @@ export async function PUT(req: Request) {
     if (rolesWithPassword.length === 0) {
       return NextResponse.json(
         {
-          error:
-            "Defina a senha dos cargos antes de cadastrar funcionários.",
+          error: "Defina a senha dos cargos antes de cadastrar funcionários.",
         },
         { status: 400 },
       );
@@ -325,9 +383,17 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+   const session = await getServerSession(authOptions);
 
-    if (!session || session.user.accountType !== "user") {
+    if (
+      !session ||
+      !(
+        (session.user.accountType === "user" &&
+          String(session.user.role).toLowerCase() === "admin") ||
+        (session.user.accountType === "role" &&
+          String(session.user.role).toLowerCase() === "gerente")
+      )
+    ) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
@@ -339,6 +405,17 @@ export async function DELETE(req: Request) {
         { error: "employeeId é obrigatório" },
         { status: 400 },
       );
+    }
+
+    if (String(session.user.role).toLowerCase() === "gerente") {
+      const [employee]: any = await db.query(
+        `SELECT id FROM employees WHERE id = ? AND restaurant_id = ?`,
+        [employeeId, session.user.restaurantId],
+      );
+
+      if (employee.length === 0) {
+        return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+      }
     }
 
     await db.query(`DELETE FROM employee_roles WHERE employee_id = ?`, [

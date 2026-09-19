@@ -66,7 +66,7 @@ export default function AnimatedAlert({
     <div
       className={`
         grid transition-all duration-400 ease-in-out
-        ${isOpen ? "grid-rows-[1fr] opacity-100 mb-6" : "grid-rows-[0fr] opacity-0 mb-0"}
+        ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 mb-0"}
       `}
     >
       <div className="overflow-hidden">

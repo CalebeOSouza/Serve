@@ -20,8 +20,8 @@ export async function DELETE(
 
     const connection = await db.getConnection();
 
-const [reservationRows]: any = await connection.query(
-  `
+    const [reservationRows]: any = await connection.query(
+      `
     SELECT
       r.customer_name,
       r.people_count,
@@ -35,8 +35,8 @@ const [reservationRows]: any = await connection.query(
       AND r.restaurant_id = ?
     LIMIT 1
   `,
-  [reservationId, restaurantId],
-);
+      [reservationId, restaurantId],
+    );
 
     try {
       const [result] = await connection.execute(
@@ -48,9 +48,6 @@ const [reservationRows]: any = await connection.query(
         [reservationId, restaurantId],
       );
 
-
-
-
       const affectedRows = (result as any).affectedRows;
 
       if (affectedRows === 0) {
@@ -60,16 +57,16 @@ const [reservationRows]: any = await connection.query(
         );
       }
 
-const employeeSession = await getEmployeeSession("garcom");
+      const employeeSession = await getEmployeeSession("garcom");
 
-if (employeeSession) {
-  await createEmployeeLog(
-    connection,
-    restaurantId,
-    employeeSession.employeeId,
-    `Excluiu a reserva da mesa ${reservationRows[0].table_number}: ${reservationRows[0].customer_name}, ${reservationRows[0].people_count} pessoa${reservationRows[0].people_count === 1 ? "" : "s"}.`,
-  );
-}
+      if (employeeSession) {
+        await createEmployeeLog(
+          connection,
+          restaurantId,
+          employeeSession.employeeId,
+          `Excluiu a reserva da mesa ${reservationRows[0].table_number}: ${reservationRows[0].customer_name}, ${reservationRows[0].people_count} pessoa${reservationRows[0].people_count === 1 ? "" : "s"}.`,
+        );
+      }
 
       return NextResponse.json({
         success: true,
@@ -102,15 +99,10 @@ async function createEmployeeLog(
       )
       VALUES (?, ?, 'garçom', ?)
     `,
-    [
-      restaurantId,
-      employeeId,
-      description.slice(0, 255),
-    ],
+    [restaurantId, employeeId, description.slice(0, 255)],
   );
 }
 async function syncTableStatuses(connection: any, restaurantId: string) {
-
   await connection.query(
     `
       UPDATE tables t
@@ -120,7 +112,6 @@ async function syncTableStatuses(connection: any, restaurantId: string) {
           MIN(TIMESTAMP(reservation_date, reservation_time)) AS reservation_datetime
         FROM reservations
         WHERE restaurant_id = ?
-          AND reservation_date = CURDATE()
           AND TIMESTAMP(reservation_date, reservation_time) > NOW()
         GROUP BY table_id
       ) r ON r.table_id = t.id
@@ -134,15 +125,15 @@ async function syncTableStatuses(connection: any, restaurantId: string) {
 
   await connection.query(
     `
-      UPDATE tables t
+       UPDATE tables t
       INNER JOIN (
         SELECT
           table_id,
           MIN(TIMESTAMP(reservation_date, reservation_time)) AS reservation_datetime
         FROM reservations
         WHERE restaurant_id = ?
-          AND reservation_date = CURDATE()
           AND TIMESTAMP(reservation_date, reservation_time) <= NOW()
+          AND TIMESTAMP(reservation_date, reservation_time) >= DATE_SUB(NOW(), INTERVAL 6 HOUR)
         GROUP BY table_id
       ) r ON r.table_id = t.id
       SET t.status = 'ocupada'
@@ -152,8 +143,8 @@ async function syncTableStatuses(connection: any, restaurantId: string) {
     [restaurantId, restaurantId],
   );
 
-await connection.query(
-  `
+  await connection.query(
+    `
     INSERT INTO table_accounts (
       table_id,
       status,
@@ -175,9 +166,8 @@ await connection.query(
           AND ta.status IN ('aberta', 'conta_solicitada')
       )
   `,
-  [restaurantId],
-);
-  
+    [restaurantId],
+  );
 }
 
 export async function GET(
@@ -194,8 +184,8 @@ export async function GET(
     await connection.beginTransaction();
 
     await syncTableStatuses(connection, restaurantId);
-const [rows]: any = await connection.query(
-  `
+    const [rows]: any = await connection.query(
+      `
     SELECT
       r.id,
       r.table_id,
@@ -212,8 +202,31 @@ const [rows]: any = await connection.query(
   AND TIMESTAMP(r.reservation_date, r.reservation_time) > NOW()
 ORDER BY r.reservation_date ASC, r.reservation_time ASC
   `,
-  [restaurantId],
-);
+      [restaurantId],
+    );
+
+    const [occupationRows]: any = await connection.query(
+      `
+    SELECT
+      r.id,
+      r.table_id,
+      r.customer_name AS name,
+      r.people_count
+    FROM reservations r
+    WHERE r.restaurant_id = ?
+      AND TIMESTAMP(r.reservation_date, r.reservation_time) <= NOW()
+      AND NOT EXISTS (
+        SELECT 1
+        FROM reservations r2
+        WHERE r2.restaurant_id = r.restaurant_id
+          AND r2.table_id = r.table_id
+          AND TIMESTAMP(r2.reservation_date, r2.reservation_time)
+            > TIMESTAMP(r.reservation_date, r.reservation_time)
+          AND TIMESTAMP(r2.reservation_date, r2.reservation_time) <= NOW()
+      )
+  `,
+      [restaurantId],
+    );
 
     const [tableRows]: any = await connection.query(
       `
@@ -228,8 +241,9 @@ ORDER BY r.reservation_date ASC, r.reservation_time ASC
 
     await connection.commit();
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       reservations: rows,
+      tableCustomers: occupationRows,
       tables: tableRows,
     });
   } catch (error) {
@@ -261,36 +275,29 @@ export async function POST(
   try {
     const body = await req.json();
 
-const employeeSession = await getEmployeeSession("garcom");
+    const employeeSession = await getEmployeeSession("garcom");
 
-if (!employeeSession) {
-  return NextResponse.json(
-    {
-      error: "Sessão do garçom não encontrada. Informe o PIN novamente.",
-    },
-    { status: 401 },
-  );
-}
+    if (!employeeSession) {
+      return NextResponse.json(
+        {
+          error: "Sessão do garçom não encontrada. Informe o PIN novamente.",
+        },
+        { status: 401 },
+      );
+    }
 
-if (employeeSession.restaurantId !== Number(restaurantId)) {
-  return NextResponse.json(
-    {
-      error: "O garçom não pertence a este restaurante.",
-    },
-    { status: 403 },
-  );
-}
+    if (employeeSession.restaurantId !== Number(restaurantId)) {
+      return NextResponse.json(
+        {
+          error: "O garçom não pertence a este restaurante.",
+        },
+        { status: 403 },
+      );
+    }
 
-const employeeId = employeeSession.employeeId;
+    const employeeId = employeeSession.employeeId;
 
-    const {
-      action,
-      name,
-      date,
-      time,
-      tableId,
-      peopleCount,
-    } = body;
+    const { action, name, date, time, tableId, peopleCount } = body;
 
     if (!restaurantId) {
       return NextResponse.json(
@@ -305,12 +312,12 @@ const employeeId = employeeSession.employeeId;
         { status: 400 },
       );
     }
-if (!Number.isInteger(Number(peopleCount)) || Number(peopleCount) < 1) {
-  return NextResponse.json(
-    { error: "A quantidade de pessoas deve ser informada." },
-    { status: 400 },
-  );
-}
+    if (!Number.isInteger(Number(peopleCount)) || Number(peopleCount) < 1) {
+      return NextResponse.json(
+        { error: "A quantidade de pessoas deve ser informada." },
+        { status: 400 },
+      );
+    }
     connection = await db.getConnection();
     await connection.beginTransaction();
 
@@ -324,8 +331,8 @@ if (!Number.isInteger(Number(peopleCount)) || Number(peopleCount) < 1) {
         );
       }
 
-    const [tableRows]: any = await connection.query(
-  `
+      const [tableRows]: any = await connection.query(
+        `
     SELECT
       id,
       number,
@@ -336,8 +343,8 @@ if (!Number.isInteger(Number(peopleCount)) || Number(peopleCount) < 1) {
       AND restaurant_id = ?
     FOR UPDATE
   `,
-  [tableId, restaurantId],
-);
+        [tableId, restaurantId],
+      );
       if (tableRows.length === 0) {
         await connection.rollback();
 
@@ -349,16 +356,16 @@ if (!Number.isInteger(Number(peopleCount)) || Number(peopleCount) < 1) {
 
       const table = tableRows[0];
 
-if (Number(peopleCount) > Number(table.capacity)) {
-  await connection.rollback();
+      if (Number(peopleCount) > Number(table.capacity)) {
+        await connection.rollback();
 
-  return NextResponse.json(
-    {
-      error: `Esta mesa comporta no máximo ${table.capacity} pessoas.`,
-    },
-    { status: 400 },
-  );
-}
+        return NextResponse.json(
+          {
+            error: `Esta mesa comporta no máximo ${table.capacity} pessoas.`,
+          },
+          { status: 400 },
+        );
+      }
 
       if (table.status === "indisponivel") {
         await connection.rollback();
@@ -373,7 +380,10 @@ if (Number(peopleCount) > Number(table.capacity)) {
         await connection.rollback();
 
         return NextResponse.json(
-          { error: "Esta mesa possui uma reserva e não pode ser ocupada manualmente." },
+          {
+            error:
+              "Esta mesa possui uma reserva e não pode ser ocupada manualmente.",
+          },
           { status: 409 },
         );
       }
@@ -399,12 +409,7 @@ if (Number(peopleCount) > Number(table.capacity)) {
 )
 VALUES (?, ?, ?, ?, CURDATE(), CURTIME())
         `,
-      [
-  restaurantId,
-  tableId,
-  name.trim(),
-  Number(peopleCount),
-],
+        [restaurantId, tableId, name.trim(), Number(peopleCount)],
       );
 
       await connection.query(
@@ -417,8 +422,8 @@ VALUES (?, ?, ?, ?, CURDATE(), CURTIME())
         [tableId, restaurantId],
       );
 
-await connection.query(
-  `
+      await connection.query(
+        `
     INSERT INTO table_accounts (
       table_id,
       status,
@@ -427,15 +432,15 @@ await connection.query(
     )
     VALUES (?, 'aberta', 0, 0)
   `,
-  [tableId],
-);
+        [tableId],
+      );
 
-await createEmployeeLog(
-  connection,
-  restaurantId,
-  employeeId,
-  `Ocupou a mesa ${table.number} para ${name.trim()}, ${Number(peopleCount)} pessoa${Number(peopleCount) === 1 ? "" : "s"}.`,
-);
+      await createEmployeeLog(
+        connection,
+        restaurantId,
+        employeeId,
+        `Ocupou a mesa ${table.number} para ${name.trim()}, ${Number(peopleCount)} pessoa${Number(peopleCount) === 1 ? "" : "s"}.`,
+      );
 
       await connection.commit();
 
@@ -476,8 +481,25 @@ await createEmployeeLog(
       );
     }
 
+    const [nowCheckRows]: any = await connection.query(
+      `SELECT TIMESTAMP(?, ?) > NOW() AS isFuture`,
+      [date, time],
+    );
+
+    if (!nowCheckRows[0].isFuture) {
+      await connection.rollback();
+
+      return NextResponse.json(
+        {
+          error:
+            "A data e o horário da reserva precisam ser no futuro em relação ao momento atual.",
+        },
+        { status: 400 },
+      );
+    }
+
     const [tableRows]: any = await connection.query(
-  `
+      `
     SELECT
       id,
       number,
@@ -488,8 +510,8 @@ await createEmployeeLog(
       AND restaurant_id = ?
     FOR UPDATE
   `,
-  [tableId, restaurantId],
-);
+      [tableId, restaurantId],
+    );
 
     if (tableRows.length === 0) {
       await connection.rollback();
@@ -502,16 +524,16 @@ await createEmployeeLog(
 
     const table = tableRows[0];
 
-if (Number(peopleCount) > Number(table.capacity)) {
-  await connection.rollback();
+    if (Number(peopleCount) > Number(table.capacity)) {
+      await connection.rollback();
 
-  return NextResponse.json(
-    {
-      error: `Esta mesa comporta no máximo ${table.capacity} pessoas.`,
-    },
-    { status: 400 },
-  );
-}
+      return NextResponse.json(
+        {
+          error: `Esta mesa comporta no máximo ${table.capacity} pessoas.`,
+        },
+        { status: 400 },
+      );
+    }
 
     if (table.status === "indisponivel") {
       await connection.rollback();
@@ -549,14 +571,7 @@ if (Number(peopleCount) > Number(table.capacity)) {
           ) ASC
         LIMIT 1
       `,
-      [
-        restaurantId,
-        tableId,
-        date,
-        time,
-        date,
-        time,
-      ],
+      [restaurantId, tableId, date, time, date, time],
     );
 
     if (reservationRows.length > 0) {
@@ -579,7 +594,7 @@ if (Number(peopleCount) > Number(table.capacity)) {
     }
 
     const [reservationResult]: any = await connection.query(
-  `
+      `
     INSERT INTO reservations (
       restaurant_id,
       table_id,
@@ -590,21 +605,17 @@ if (Number(peopleCount) > Number(table.capacity)) {
     )
     VALUES (?, ?, ?, ?, ?, ?)
   `,
-  [
-    restaurantId,
-    tableId,
-    name.trim(),
-    Number(peopleCount),
-    date,
-    time,
-  ],
-);
-await createEmployeeLog(
-  connection,
-  restaurantId,
-  employeeId,
-  `Criou reserva para a mesa ${table.number}: ${name.trim()}, ${Number(peopleCount)} pessoa${Number(peopleCount) === 1 ? "" : "s"}, ${date} às ${time}.`,
-);
+      [restaurantId, tableId, name.trim(), Number(peopleCount), date, time],
+    );
+    await createEmployeeLog(
+      connection,
+      restaurantId,
+      employeeId,
+      `Criou reserva para a mesa ${table.number}: ${name.trim()}, ${Number(peopleCount)} pessoa${Number(peopleCount) === 1 ? "" : "s"}, ${date} às ${time}.`,
+    );
+
+    await syncTableStatuses(connection, restaurantId);
+
     await connection.commit();
 
     return NextResponse.json(

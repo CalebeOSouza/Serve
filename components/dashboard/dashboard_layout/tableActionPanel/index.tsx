@@ -11,6 +11,11 @@ import {
 
 import type { RestaurantTable } from "@/app/admin/dashboard/[id]/layout/types";
 
+type TableCustomer = {
+  name: string;
+  people_count: number;
+};
+
 type Reservation = {
   id: number;
   table_id: string;
@@ -24,6 +29,7 @@ export function TableActionPanel({
   role,
   table,
   nextReservation,
+  mainCustomer,
   onClose,
   onReserve,
   onOccupy,
@@ -32,6 +38,7 @@ export function TableActionPanel({
   role: "gerente" | "garcom";
   table: RestaurantTable;
   nextReservation: Reservation | null;
+  mainCustomer: TableCustomer | null;
   onClose: () => void;
   onReserve: () => void;
   onOccupy: () => void;
@@ -63,41 +70,41 @@ export function TableActionPanel({
   }
 
   function getCountdown(date: Date) {
-  const now = new Date();
+    const now = new Date();
 
-  const diff = date.getTime() - now.getTime();
+    const diff = date.getTime() - now.getTime();
 
-  if (diff <= 0) {
-    return "A reserva é agora.";
-  }
-
-  const totalMinutes = Math.floor(diff / (1000 * 60));
-
-  const minutesInDay = 24 * 60;
-
-  if (totalMinutes >= minutesInDay) {
-    const days = Math.floor(totalMinutes / minutesInDay);
-
-    if (days === 1) {
-      return "Falta 1 dia para esta reserva.";
+    if (diff <= 0) {
+      return "A reserva é agora.";
     }
 
-    return `Faltam ${days} dias para esta reserva.`;
+    const totalMinutes = Math.floor(diff / (1000 * 60));
+
+    const minutesInDay = 24 * 60;
+
+    if (totalMinutes >= minutesInDay) {
+      const days = Math.floor(totalMinutes / minutesInDay);
+
+      if (days === 1) {
+        return "Falta 1 dia para esta reserva.";
+      }
+
+      return `Faltam ${days} dias para esta reserva.`;
+    }
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0 && minutes > 0) {
+      return `Faltam ${hours}h e ${minutes} min para esta reserva.`;
+    }
+
+    if (hours > 0) {
+      return `Faltam ${hours}h para esta reserva.`;
+    }
+
+    return `Faltam ${minutes} min para esta reserva.`;
   }
-
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours > 0 && minutes > 0) {
-    return `Faltam ${hours}h e ${minutes} min para esta reserva.`;
-  }
-
-  if (hours > 0) {
-    return `Faltam ${hours}h para esta reserva.`;
-  }
-
-  return `Faltam ${minutes} min para esta reserva.`;
-}
 
   return (
     <div className="w-80 rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden">
@@ -127,13 +134,7 @@ export function TableActionPanel({
                     onClick={onOrders}
                   >
                     Pedidos
-                  </button>
-                  <button
-                    className="w-full rounded-sm border border-(--color-primary) px-2 py-1.5 text-sm font-medium text-(--color-primary) hover:bg-(--color-primary)/5 cursor-pointer"
-                    onClick={() => {}}
-                  >
-                    Fechar conta
-                  </button>
+                  </button>               
                 </div>
               )}
 
@@ -163,6 +164,40 @@ export function TableActionPanel({
 
       <div className="p-4">
         <div className="flex flex-col gap-4">
+          {table.status === "ocupada" && mainCustomer && (
+            <>
+              <h5 className="text-[#1b325f] font-semibold text-base">
+                Clientes na mesa
+              </h5>
+
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <UserRound className="w-5 h-5 text-[#1b325f] shrink-0" />
+
+                    <span
+                      className="text-sm text-(--color-primary) truncate"
+                      title={mainCustomer.name}
+                    >
+                      {mainCustomer.name}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <UsersRound className="w-5 h-5 text-[#1b325f] shrink-0" />
+
+                    <span className="text-sm text-(--color-primary)">
+                      {mainCustomer.people_count}{" "}
+                      {mainCustomer.people_count === 1 ? "pessoa" : "pessoas"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-px w-full bg-gray-200" />
+            </>
+          )}
+
           <h5 className="text-[#1b325f] font-semibold text-base">
             Próxima reserva
           </h5>
@@ -220,7 +255,6 @@ export function TableActionPanel({
                     {getCountdown(nextReservation.dateTime)}
                   </p>
                 </div>
- 
               </div>
             </>
           ) : (

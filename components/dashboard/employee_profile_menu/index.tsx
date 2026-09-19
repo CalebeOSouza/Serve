@@ -61,7 +61,7 @@ export default function EmployeeProfileMenu({
   }, [role]);
 
   function getInitials(name?: string) {
-    if (!name) return "--";
+    if (!name) return "";
 
     const parts = name.trim().split(/\s+/).filter(Boolean);
 
@@ -75,7 +75,7 @@ export default function EmployeeProfileMenu({
   }
 
   function getFirstName(name?: string) {
-    if (!name) return "Carregando...";
+    if (!name) return "Indefinido";
 
     return name.trim().split(/\s+/)[0] || "Funcionário";
   }
@@ -169,24 +169,26 @@ export default function EmployeeProfileMenu({
             {firstName}
           </p>
 
-          <p className="mt-[3px] text-[13px] leading-[16px] text-[#8791A8]">
+          <p className="mt-[3px] text-[13px] leading-[16px] text-[#5e677a]">
             {roleLabel}
           </p>
         </div>
 
-        <button
-          ref={buttonRef}
-          type="button"
-          onClick={toggleMenu}
-          aria-label="Opções do funcionário"
-          className="m-0 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md p-0 text-[#253E6F]"
-        >
-          <MoreVertical size={19} />
-        </button>
+        {role !== "gerente" && (
+  <button
+    ref={buttonRef}
+    type="button"
+    onClick={toggleMenu}
+    aria-label="Opções do funcionário"
+    className="m-0 flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md p-0 text-[#253E6F] outline-none"
+  >
+    <MoreVertical size={19} />
+  </button>
+)}
 
         {open && (
           <div
-            className="fixed w-45 rounded-lg overflow-hidden bg-white shadow-[0_6px_24px_rgba(27,50,95,0.14)] border border-[#E8EAF0] "
+            className="fixed w-38 rounded-lg overflow-hidden bg-white shadow-[0_6px_24px_rgba(27,50,95,0.14)] border border-[#E8EAF0] "
             style={{
               top: `${menuPosition.top}px`,
               left: `${menuPosition.left}px`,

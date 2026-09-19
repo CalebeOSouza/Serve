@@ -16,7 +16,8 @@ function getSecret() {
 export async function getEmployeeSession(role: EmployeeRole) {
   const cookieStore = await cookies();
 
-  const token = cookieStore.get(`serve_employee_${role}`)?.value;
+  const cookieName = `serve_employee_${role}`;
+  const token = cookieStore.get(cookieName)?.value;
 
   if (!token) {
     return null;
@@ -61,6 +62,24 @@ export async function getEmployeeSession(role: EmployeeRole) {
   if (!valid) {
     return null;
   }
+
+  const newExpiresAt = Date.now() + 12 * 60 * 60 * 1000;
+  const newPayload = `${employeeId}.${restaurantId}.${tokenRole}.${newExpiresAt}`;
+
+  const newSignature = crypto
+    .createHmac("sha256", getSecret())
+    .update(newPayload)
+    .digest("hex");
+
+  const newToken = `${newPayload}.${newSignature}`;
+
+  cookieStore.set(cookieName, newToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 12,
+    path: "/",
+  });
 
   return {
     employeeId: Number(employeeId),

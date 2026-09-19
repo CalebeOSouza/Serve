@@ -78,7 +78,7 @@ export function TableOverlay({
           ? "bottom-1"
           : status === "ocupada"
             ? "bottom-2"
-            : "bottom-1"
+            : "bottom-4"
     }`}
         >
           <p className="text-[10px] mt-0.5">
@@ -190,20 +190,18 @@ ${
                   ? "Ocupada"
                   : "Indisponível"}
           </p>
-          {status === "reservada" && (
-            <div className="flex items-center text-center gap-1 text-[10px]">
-                  <Clock3 className="w-2.5 h-2.5" />
-                  {reservationTime}
-                </div>
-          )}
-
-{lCorner === "top-right" && status === "reservada" && (
-            <div className="flex items-center justify-end text-center gap-1 text-[10px]">
-                  <Clock3 className="w-2.5 h-2.5" />
-                  {reservationTime}
-                </div>
-          )}
-
+         {status === "reservada" && (
+  <div
+    className={`flex items-center text-center gap-1 text-[10px] ${
+      lCorner === "top-right" || lCorner === "bottom-left"
+        ? "justify-end"
+        : ""
+    }`}
+  >
+    <Clock3 className="w-2.5 h-2.5" />
+    {reservationTime}
+  </div>
+)}
         </div>
       </div>
     );

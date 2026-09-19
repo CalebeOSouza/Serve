@@ -173,6 +173,58 @@ export default function RestaurantLayout({ role }: { role: Role }) {
   } | null>(null);
 
   const [settingsTableId, setSettingsTableId] = useState<string | null>(null);
+const [reservations, setReservations] = useState<
+  {
+    id: number;
+    table_id: string;
+    customer_name: string;
+    people_count: number;
+    reservation_date: string;
+    reservation_time: string;
+  }[]
+>([]);
+
+useEffect(() => {
+  if (!restaurantId) return;
+
+  async function loadReservations() {
+    try {
+      const res = await fetch(
+        `/api/restaurant/${restaurantId}/garcom/reservation`,
+        { cache: "no-store" },
+      );
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setReservations(data.reservations ?? []);
+
+      setLayoutState((s) => ({
+        ...s,
+        items: s.items.map((item) => {
+          if (!isRestaurantTable(item)) return item;
+
+          const updatedTable = data.tables?.find(
+            (table: { id: number; status: RestaurantTable["status"] }) =>
+              String(table.id) === getRawTableId(item.id),
+          );
+
+          if (!updatedTable) return item;
+
+          return { ...item, status: updatedTable.status };
+        }),
+      }));
+    } catch (error) {
+      console.error("Erro ao carregar reservas:", error);
+    }
+  }
+
+  loadReservations();
+
+  const interval = setInterval(loadReservations, 30000);
+  return () => clearInterval(interval);
+}, [restaurantId]);
 
   const { items, walls, floors, history, future } = layoutState;
 
@@ -223,6 +275,50 @@ export default function RestaurantLayout({ role }: { role: Role }) {
       item.type === "mesa_l"
     );
   }
+
+function getRawTableId(id: string) {
+  return id.startsWith("table-") ? id.slice(6) : id;
+}
+
+function getReservationDateTime(reservation: {
+  reservation_date: string;
+  reservation_time: string;
+}) {
+  const date =
+    typeof reservation.reservation_date === "string"
+      ? reservation.reservation_date.slice(0, 10)
+      : "";
+
+  const time =
+    typeof reservation.reservation_time === "string"
+      ? reservation.reservation_time.slice(0, 5)
+      : "";
+
+  return new Date(`${date}T${time}:00`);
+}
+
+function getNextReservation(tableId: string) {
+  const now = new Date();
+  const rawId = getRawTableId(tableId);
+
+  return (
+    reservations
+      .filter((reservation) => String(reservation.table_id) === rawId)
+      .map((reservation) => ({
+        ...reservation,
+        dateTime: getReservationDateTime(reservation),
+      }))
+      .filter(
+        (reservation) =>
+          !isNaN(reservation.dateTime.getTime()) && reservation.dateTime > now,
+      )
+      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())[0] ?? null
+  );
+}
+
+function getNextReservationTime(tableId: string) {
+  return getNextReservation(tableId)?.reservation_time?.slice(0, 5);
+}
 
   function normalizeRotation(rotation: number) {
     return ((rotation % 360) + 360) % 360;
@@ -679,6 +775,48 @@ export default function RestaurantLayout({ role }: { role: Role }) {
     if (!restaurantId) return;
     withLoadingOverlay("Carregando layout...", loadLayout);
   }, [restaurantId]);
+
+useEffect(() => {
+  if (!restaurantId) return;
+
+  async function loadReservations() {
+    try {
+      const res = await fetch(
+        `/api/restaurant/${restaurantId}/garcom/reservation`,
+        { cache: "no-store" },
+      );
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setReservations(data.reservations ?? []);
+
+      setLayoutState((s) => ({
+        ...s,
+        items: s.items.map((item) => {
+          if (!isRestaurantTable(item)) return item;
+
+          const updatedTable = data.tables?.find(
+            (table: { id: number; status: RestaurantTable["status"] }) =>
+              String(table.id) === getRawTableId(item.id),
+          );
+
+          if (!updatedTable) return item;
+
+          return { ...item, status: updatedTable.status };
+        }),
+      }));
+    } catch (error) {
+      console.error("Erro ao carregar reservas:", error);
+    }
+  }
+
+  loadReservations();
+
+  const interval = setInterval(loadReservations, 30000);
+  return () => clearInterval(interval);
+}, [restaurantId]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -1904,12 +2042,18 @@ export default function RestaurantLayout({ role }: { role: Role }) {
 
     const isReservada = isRestaurantTable(item) && item.status === "reservada";
 
+    const isOcupada = isRestaurantTable(item) && item.status === "ocupada";
+
     let base = isIndisponivel
       ? "border border-[#6D7387] bg-gray-100"
       : "border border-[#6388b2] bg-[#EBF5FF]";
 
     if (isReservada) {
-      base = "border border-[#DE6B10] bg-[#FDEFDC]";
+      base = "border border-[#ffbb7f] bg-[#FFF8ED]";
+    }
+
+    if (isOcupada) {
+      base = "border border-red-400 bg-red-200";
     }
 
     const rotation = item.rotation ?? 0;
@@ -1931,6 +2075,10 @@ export default function RestaurantLayout({ role }: { role: Role }) {
       item.type === "mesa_l" ? getLTableCorner(rotation) : "top-left";
 
     const internalRotation = getInternalRotation(rotation);
+
+const reservationTime = isRestaurantTable(item)
+  ? getNextReservationTime(item.id)
+  : undefined;
 
     switch (item.type) {
       case "mesa_quadrada":
@@ -1976,6 +2124,7 @@ export default function RestaurantLayout({ role }: { role: Role }) {
                   tableNumber={item.tableNumber}
                   capacity={item.capacity}
                   status={item.status}
+                  reservationTime={reservationTime}
                   isPreview={previewItem?.id === item.id}
                 />
               )}
@@ -2001,6 +2150,7 @@ export default function RestaurantLayout({ role }: { role: Role }) {
                   tableNumber={item.tableNumber}
                   capacity={item.capacity}
                   status={item.status}
+                  reservationTime={reservationTime}
                   isPreview={previewItem?.id === item.id}
                 />
               )}
@@ -2020,6 +2170,7 @@ export default function RestaurantLayout({ role }: { role: Role }) {
                 tableNumber={item.tableNumber}
                 capacity={item.capacity}
                 status={item.status}
+                reservationTime={reservationTime}
                 isPreview={previewItem?.id === item.id}
                 isVertical={isVertical}
                 isHorizontalFlipped={isHorizontalFlipped}
@@ -2029,12 +2180,26 @@ export default function RestaurantLayout({ role }: { role: Role }) {
           </div>
         );
 
-      case "mesa_l":
+      case "mesa_l": {
         const isIndisponivel =
           isRestaurantTable(item) && item.status === "indisponivel";
+        const isReservada =
+          isRestaurantTable(item) && item.status === "reservada";
+        const isOcupada = isRestaurantTable(item) && item.status === "ocupada";
 
-        const lFill = isIndisponivel ? "#f3f4f6" : "#EBF5FF";
-        const lStroke = isIndisponivel ? "#6D7387" : "#6388b2";
+        let lFill = "#EBF5FF";
+        let lStroke = "#6388b2";
+
+        if (isIndisponivel) {
+          lFill = "#f3f4f6";
+          lStroke = "#6D7387";
+        } else if (isReservada) {
+          lFill = "#FFF8ED";
+          lStroke = "#ffbb7f";
+        } else if (isOcupada) {
+          lFill = "#fecaca";
+          lStroke = "#f87171";
+        }
 
         return (
           <div style={{ width: size.w, height: size.h }} className="relative">
@@ -2070,6 +2235,7 @@ export default function RestaurantLayout({ role }: { role: Role }) {
                   tableNumber={item.tableNumber}
                   capacity={item.capacity}
                   status={item.status}
+                  reservationTime={reservationTime}
                   isPreview={previewItem?.id === item.id}
                   lCorner={lCorner}
                 />
@@ -2077,6 +2243,7 @@ export default function RestaurantLayout({ role }: { role: Role }) {
             </div>
           </div>
         );
+      }
       case "porta": {
         const isRight = item.swingDirection === "right";
 

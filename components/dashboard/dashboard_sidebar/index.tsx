@@ -7,8 +7,10 @@ import {
   Users,
   Layout,
   ArrowLeftRight,
-  CalendarDays,
+  Calendar,
   ScrollText,
+  ListTodo,
+  Banknote
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import EmployeeProfileMenu from "@/components/dashboard/employee_profile_menu";
@@ -74,6 +76,16 @@ export function DashboardMenu({ restaurantId }: Props) {
       path: `${basePath}/layout`,
       icon: Layout,
     },
+    {
+      label: "Reservas",
+      path: `${basePath}/reservas`,
+      icon: Calendar,
+    },
+    {
+      label: "Logs",
+      path: `${basePath}/logs`,
+      icon: ScrollText,
+    },
   ];
 
   const gerenteMenu: MenuItem[] = [
@@ -83,14 +95,9 @@ export function DashboardMenu({ restaurantId }: Props) {
       icon: Users,
     },
     {
-      label: "Layout",
-      path: `${basePath}/layout`,
-      icon: Layout,
-    },
-    {
       label: "Reservas",
       path: `${basePath}/reservas`,
-      icon: CalendarDays,
+      icon: Calendar,
     },
     {
       label: "Logs",
@@ -108,7 +115,7 @@ export function DashboardMenu({ restaurantId }: Props) {
     {
       label: "Reservas",
       path: `${basePath}/reservas`,
-      icon: CalendarDays,
+      icon: Calendar,
     },
   ];
 
@@ -116,15 +123,15 @@ export function DashboardMenu({ restaurantId }: Props) {
     {
       label: "Pedidos",
       path: `${basePath}/pedidos`,
-      icon: Utensils,
+      icon: ListTodo,
     },
   ];
 
   const caixaMenu: MenuItem[] = [
     {
-      label: "Pedidos",
-      path: `${basePath}/pedidos`,
-      icon: Utensils,
+      label: "Caixa",
+      path: `${basePath}/painel_caixa`,
+      icon: Banknote,
     },
   ];
 

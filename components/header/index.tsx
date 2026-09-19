@@ -15,7 +15,7 @@ import GarcomMenu from "../menus/garcomMenu";
 import CaixaMenu from "../menus/caixaMenu";
 import LogoutButton from "../logout_btn";
 
-import { Bell } from "lucide-react";
+import { Bell, BellOff } from "lucide-react";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,15 +29,25 @@ export function Header() {
 
   const [openNotifications, setOpenNotifications] = useState(false);
 
+  const [orderNotifications, setOrderNotifications] = useState<
+    {
+      id: number;
+      status: string;
+      created_at: string;
+      table_number: number;
+    }[]
+  >([]);
+
+  const [hasNewOrderNotification, setHasNewOrderNotification] = useState(false);
+  const seenOrderIdsRef = useRef<number[]>([]);
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
-
+  console.log(session);
   const role = session?.user?.role?.toLowerCase() ?? null;
+  const restaurantId = session?.user?.restaurantId;
   const isLogged = !!session;
   const hasRole = role !== null;
-
-  /* ================= MENU POR ROLE ================= */
 
   function renderMenu() {
     console.log("Role atual:", role);
@@ -265,6 +275,79 @@ export function Header() {
     };
   }, [onboardingNotification]);
 
+  //Mostrar os pedidos prontos pro garçom que fez eles
+
+  useEffect(() => {
+    if (status !== "authenticated" || role !== "garcom" || !restaurantId) {
+      setOrderNotifications([]);
+      setHasNewOrderNotification(false);
+      seenOrderIdsRef.current = [];
+      return;
+    }
+
+    let isMounted = true;
+    let firstLoad = true;
+
+    const loadOrderNotifications = async () => {
+      try {
+        const response = await fetch(
+          `/api/restaurant/${restaurantId}/garcom/notifications`,
+          {
+            cache: "no-store",
+          },
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const orders = data.orders || [];
+
+        if (!isMounted) {
+          return;
+        }
+
+        const currentOrderIds = orders.map((order: { id: number }) => order.id);
+
+        setOrderNotifications(orders);
+
+        if (firstLoad) {
+          seenOrderIdsRef.current = currentOrderIds;
+          firstLoad = false;
+          setHasNewOrderNotification(orders.length > 0);
+          return;
+        }
+
+        const newOrders = orders.filter(
+          (order: { id: number }) =>
+            !seenOrderIdsRef.current.includes(order.id),
+        );
+
+        if (newOrders.length > 0) {
+          setHasNewOrderNotification(true);
+        }
+
+        if (orders.length === 0) {
+          setHasNewOrderNotification(false);
+        }
+
+        seenOrderIdsRef.current = currentOrderIds;
+      } catch (error) {
+        console.error("Erro ao verificar pedidos prontos:", error);
+      }
+    };
+
+    loadOrderNotifications();
+
+    const interval = setInterval(loadOrderNotifications, 2000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [status, role, restaurantId]);
+
   const renderContent = () => {
     if (isLogged && hasRole) {
       return (
@@ -366,38 +449,105 @@ export function Header() {
               onClick={() => setOpenNotifications(!openNotifications)}
             />
 
-            {showOnboardingNotification && (
-              <span className="absolute -top-1 -right-1 bg-(--color-primary) h-2 w-2 text-white text-[10px] rounded-full px-1"></span>
+            {(showOnboardingNotification || orderNotifications.length > 0) && (
+              <span className="absolute -top-1 -right-1 bg-(--color-primary) h-2 w-2 rounded-full"></span>
             )}
           </div>
 
           {openNotifications && (
             <div className="absolute right-0 top-10 w-80 bg-white shadow-lg border border-gray-200 rounded-lg p-4 z-50">
-              {showOnboardingNotification && onboardingNotification ? (
-                <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-gray-800">
-                    Onboarding incompleto
+                    Notificações
                   </p>
 
-                  <p className="text-sm text-gray-600">
-                    Você não terminou de configurar o restaurante{" "}
-                    {onboardingNotification.profile.name}.
-                  </p>
-
-                  <button
-                    onClick={() =>
-                      router.push(
-                        `/admin/onboarding/${onboardingNotification.id}`,
-                      )
-                    }
-                    className="mt-2 bg-(--color-primary) text-white text-sm px-3 py-2 rounded-md hover:bg-(--color-secondary) cursor-pointer"
-                  >
-                    Continuar configuração
-                  </button>
+                  {(orderNotifications.length > 0 ||
+                    showOnboardingNotification) && (
+                    <span className="text-xs font-medium text-(--color-primary)">
+                      Nova
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-gray-500">Sem notificações</p>
-              )}
+
+                {orderNotifications.length > 0 && (
+                  <div className="flex flex-col gap-1.5 max-h-80 overflow-y-auto">
+                    {orderNotifications.map((order) => (
+                      <button
+                        key={order.id}
+                        onClick={() => {
+                          router.push(
+                            `/roles/garcom/dashboard/${restaurantId}/salao`,
+                          );
+                        }}
+                        className="w-full text-left transition cursor-pointer"
+                      >
+                        <div className="flex items-start gap-3 rounded-lg bg-gray-50 p-3 hover:bg-gray-100 transition">
+                          <div className="mt-1.5 w-2 h-2 rounded-full bg-(--color-primary) shrink-0" />
+
+                          <div className="flex flex-col gap-1">
+                            <p className="text-sm font-semibold text-gray-800">
+                              Pedido pronto
+                            </p>
+
+                            <p className="text-xs text-gray-600">
+                              O pedido #{order.id} da mesa{" "}
+                              {String(order.table_number).padStart(2, "0")} está
+                              pronto para ser entregue.
+                            </p>
+
+                            <p className="text-[11px] text-gray-400">
+                              {new Date(order.created_at).toLocaleTimeString(
+                                "pt-BR",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {showOnboardingNotification && onboardingNotification && (
+                  <div className="flex flex-col gap-2 rounded-lg bg-gray-50 p-3">
+                    <p className="text-sm font-semibold text-gray-800">
+                      Onboarding incompleto
+                    </p>
+
+                    <p className="text-sm text-gray-600">
+                      Você não terminou de configurar o restaurante{" "}
+                      {onboardingNotification.profile.name}.
+                    </p>
+
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/admin/onboarding/${onboardingNotification.id}`,
+                        )
+                      }
+                      className="mt-2 bg-(--color-primary) text-white text-sm px-3 py-2 rounded-md hover:bg-(--color-secondary) cursor-pointer"
+                    >
+                      Continuar configuração
+                    </button>
+                  </div>
+                )}
+
+                {orderNotifications.length === 0 && !showOnboardingNotification && (
+                  <div className="py-3 flex flex-col items-center justify-center text-center">
+                    <div className="w-10 h-10 rounded-full bg-[#F3F5F8] flex items-center justify-center">
+                      <BellOff className="w-6 h-6 text-[#89909F]" />
+                    </div>
+
+                    <p className="text-[14px] font-semibold text-[#555B6B] mt-3">
+                      Nenhuma notificação!
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

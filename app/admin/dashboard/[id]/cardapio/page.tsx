@@ -454,8 +454,7 @@ function handleSubcategoryDeleted(
               </h2>
 
               <p className="text-sm text-gray-500 mt-2 mb-6">
-                Adicione uma nova categoria ao seu cardápio para organizar seus
-                produtos de forma eficiente.
+     
                 {categoryModal.mode === "create"
                   ? "Adicione uma nova categoria ao seu cardápio para organizar seus produtos de forma eficiente."
                   : "Edite o nome da categoria."}
@@ -580,7 +579,7 @@ function handleSubcategoryDeleted(
         )}
       </header>
 
-      <main className="flex w-full min-w-0 p-5 lg:px-10 mt-5">
+      <main className="flex w-full min-w-0 py-5 pb-10 lg:px-10 mt-5">
         <div className="grid w-full min-w-0 grid-cols-1 min-[1530px]:grid-cols-2 gap-6 items-start">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-30 w-full col-span-full gap-3">

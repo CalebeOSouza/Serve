@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+
 import { DashboardMenu } from "@/components/dashboard/dashboard_sidebar";
 import { DashboardMenuTablet } from "@/components/dashboard/dashboard_sidebar_tablet";
 import Image from "next/image";
@@ -20,6 +22,10 @@ type Restaurant = {
   updated_at: string;
 };
 
+type EmployeeRole = "gerente" | "cozinha" | "caixa" | "garcom";
+
+const VALID_ROLES: EmployeeRole[] = ["gerente", "cozinha", "caixa", "garcom"];
+
 export default function DashboardLayout({
   children,
 }: {
@@ -31,10 +37,19 @@ export default function DashboardLayout({
   const params = useParams();
   const id = params?.id;
 
+  const { data: session, status: sessionStatus } = useSession();
+
+  const employeeRole =
+    session?.user?.role &&
+    VALID_ROLES.includes(session.user.role as EmployeeRole)
+      ? (session.user.role as EmployeeRole)
+      : null;
+
   useEffect(() => {
     async function fetchRestaurant() {
       try {
         const res = await fetch(`/api/restaurant/me?restaurantId=${id}`);
+
         const data = await res.json();
         setRestaurant(data);
       } catch (error) {
@@ -49,38 +64,56 @@ export default function DashboardLayout({
     }
   }, [id]);
 
-  if (!id || Array.isArray(id)) return null;
+  if (!id || Array.isArray(id)) {
+    return null;
+  }
+
+  if (sessionStatus === "loading") {
+    return null;
+  }
+
+  if (!employeeRole) {
+    console.error(
+      "Cargo inválido ou não encontrado na sessão:",
+      session?.user?.role,
+    );
+
+    return null;
+  }
+
+  const content = (
+    <section className="min-h-screen flex bg-(--color-background)">
+      <DashboardMenu restaurantId={id} />
+
+      <div className="flex flex-1 flex-col lg:pl-55 pt-16">
+        <div className="relative h-40 w-full overflow-hidden shadow-sm">
+          {!loading && (
+            <Image
+              src={restaurant?.media?.banner_url || "/no_banner2.png"}
+              alt="Banner do restaurante"
+              fill
+              className="object-cover"
+              priority
+            />
+          )}
+
+          <div className="absolute inset-0 bg-black/20" />
+        </div>
+
+        <DashboardMenuTablet restaurantId={id} />
+
+        <main className="flex-1 flex flex-col">{children}</main>
+      </div>
+    </section>
+  );
+
+  if (employeeRole === "gerente") {
+    return content;
+  }
 
   return (
-    <EmployeeIdentifier
-      restaurantId={id}
-      role="garcom"
-    >
-      <section className="min-h-screen flex bg-(--color-background)">
-        <DashboardMenu restaurantId={id} />
-
-        <div className="flex flex-1 flex-col lg:pl-55 pt-16">
-          <div className="relative h-40 w-full overflow-hidden shadow-sm">
-            {!loading && (
-              <Image
-                src={restaurant?.media?.banner_url || "/no_banner2.png"}
-                alt="Banner do restaurante"
-                fill
-                className="object-cover"
-                priority
-              />
-            )}
-
-            <div className="absolute inset-0 bg-black/20" />
-          </div>
-
-          <DashboardMenuTablet restaurantId={id} />
-
-          <main className="flex-1 flex flex-col">
-            {children}
-          </main>
-        </div>
-      </section>
+    <EmployeeIdentifier restaurantId={id} role={employeeRole}>
+      {content}
     </EmployeeIdentifier>
   );
 }

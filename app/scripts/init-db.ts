@@ -222,7 +222,7 @@ CREATE TABLE menu_items (
 );
 
     `);
- 
+
     //Tabela das paredes do layout
     await pool.query(`
 CREATE TABLE layout_walls (
@@ -353,7 +353,7 @@ CREATE TABLE table_accounts (
 );
     `);
 
-  await pool.query(`
+    await pool.query(`
 CREATE TABLE reservations (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -391,6 +391,7 @@ CREATE TABLE orders (
         'recebido',
         'em_preparo',
         'pronto',
+        'entregue',
         'cancelado'
     ) DEFAULT 'recebido',
 
@@ -421,12 +422,15 @@ CREATE TABLE order_items (
 
     unit_price DECIMAL(10,2) NOT NULL,
 
+paid_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+
     observation VARCHAR(255),
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (order_id)
-        REFERENCES orders(id),
+        REFERENCES orders(id)
+        ON DELETE CASCADE,
 
     FOREIGN KEY (menu_item_id)
         REFERENCES menu_items(id)

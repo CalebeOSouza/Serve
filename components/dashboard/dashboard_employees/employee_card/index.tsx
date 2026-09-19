@@ -21,6 +21,7 @@ export type Employee = {
 interface Props {
   emp: Employee;
   cargos: Cargo[];
+  viewerRole: "gerente" | "admin";
   setPinModal: Dispatch<
     SetStateAction<{
       open: boolean;
@@ -47,6 +48,7 @@ function getFirstName(name: string) {
 export default function EmployeeCard({
   emp,
   cargos,
+  viewerRole,
   setConfirmDeleteId,
   confirmDeleteId,
   deletarFuncionario,
@@ -157,20 +159,29 @@ export default function EmployeeCard({
             setCargosSelecionados(emp.roles);
             abrirModal();
           }}
-          className="flex-1 text-white bg-(--color-primary) hover:bg-(--color-secondary) text-sm font-semibold py-2 rounded-md transition cursor-pointer"
+          disabled={viewerRole === "gerente" && emp.roles.includes("gerente")}
+          className={`flex-1 text-sm font-semibold py-2 rounded-md transition ${
+  viewerRole === "gerente" && emp.roles.includes("gerente")
+    ? "bg-[#E5E5E5] text-[#676767] cursor-not-allowed"
+    : "text-white bg-(--color-primary) hover:bg-(--color-secondary) cursor-pointer"
+}`}
         >
           Editar
         </button>
 
-       
-<button
-     onClick={() => {
+        <button
+          onClick={() => {
             setConfirmDeleteId(confirmDeleteId === emp.id ? null : emp.id);
           }}
-    className="flex-1 px-2.5 py-2 items-center justify-center rounded-lg text-[#636976] hover:bg-[#fff1f1] hover:bg-gray-100 border border-gray-200 cursor-pointer"
-  >
-    Excluir
-  </button>
+          disabled={viewerRole === "gerente" && emp.roles.includes("gerente")}
+          className={`flex-1 px-2.5 py-2 items-center justify-center rounded-lg border transition ${
+  viewerRole === "gerente" && emp.roles.includes("gerente")
+    ? "bg-[#E5E5E5] text-[#676767] border-[#E5E5E5] cursor-not-allowed"
+    : "py-2.5 border-[#f0caca] bg-[#fff7f7] text-sm text-[#d64545] hover:bg-[#fff0f0] cursor-pointer"
+}`}
+        >
+          Excluir
+        </button>
 
         {confirmDeleteId === emp.id && (
           <div className="absolute bottom-12 right-0 z-50 w-[280px] rounded-md bg-red-600 shadow-xl overflow-hidden">
