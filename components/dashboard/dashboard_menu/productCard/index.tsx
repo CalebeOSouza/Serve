@@ -28,7 +28,7 @@ type Props = {
 export default function ProductCard({
   id,
   name,
-   restaurantId,
+  restaurantId,
   description,
   price,
   imageUrl,
@@ -145,7 +145,7 @@ formData.append("restaurantId", String(restaurantId));
 
   return (
    <div className="flex w-full min-w-0 flex-col gap-3 py-1 sm:min-h-[88px] sm:flex-row sm:items-center sm:justify-between">
-      {/* ESQUERDA */}
+     
       <div className="flex min-w-0 w-full flex-1 items-center gap-3">
         {/* <button className="cursor-grabbing">
           <GripVertical className="w-4.5 h-4.5 text-gray-600" />
@@ -218,7 +218,6 @@ formData.append("restaurantId", String(restaurantId));
           document.body,
         )}
 
-      {/* DIREITA */}
       <div className="flex w-full shrink-0 items-center gap-4 sm:w-auto sm:gap-5">
         <p className="font-bold text-[16px] whitespace-nowrap">
           R${" "}

@@ -163,7 +163,7 @@ async function syncTableStatuses(connection: any, restaurantId: string) {
         SELECT 1
         FROM table_accounts ta
         WHERE ta.table_id = t.id
-          AND ta.status IN ('aberta', 'conta_solicitada')
+          AND ta.status = 'aberta'
       )
   `,
     [restaurantId],

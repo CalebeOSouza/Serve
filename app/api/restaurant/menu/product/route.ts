@@ -498,6 +498,39 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const [activeOrderItems]: any = await db.query(
+      `
+      SELECT oi.id
+      FROM order_items oi
+      INNER JOIN orders o
+        ON o.id = oi.order_id
+      INNER JOIN table_accounts ta
+        ON ta.id = o.account_id
+      INNER JOIN tables t
+        ON t.id = ta.table_id
+      INNER JOIN menu_items mi
+        ON mi.id = oi.menu_item_id
+      INNER JOIN menu_categories mc
+        ON mc.id = mi.category_id
+      WHERE oi.menu_item_id = ?
+        AND mc.restaurant_id = ?
+      LIMIT 1
+      `,
+      [id, restaurantId],
+    );
+
+    if (activeOrderItems.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Não é possível excluir este produto porque ele está em um pedido de uma mesa com conta aberta.",
+        },
+        {
+          status: 409,
+        },
+      );
+    }
+
     const [rows]: any = await db.query(
       `
       SELECT mi.image_url

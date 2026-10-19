@@ -32,7 +32,7 @@ type Product = {
 interface Props {
   id: number;
   name: string;
-   restaurantId: number;
+  restaurantId: number;
   products: Product[];
   onProductCreated: (product: Product) => void;
   onEdit: (id: number, name: string) => void;
@@ -44,7 +44,7 @@ interface Props {
 export default function SubcategoryCard({
   id,
   name,
-   restaurantId,
+  restaurantId,
   products,
   onProductCreated,
   onEdit,
@@ -57,7 +57,6 @@ export default function SubcategoryCard({
   const [collapsed, setCollapsed] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  
   const [alert, setAlert] = useState<{
     message: string | null;
     type: "error" | "success";
@@ -75,10 +74,10 @@ export default function SubcategoryCard({
   const [open, setOpen] = useState(false);
   const iconRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-const [deletePosition, setDeletePosition] = useState({
-  x: 0,
-  y: 0,
-});
+  const [deletePosition, setDeletePosition] = useState({
+    x: 0,
+    y: 0,
+  });
   async function handleCreateProduct(data: ProductFormData) {
     const formData = new FormData();
     formData.append("restaurantId", String(restaurantId));
@@ -124,20 +123,17 @@ const [deletePosition, setDeletePosition] = useState({
     setProductModalOpen(true);
   }
 
-function openDeleteConfirmation(
-  e: React.MouseEvent<HTMLButtonElement>,
-) {
-  const rect = e.currentTarget.getBoundingClientRect();
+  function openDeleteConfirmation(e: React.MouseEvent<HTMLButtonElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
 
-  setDeletePosition({
-    x: rect.right,
-    y: rect.bottom + 8,
-  });
+    setDeletePosition({
+      x: rect.right,
+      y: rect.bottom + 8,
+    });
 
-  setConfirmDelete(true);
-  setMenuOpen(false);
-}
-
+    setConfirmDelete(true);
+    setMenuOpen(false);
+  }
 
   async function handleUpdateProduct(data: ProductFormData) {
     if (!editingProduct) return;
@@ -170,65 +166,100 @@ function openDeleteConfirmation(
     });
   }
 
- async function handleDeleteProduct(productId: number) {
-  await fetch(
-    `/api/restaurant/menu/product?id=${productId}&restaurantId=${restaurantId}`,
-    {
-      method: "DELETE",
-    },
-  );
+    async function handleDeleteProduct(productId: number) {
+    try {
+      const response = await fetch(
+        `/api/restaurant/menu/product?id=${productId}&restaurantId=${restaurantId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
-  onProductDeleted(productId);
-}
+      const result = await response.json();
 
- useEffect(() => {
-  function handleClickOutside(event: MouseEvent) {
-    if (
-      menuRef.current &&
-      !menuRef.current.contains(event.target as Node)
-    ) {
+      if (!response.ok) {
+        setAlert({
+          message: result.error || "Não foi possível excluir o produto.",
+          type: "error",
+        });
+
+        return;
+      }
+
+      onProductDeleted(productId);
+    } catch (error) {
+      console.error("Erro ao excluir produto:", error);
+
+      setAlert({
+        message: "Erro ao excluir produto.",
+        type: "error",
+      });
+    }
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    function handleScroll() {
+      setConfirmDelete(false);
       setMenuOpen(false);
     }
-  }
 
-  function handleScroll() {
-    setConfirmDelete(false);
-    setMenuOpen(false);
-  }
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
 
-  document.addEventListener("mousedown", handleClickOutside);
-  window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, []);
+  async function handleDeleteSubcategory() {
+    try {
+      const response = await fetch(
+        `/api/restaurant/menu/category?id=${id}&restaurantId=${restaurantId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-    window.removeEventListener("scroll", handleScroll, true);
-  };
-}, []);
-async function handleDeleteSubcategory() {
-  try {
-    const response = await fetch(
-      `/api/restaurant/menu/category?id=${id}&restaurantId=${restaurantId}`,
-      {
-        method: "DELETE",
-      },
-    );
+      const result = await response.json();
 
-    const result = await response.json();
+      if (!response.ok) {
+        setAlert({
+          message:
+            result.error || "Não foi possível excluir esta subcategoria.",
+          type: "error",
+        });
 
-    if (!response.ok) {
-      console.error("Erro ao excluir subcategoria:", result);
-      return;
+        setConfirmDelete(false);
+        return;
+      }
+
+      onDelete(id);
+      setConfirmDelete(false);
+    } catch (error) {
+      console.error("Erro ao excluir subcategoria:", error);
+
+      setAlert({
+        message: "Erro ao excluir subcategoria.",
+        type: "error",
+      });
+
+      setConfirmDelete(false);
     }
-
-    onDelete(id);
-
-    setConfirmDelete(false);
-  } catch (error) {
-    console.error("Erro ao excluir subcategoria:", error);
   }
-}
   return (
-    <div className="w-full min-w-0 max-w-full overflow-hidden border border-gray-200 py-5 px-3 rounded-lg flex flex-col gap-4">
+    <div className="w-full min-w-0 max-w-full overflow-hidden border border-gray-200 py-3 px-3 rounded-lg flex flex-col gap-2">
+<AnimatedAlert
+  message={alert.message}
+  type={alert.type}
+  onClose={() => setAlert({ message: null, type: "error" })}
+/>
+
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="relative flex items-center gap-2">
@@ -294,71 +325,71 @@ async function handleDeleteSubcategory() {
                 <EllipsisVertical className="w-5 h-5 text-gray-600" />
               </button>
 
-             {menuOpen && (
-  <div className="absolute right-0 top-full mt-2 rounded-lg shadow-xl overflow-hidden z-50 bg-white border border-gray-200 w-28">
-    {name !== "Produtos" && (
-      <button
-        onClick={() => {
-          setMenuOpen(false);
-          onEdit(id, name);
-        }}
-        className="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-      >
-        <Pencil className="w-4 h-4" />
-        Editar
-      </button>
-    )}
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 rounded-lg shadow-xl overflow-hidden z-50 bg-white border border-gray-200 w-28">
+                  {name !== "Produtos" && (
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onEdit(id, name);
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Editar
+                    </button>
+                  )}
 
-    <button
-      onClick={openDeleteConfirmation}
-      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
-    >
-      <Trash2 className="w-4 h-4" />
-      Excluir
-    </button>
-  </div>
-)}
+                  <button
+                    onClick={openDeleteConfirmation}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </button>
+                </div>
+              )}
 
-{confirmDelete &&
-  createPortal(
-    <div
-      className="fixed z-[999999] bg-red-600 w-50 rounded-lg shadow-xl overflow-hidden"
-      style={{
-        top: deletePosition.y,
-        left: deletePosition.x,
-        transform: "translateX(-100%)",
-      }}
-    >
-      <div className="p-4 text-white">
-        <p className="font-semibold text-sm">
-          Deseja excluir esta subcategoria?
-        </p>
+              {confirmDelete &&
+                createPortal(
+                  <div
+                    className="fixed z-[999999] bg-red-600 w-50 rounded-lg shadow-xl overflow-hidden"
+                    style={{
+                      top: deletePosition.y,
+                      left: deletePosition.x,
+                      transform: "translateX(-100%)",
+                    }}
+                  >
+                    <div className="p-4 text-white">
+                      <p className="font-semibold text-sm">
+                        Deseja excluir esta subcategoria?
+                      </p>
 
-        <p className="text-xs mt-1 opacity-90">
-          Todos os produtos de dentro dela serão apagados.
-        </p>
+                      <p className="text-xs mt-1 opacity-90">
+                        Todos os produtos de dentro dela serão apagados.
+                      </p>
 
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={() => {
-              setConfirmDelete(false);
-            }}
-            className="flex-1 bg-white text-red-600 rounded py-2 text-sm cursor-pointer hover:bg-gray-100 transition"
-          >
-            Cancelar
-          </button>
+                      <div className="flex gap-2 mt-4">
+                        <button
+                          onClick={() => {
+                            setConfirmDelete(false);
+                          }}
+                          className="flex-1 bg-white text-red-600 rounded py-2 text-sm cursor-pointer hover:bg-gray-100 transition"
+                        >
+                          Cancelar
+                        </button>
 
-          <button
-  onClick={handleDeleteSubcategory}
-  className="flex-1 bg-red-800 rounded py-2 text-sm cursor-pointer hover:bg-red-900 transition"
->
-  Excluir
-</button>
-        </div>
-      </div>
-    </div>,
-    document.body,
-  )}
+                        <button
+                          onClick={handleDeleteSubcategory}
+                          className="flex-1 bg-red-800 rounded py-2 text-sm cursor-pointer hover:bg-red-900 transition"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  </div>,
+                  document.body,
+                )}
             </div>
           </div>
         </div>
@@ -374,7 +405,7 @@ async function handleDeleteSubcategory() {
           {products.length === 0 ? (
             <div className="flex items-center justify-center py-3 text-center gap-3">
               <div className="bg-[#F5F5F6] p-4 rounded-full flex items-center justify-center">
-                <Inbox className="w-8 h-8 text-[#CCCFD4]" />
+                <Inbox className="w-8 h-8 text-[#a9b2c6]" />
               </div>
 
               <p className="text-gray-500 font-semibold text-[15px]">

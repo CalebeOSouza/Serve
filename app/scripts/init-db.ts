@@ -18,8 +18,6 @@ async function main() {
           name VARCHAR(100) NOT NULL,
           email VARCHAR(150) NOT NULL UNIQUE,
           password VARCHAR(255) NOT NULL,
-          status ENUM('pendente', 'ativo', 'bloqueado') DEFAULT 'pendente',
-          token VARCHAR(255) UNIQUE NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -40,9 +38,6 @@ CREATE TABLE restaurants (
     neighborhood VARCHAR(100),
     city VARCHAR(100),
     state CHAR(2),
-
-    status ENUM('configurando', 'operacional', 'pausado') 
-    DEFAULT 'configurando',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -127,8 +122,6 @@ CREATE TABLE roles (
 
     pin VARCHAR(255) NULL,
 
-    status ENUM('ativo', 'inativo') DEFAULT 'ativo',
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (restaurant_id)
@@ -179,7 +172,7 @@ CREATE TABLE employee_roles (
     parent_id INT NULL,
 
     name VARCHAR(100) NOT NULL,
-    display_order INT DEFAULT 0,
+
     active BOOLEAN DEFAULT TRUE,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -234,7 +227,6 @@ CREATE TABLE layout_walls (
   pos_x          DECIMAL(8,2) NOT NULL,
   pos_y          DECIMAL(8,2) NOT NULL,
 
-  -- Comprimento em pixels (a ponta final = pos_x + length se horizontal,pos_y + length se vertical)
   length         DECIMAL(8,2) NOT NULL,
 
   is_vertical    BOOLEAN NOT NULL DEFAULT FALSE,
@@ -336,9 +328,7 @@ CREATE TABLE table_accounts (
     table_id INT NOT NULL,
 
     status ENUM(
-        'aberta',
-        'conta_solicitada',
-        'fechada'
+        'aberta'
     ) DEFAULT 'aberta',
 
     total_consumed DECIMAL(10,2) DEFAULT 0,
@@ -422,10 +412,10 @@ CREATE TABLE order_items (
 
     unit_price DECIMAL(10,2) NOT NULL,
 
-paid_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    paid_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
 
     observation VARCHAR(255),
-
+      
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (order_id)

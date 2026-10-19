@@ -1,4 +1,4 @@
-// /components/WallRenderer.tsx
+
 import React from "react";
 import { Trash2 } from "lucide-react";
 import { Role } from "@/components/restaurant/layout";
@@ -9,7 +9,7 @@ export type Wall = {
   y: number;
   width: number;
   rotation: number;
-  side: "near" | "far"; // near = topo/esquerda da célula, far = baixo/direita
+  side: "near" | "far"; // near = topo/esquerda da célula far = baixo/direita
   wallType?: "externa" | "interna";
 };
 
@@ -30,7 +30,7 @@ type Props = {
   onDelete: (e: React.MouseEvent) => void;
 };
 
-const WALL_THICKNESS = 12.5; // espessura em px (meia célula de 25)
+const WALL_THICKNESS = 12.5; //  metade de 25
 const WALL_THICKNESS_INTERNA = 6.25;
 
 export default function WallRenderer({
@@ -89,7 +89,7 @@ export default function WallRenderer({
           />
         ))}
 
-      {/* CORPO DA PAREDE */}
+      {/* Corpo da parede */}
       <div
         style={{
           width: "100%",
@@ -101,7 +101,7 @@ export default function WallRenderer({
         }}
       />
 
-      {/* BOTÃO DELETE */}
+      {/* Botão de deltar a parede */}
       {isSelected &&
         (role !== "admin" ? null : (
           <div

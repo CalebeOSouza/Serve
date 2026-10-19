@@ -55,13 +55,12 @@ export async function GET(
       `
       SELECT
         id,
-        name,
-        display_order
+        name
       FROM menu_categories
       WHERE restaurant_id = ?
         AND parent_id IS NULL
         AND active = TRUE
-      ORDER BY display_order ASC, id ASC
+      ORDER BY id ASC
       `,
       [restaurantId],
     );
@@ -71,13 +70,12 @@ export async function GET(
       SELECT
         id,
         parent_id,
-        name,
-        display_order
+        name
       FROM menu_categories
       WHERE restaurant_id = ?
         AND parent_id IS NOT NULL
         AND active = TRUE
-      ORDER BY display_order ASC, id ASC
+      ORDER BY id ASC
       `,
       [restaurantId],
     );
@@ -444,7 +442,6 @@ export async function POST(
       FROM employees
       WHERE id = ?
         AND restaurant_id = ?
-        AND status = 'ativo'
       LIMIT 1
       `,
       [waiterEmployeeId, restaurantId],
@@ -457,7 +454,7 @@ export async function POST(
 
       return NextResponse.json(
         {
-          error: "Garçom inválido ou inativo.",
+          error: "Garçom inválido.",
         },
         { status: 400 },
       );
@@ -502,88 +499,95 @@ export async function POST(
       [account.id, waiterEmployeeId],
     );
 
-    const orderId = (orderResult as any).insertId;
+   const orderId = (orderResult as any).insertId;
 
-    let orderTotal = 0;
+let orderTotal = 0;
+const logItems: string[] = [];
 
-    for (const item of items) {
-      const menuItemId = Number(item.menuItemId);
-      const quantity = Number(item.quantity);
+for (const item of items) {
+  const menuItemId = Number(item.menuItemId);
+  const quantity = Number(item.quantity);
 
-      const customerName = String(item.customerName || "").trim();
+  const customerName = String(item.customerName || "").trim();
 
-      const observation = String(item.observation || "").trim() || null;
+  const observation = String(item.observation || "").trim() || null;
 
-      if (!menuItemId) {
-        throw new Error("Produto inválido.");
-      }
+  if (!menuItemId) {
+    throw new Error("Produto inválido.");
+  }
 
-      if (!Number.isInteger(quantity) || quantity <= 0) {
-        throw new Error("Quantidade inválida.");
-      }
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new Error("Quantidade inválida.");
+  }
 
-      if (!customerName) {
-        throw new Error("O nome do cliente é obrigatório.");
-      }
+  if (!customerName) {
+    throw new Error("O nome do cliente é obrigatório.");
+  }
 
-      const [menuItemRows] = await connection.query(
-        `
-       SELECT
-  mi.id,
-  mi.name,
-  mi.price,
-  mi.available
-FROM menu_items mi
+  const [menuItemRows] = await connection.query(
+    `
+    SELECT
+      mi.id,
+      mi.name,
+      mi.price,
+      mi.available
+    FROM menu_items mi
+    INNER JOIN menu_categories mc
+      ON mc.id = mi.category_id
+    WHERE mi.id = ?
+      AND mc.restaurant_id = ?
+    LIMIT 1
+    `,
+    [menuItemId, restaurantId],
+  );
 
-        INNER JOIN menu_categories mc
-          ON mc.id = mi.category_id
+  const menuItem = (menuItemRows as any[])[0];
 
-        WHERE mi.id = ?
-          AND mc.restaurant_id = ?
+  if (!menuItem) {
+    throw new Error(`Produto ${menuItemId} não encontrado.`);
+  }
 
-        LIMIT 1
-        `,
-        [menuItemId, restaurantId],
-      );
+  if (!Boolean(menuItem.available)) {
+    throw new Error(`O produto ${menuItemId} está indisponível.`);
+  }
 
-      const menuItem = (menuItemRows as any[])[0];
+  const unitPrice = Number(menuItem.price);
 
-      if (!menuItem) {
-        throw new Error(`Produto ${menuItemId} não encontrado.`);
-      }
+  const itemTotal = quantity * unitPrice;
 
-      if (!Boolean(menuItem.available)) {
-        throw new Error(`O produto ${menuItemId} está indisponível.`);
-      }
+  orderTotal += itemTotal;
 
-      const unitPrice = Number(menuItem.price);
+  logItems.push(
+    `${quantity}x ${menuItem.name}${customerName ? ` para ${customerName}` : ""}${observation ? ` (obs: ${observation})` : ""}`,
+  );
 
-      const itemTotal = quantity * unitPrice;
+  await connection.query(
+    `
+    INSERT INTO order_items (
+      order_id,
+      menu_item_id,
+      customer_name,
+      quantity,
+      unit_price,
+      observation
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+    `,
+    [orderId, menuItemId, customerName, quantity, unitPrice, observation],
+  );
+}
 
-      orderTotal += itemTotal;
+await createEmployeeLog(
+  connection,
+  restaurantId,
+  waiterEmployeeId,
+  `Fez pedido para a mesa ${table.number}: ${logItems.join("\n")}`,
+);
 
-      await connection.query(
-        `
-        INSERT INTO order_items (
-          order_id,
-          menu_item_id,
-          customer_name,
-          quantity,
-          unit_price,
-          observation
-        )
-        VALUES (?, ?, ?, ?, ?, ?)
-        `,
-        [orderId, menuItemId, customerName, quantity, unitPrice, observation],
-      );
 
-      await createEmployeeLog(
-        connection,
-        restaurantId,
-        waiterEmployeeId,
-        `Fez pedido para a mesa ${table.number}: ${quantity}x ${menuItem.name}${customerName ? ` para ${customerName}` : ""}${observation ? ` (obs: ${observation})` : ""}.`,
-      );
-    }
+
+
+
 
     await connection.query(
       `
@@ -695,7 +699,7 @@ export async function PATCH(
       FROM employees
       WHERE id = ?
         AND restaurant_id = ?
-        AND status = 'ativo'
+
       LIMIT 1
       `,
       [employeeId, restaurantId],
@@ -708,7 +712,7 @@ export async function PATCH(
 
       return NextResponse.json(
         {
-          error: "Funcionário inválido ou inativo.",
+          error: "Funcionário inválido.",
         },
         { status: 400 },
       );
@@ -899,7 +903,6 @@ export async function DELETE(
       FROM employees
       WHERE id = ?
         AND restaurant_id = ?
-        AND status = 'ativo'
       LIMIT 1
       `,
       [employeeId, restaurantId],
@@ -912,7 +915,7 @@ export async function DELETE(
 
       return NextResponse.json(
         {
-          error: "Garçom inválido ou inativo.",
+          error: "Garçom inválido.",
         },
         { status: 400 },
       );

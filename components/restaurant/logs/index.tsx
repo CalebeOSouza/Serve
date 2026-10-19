@@ -50,6 +50,102 @@ function formatRole(role: SystemAccount) {
   return "Caixa";
 }
 
+function formatLogAction(action: string) {
+  if (action.startsWith("Criou reserva para a mesa")) {
+    return {
+      title: "Reserva criada",
+      description: action
+        .replace("Criou reserva para a mesa ", "Mesa ")
+        .replace(/: /, " · ")
+        .replace(/, /g, " · ")
+        .replace(
+          /(\d{4})-(\d{2})-(\d{2}) às/,
+          (_, year, month, day) => `${day}/${month}/${year} às`,
+        ),
+    };
+  }
+
+  if (action.startsWith("Liberou a mesa")) {
+    return {
+      title: "Mesa liberada",
+      description: action
+        .replace(/^Mesa liberada[:\s]*/, "")
+        .replace(/, /g, " · ")
+        .replace(/ - /g, " · "),
+    };
+  }
+
+  if (action.startsWith("Ocupou a mesa")) {
+    return {
+      title: "Mesa ocupada",
+      description: action
+        .replace(/^Mesa liberada[:\s]*/, "")
+        .replace(/, /g, " · ")
+        .replace(/ - /g, " · "),
+    };
+  }
+
+  if (action.startsWith("Entregou o pedido")) {
+    return {
+      title: "Pedido entregue",
+      description: action
+        .replace(/^Mesa liberada[:\s]*/, "")
+        .replace(/, /g, " · ")
+        .replace(/ - /g, " · "),
+    };
+  }
+
+  if (action.startsWith("Iniciou o preparo")) {
+    return {
+      title: "Preparo iniciado",
+      description: action
+        .replace(/^Mesa liberada[:\s]*/, "")
+        .replace(/, /g, " · ")
+        .replace(/ - /g, " · "),
+    };
+  }
+
+  if (action.startsWith("Concluiu o pedido")) {
+    return {
+      title: "Pedido concluído",
+      description: action
+        .replace(/^Mesa liberada[:\s]*/, "")
+        .replace(/, /g, " · ")
+        .replace(/ - /g, " · "),
+    };
+  }
+
+  if (action.startsWith("Fez pedido")) {
+    const content = action.replace("Fez pedido para a mesa ", "");
+
+    const [tableAndFirstItem, ...remainingItems] = content.split("\n");
+
+    const firstSeparator = tableAndFirstItem.indexOf(": ");
+
+    if (firstSeparator === -1) {
+      return {
+        title: "Pedido criado",
+        description: `Mesa ${content}`,
+      };
+    }
+
+    const table = tableAndFirstItem.slice(0, firstSeparator);
+    const firstItem = tableAndFirstItem.slice(firstSeparator + 2);
+
+    const items = [firstItem, ...remainingItems];
+
+    return {
+      title: "Pedido criado",
+      description: `Mesa ${table}: ${items.join("\n")}`,
+    };
+  }
+
+  return {
+    title: "Ação realizada",
+    description: action.replace(/, /g, " · ").replace(/ - /g, " · "),
+  };
+}
+
 function getPeriodStart(period: PeriodFilter) {
   const now = new Date();
 
@@ -91,11 +187,13 @@ export default function Logs() {
   const logsPerPage = 8;
   const [confirmClearLogs, setConfirmClearLogs] = useState(false);
   const [clearingLogs, setClearingLogs] = useState(false);
-  async function loadLogs() {
+  async function loadLogs(showLoading = false) {
     if (!restaurantId) return;
 
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
 
       const response = await fetch(`/api/restaurant/${restaurantId}/logs`, {
         cache: "no-store",
@@ -110,9 +208,10 @@ export default function Logs() {
       setLogs(data.logs ?? []);
     } catch (error) {
       console.error("Erro ao carregar logs:", error);
-      setLogs([]);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }
   async function clearLogs() {
@@ -140,7 +239,17 @@ export default function Logs() {
     }
   }
   useEffect(() => {
-    loadLogs();
+    if (!restaurantId) return;
+
+    loadLogs(true);
+
+    const interval = setInterval(() => {
+      loadLogs(false);
+    }, 2000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [restaurantId]);
 
   const filteredLogs = useMemo(() => {
@@ -177,7 +286,7 @@ export default function Logs() {
               Logs do sistema
             </h1>
 
-            <p className="mt-1 text-[16px] text-[#7b8497]">
+            <p className="mt-1 text-[16px] text-[#19274b]">
               Acompanhe as ações realizadas pelos funcionários
             </p>
           </div>
@@ -188,7 +297,7 @@ export default function Logs() {
             </div>
 
             <div>
-              <p className="text-[13px] font-medium text-[#7b8497]">
+              <p className="text-[13px] font-medium text-[#8a93a5]">
                 Registros encontrados
               </p>
 
@@ -311,81 +420,70 @@ export default function Logs() {
               ))}
             </>
           ) : filteredLogs.length > 0 ? (
-            paginatedLogs.map((log) => (
-              <div
-                key={log.id}
-                className="grid min-h-[96px] grid-cols-1 gap-5 rounded-lg border border-[#e5e9f0] bg-white px-5 py-4 hover:border-[#d6dfeb] lg:grid-cols-[1.2fr_1fr_1fr_2fr] lg:items-center"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#F5F5F6]">
-                    <UserRound className="h-5 w-5 text-[#536b8e]" />
+            paginatedLogs.map((log) => {
+              const formattedAction = formatLogAction(log.action_description);
+
+              return (
+                <div
+                  key={log.id}
+                  className="grid min-h-[96px] grid-cols-1 gap-5 rounded-lg border border-[#e5e9f0] bg-white px-5 py-4 hover:border-[#d6dfeb] lg:grid-cols-[1.2fr_1fr_1fr_2fr] lg:items-center"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#F5F5F6]">
+                      <UserRound className="h-5 w-5 text-[#536b8e]" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-[15px] font-semibold text-[#19274b]">
+                        {log.employee_name}
+                      </p>
+
+                      <p className="mt-0.5 text-[12px] text-[#8a93a5]">
+                        {formatRole(log.system_account)}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="min-w-0">
-                    <p className="truncate text-[15px] font-semibold text-[#19274b]">
-                      {log.employee_name}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <Clock3 className="h-5 w-5 shrink-0 text-[#536b8e]" />
 
-                    <p className="mt-0.5 text-[12px] text-[#8a93a5]">
-                      {formatRole(log.system_account)}
-                    </p>
+                    <div>
+                      <p className="text-[14px] font-semibold text-[#19274b]">
+                        {formatDate(log.created_at)}
+                      </p>
+
+                      <p className="mt-0.5 text-[13px] text-[#8a93a5]">
+                        {formatTime(log.created_at)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Clock3 className="h-5 w-5 shrink-0 text-[#536b8e]" />
 
                   <div>
-                    <p className="text-[14px] font-semibold text-[#19274b]">
-                      {formatDate(log.created_at)}
-                    </p>
+                    <span className="inline-flex rounded-md bg-[#F5F7FA] px-3 py-1.5 text-[12px] font-semibold text-[#536078]">
+                      {formatRole(log.system_account)}
+                    </span>
+                  </div>
 
-                    <p className="mt-0.5 text-[13px] text-[#7b8497]">
-                      {formatTime(log.created_at)}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <FileText className="h-5 w-5 shrink-0 text-[#536b8e]" />
+
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-[#19274b]">
+                        {formattedAction.title}
+                      </p>
+
+                      <p className="mt-1 whitespace-pre-line text-[13px] text-[#8a93a5]">
+                        {formattedAction.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
-
-                <div>
-                  <span className="inline-flex rounded-md bg-[#F5F7FA] px-3 py-1.5 text-[12px] font-semibold text-[#536078]">
-                    {formatRole(log.system_account)}
-                  </span>
-                </div>
-
-               <div className="flex min-w-0 items-center gap-3">
-  <FileText className="h-5 w-5 shrink-0 text-[#536b8e]" />
-
-  <div className="min-w-0">
-    {log.action_description.startsWith("Criou reserva para a mesa") ? (
-      <>
-        <p className="text-[14px] font-semibold text-[#19274b]">
-          Reserva criada
-        </p>
-
-        <p className="mt-1 text-[13px] text-[#7b8497]">
-          {log.action_description
-            .replace("Criou reserva para a mesa ", "Mesa ")
-            .replace(/: /, " · ")
-            .replace(/, /g, " · ")
-            .replace(
-              /(\d{4})-(\d{2})-(\d{2}) às/,
-              (_, year, month, day) => `${day}/${month}/${year} às`,
-            )}
-        </p>
-      </>
-    ) : (
-      <p className="text-[14px] font-medium text-[#19274b]">
-        {log.action_description}
-      </p>
-    )}
-  </div>
-</div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="flex w-full flex-col items-center justify-center gap-3 rounded-md border border-gray-200 py-30">
               <div className="flex items-center justify-center rounded-full bg-[#F5F5F6] p-6">
-                <ClipboardList className="h-14 w-14 text-[#CCCFD4]" />
+                <ClipboardList className="h-14 w-14 text-[#a9b2c6]" />
               </div>
 
               <div className="flex flex-col items-center gap-1">

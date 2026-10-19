@@ -30,7 +30,7 @@ export default function RestaurantSuccess({
                 />
               </div>
             ) : (
-              <div className="w-24 h-24 rounded-full bg-(--color-badge-1) border border-[#D6E2F1] flex items-center justify-center shadow-sm">
+              <div className="w-20 h-20 rounded-full bg-(--color-badge-1) border border-[#D6E2F1] flex items-center justify-center shadow-sm">
                 <div className="w-16 h-16 rounded-full bg-(--color-primary) flex items-center justify-center shadow-md">
                   <Check size={32} strokeWidth={3} className="text-white" />
                 </div>
@@ -46,14 +46,14 @@ export default function RestaurantSuccess({
 
             <p className="mt-4 text-[16px] leading-7 text-[#667085] max-w-[430px] mx-auto">
               Seu restaurante foi criado com sucesso. Agora você já pode acessar
-              o painel e continuar a configuração do ambiente, funcionários,
+              o painel e continuar a configuração dos, funcionários,
               cardápio e layout.
             </p>
           </div>
 
           {/* Cards */}
           <div className="mt-10 flex flex-col gap-4">
-            <div className="flex items-start gap-4 p-5 rounded-2xl bg-[#FAFBFD] border border-[#EEF2F6]">
+            <div className="flex items-start gap-4 p-5 rounded-lg bg-[#FAFBFD] border border-[#EEF2F6]">
               <div className="min-w-10 w-10 h-10 rounded-xl bg-(--color-badge-1) flex items-center justify-center">
                 <Check
                   size={18}
@@ -73,7 +73,7 @@ export default function RestaurantSuccess({
               </div>
             </div>
 
-            <div className="flex items-start gap-4 p-5 rounded-2xl bg-[#FAFBFD] border border-[#EEF2F6]">
+            <div className="flex items-start gap-4 p-5 rounded-lg bg-[#FAFBFD] border border-[#EEF2F6]">
               <div className="min-w-10 w-10 h-10 rounded-xl bg-(--color-badge-1) flex items-center justify-center">
                 <ArrowRight
                   size={18}
@@ -88,8 +88,7 @@ export default function RestaurantSuccess({
                 </p>
 
                 <p className="text-sm text-[#667085] mt-1 leading-6">
-                  Configure e personalize seu restaurante para que ele se torne
-                  operacional.
+                  Configure e personalize seu restaurante.
                 </p>
               </div>
             </div>

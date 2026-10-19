@@ -76,7 +76,7 @@ export default function MyRestaurants() {
           </div>
         </div>
 
-        <div className="w-full mx-auto px-6 py-15 mb-10">
+        <div className="w-full mx-auto px-6 py-15 mb-7">
           <div className="w-full flex justify-center">
             <div className={`w-full ${restaurants.length === 0 ? "" : "max-w-275"}`}>
               {restaurants.length === 0 ? (
@@ -116,65 +116,68 @@ export default function MyRestaurants() {
                 </div>
               )}
 
-              {restaurants.length > 0 && (
-                <div className="flex items-center mt-15 text-sm text-gray-600">
-                  <div className="flex-1">
-                    <p className="text-start">
-                      Mostrando {firstRestaurant + 1}–
-                      {Math.min(lastRestaurant, restaurants.length)} de{" "}
-                      {restaurants.length}
-                    </p>
-                  </div>
+              
+{restaurants.length > 0 && (
+  <div className="relative mt-15 flex min-h-9 items-center px-1">
+    <p className="text-[13px] text-[#8a93a5]">
+      Mostrando{" "}
+      <span className="font-semibold text-[#536078]">
+        {visibleRestaurants.length}
+      </span>{" "}
+      de{" "}
+      <span className="font-semibold text-[#536078]">
+        {restaurants.length}
+      </span>{" "}
+      {restaurants.length === 1 ? "restaurante" : "restaurantes"}
+    </p>
 
-                  <div className="flex justify-center items-center gap-2 flex-1 font-semibold text-[14.5px]">
-                    <button
-                      onClick={() => setPage((p: number) => Math.max(p - 1, 1))}
-                      className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer bg-white"
-                    >
-                      Anterior
-                    </button>
+    <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2">
+      <button
+        type="button"
+        onClick={() => setPage((p: number) => Math.max(p - 1, 1))}
+        disabled={page === 1}
+        className="cursor-pointer rounded-lg border border-[#dfe4eb] bg-white px-3 py-2 text-sm font-medium text-[#536078] hover:bg-[#f7f9fc] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Anterior
+      </button>
 
-                    <div className="flex items-center">
-                      {[...Array(endPage - adjustedStartPage + 1)].map(
-                        (_, i: number) => {
-                          const pageNumber = adjustedStartPage + i;
+      <div className="flex items-center gap-1">
+        {[...Array(endPage - adjustedStartPage + 1)].map(
+          (_, i: number) => {
+            const pageNumber = adjustedStartPage + i;
 
-                          return (
-                            <button
-                              key={pageNumber}
-                              onClick={() => setPage(pageNumber)}
-                              className={`px-3 py-1.5 border border-gray-300 cursor-pointer ${
-                                page === pageNumber
-                                  ? "bg-(--color-primary) text-white"
-                                  : "hover:bg-gray-100 bg-white"
-                              } ${
-                                i === 0
-                                  ? "rounded-l-[3px]"
-                                  : i === endPage - adjustedStartPage
-                                    ? "rounded-r-[3px] border-l-0"
-                                    : "rounded-none border-l-0"
-                              }`}
-                            >
-                              {pageNumber}
-                            </button>
-                          );
-                        },
-                      )}
-                    </div>
+            return (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => setPage(pageNumber)}
+                className={`h-9 min-w-9 cursor-pointer rounded-lg px-3 text-sm font-medium transition outline-none ${
+                  page === pageNumber
+                    ? "bg-[#1b325f] text-white"
+                    : "border border-[#dfe4eb] bg-white text-[#536078] hover:bg-[#f7f9fc]"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          },
+        )}
+      </div>
 
-                    <button
-                      onClick={() =>
-                        setPage((p: number) => Math.min(p + 1, totalPages))
-                      }
-                      className="px-3 py-1.5 border border-gray-300 rounded-[3px] hover:bg-gray-100 cursor-pointer bg-white"
-                    >
-                      Próximo
-                    </button>
-                  </div>
+      <button
+        type="button"
+        onClick={() =>
+          setPage((p: number) => Math.min(p + 1, totalPages))
+        }
+        disabled={page === totalPages}
+        className="cursor-pointer rounded-lg border border-[#dfe4eb] bg-white px-3 py-2 text-sm font-medium text-[#536078] hover:bg-[#f7f9fc] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Próxima
+      </button>
+    </div>
+  </div>
+)}
 
-                  <div className="flex-1"></div>
-                </div>
-              )}
             </div>
           </div>
         </div>

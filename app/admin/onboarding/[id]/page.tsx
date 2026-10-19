@@ -46,27 +46,43 @@ export default function AdminMenu() {
 
   useEffect(() => {
     async function loadRestaurant() {
-      const res = await fetch("/api/restaurant/onboarding-status");
-      const data = await res.json();
+      try {
+        const res = await fetch("/api/restaurant/onboarding-status", {
+          cache: "no-store",
+        });
 
-      if (!data.exists) {
-        setStep("profile");
-        return;
-      }
+        const data = await res.json();
 
-      const r = data.restaurant;
+        if (!data.exists) {
+          setStep("profile");
+          return;
+        }
 
-      setRestaurantId(r.id);
-      setProfileData(r.profile);
-      setLogoPreview(r.media.logo);
-      setBannerPreview(r.media.banner);
+        const r = data.restaurant;
 
-      if (r.onboarding_step === 1) {
-        setStep("profile");
-      } else if (r.onboarding_step === 2) {
-        setStep("media");
-      } else if (r.onboarding_step === 3) {
-        setStep("hours");
+        if (r.onboarding_step === 0) {
+          setRestaurantId(r.id);
+          setProfileData(r.profile);
+          setLogoPreview(r.media.logo);
+          setBannerPreview(r.media.banner);
+          setStep("success");
+          return;
+        }
+
+        setRestaurantId(r.id);
+        setProfileData(r.profile);
+        setLogoPreview(r.media.logo);
+        setBannerPreview(r.media.banner);
+
+        if (r.onboarding_step === 1) {
+          setStep("profile");
+        } else if (r.onboarding_step === 2) {
+          setStep("media");
+        } else if (r.onboarding_step === 3) {
+          setStep("hours");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar restaurante:", error);
       }
     }
 
@@ -74,7 +90,7 @@ export default function AdminMenu() {
   }, []);
 
   useEffect(() => {
-    if (!restaurantId) return;
+    if (!restaurantId || step === "success") return;
 
     const sendHeartbeat = async () => {
       try {
@@ -84,18 +100,21 @@ export default function AdminMenu() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ restaurantId }),
+          cache: "no-store",
         });
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error("Erro ao enviar heartbeat:", error);
       }
     };
 
     sendHeartbeat();
 
-    const interval = setInterval(sendHeartbeat, 60000);
+    const interval = setInterval(sendHeartbeat, 2000);
 
-    return () => clearInterval(interval);
-  }, [restaurantId]);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [restaurantId, step]);
 
   const channelRef = useRef<BroadcastChannel | null>(null);
   const router = useRouter();
@@ -123,11 +142,12 @@ export default function AdminMenu() {
 
     channel.postMessage("who-is-onboarding");
 
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       isOwner = true;
     }, 500);
 
     return () => {
+      clearTimeout(timeout);
       channel.close();
     };
   }, [router]);
@@ -189,9 +209,7 @@ export default function AdminMenu() {
       )}
 
       {step === "success" && (
-        <RestaurantSuccess
-          logoPreview={logoPreview}
-        />
+        <RestaurantSuccess logoPreview={logoPreview} />
       )}
     </section>
   );

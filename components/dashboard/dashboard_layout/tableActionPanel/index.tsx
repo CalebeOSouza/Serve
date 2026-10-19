@@ -130,17 +130,21 @@ export function TableActionPanel({
               {table.status === "ocupada" && (
                 <div className="flex gap-2">
                   <button
-                    className="w-full rounded-sm bg-(--color-primary) px-2 py-1.5 text-sm font-medium text-white hover:opacity-90 cursor-pointer"
+                    className="w-full rounded-sm bg-(--color-primary) px-2 py-1.5 text-sm font-medium text-white hover:bg-[#1d3d7d] cursor-pointer"
                     onClick={onOrders}
                   >
                     Pedidos
-                  </button>               
+                  </button>
                 </div>
               )}
 
               <div className="flex gap-1.5">
                 <button
-                  className="w-full rounded-sm border border-(--color-primary) px-2 py-1.5 text-sm font-medium text-(--color-primary) hover:bg-(--color-primary)/5 cursor-pointer"
+                  className={`w-full rounded-sm px-2 py-1.5 text-sm font-medium cursor-pointer ${
+                    table.status === "ocupada"
+                      ? "border border-(--color-primary) text-(--color-primary) hover:bg-(--color-primary)/5"
+                      : "bg-(--color-primary) text-white hover:bg-[#1d3d7d]"
+                  }`}
                   onClick={onReserve}
                 >
                   Reservar

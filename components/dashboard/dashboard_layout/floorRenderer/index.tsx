@@ -78,9 +78,10 @@ export default function FloorRenderer({
         onClick(e);
       }}
       onMouseDown={(e) => {
-        e.stopPropagation();
-        onMouseDown(e);
-      }}
+  if (e.button === 2) return;
+  e.stopPropagation();
+  onMouseDown(e);
+}}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={`absolute transition-shadow duration-150 ${

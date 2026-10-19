@@ -1484,9 +1484,9 @@ const mainCustomer = selectedTable
                     type: "error",
                   });
                 }}
-                className="flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 cursor-pointer"
+                className="flex h-5 w-5 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 cursor-pointer"
               >
-                <X className="w-6 h-6" />
+                <X className="w-4 h-4" />
               </button>
             </div>
             <AnimatedAlert
@@ -1745,9 +1745,9 @@ const mainCustomer = selectedTable
                     type: "error",
                   });
                 }}
-                className="flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 cursor-pointer"
+                className="flex h-5 w-5 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 cursor-pointer"
               >
-                <X className="w-6 h-6" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1764,7 +1764,7 @@ const mainCustomer = selectedTable
             />
 
             {/* NOME */}
-            <div>
+            <div className="mt-3">
               <label className="block mb-1 text-sm font-medium text-[#19274b]">
                 Nome do cliente principal
               </label>

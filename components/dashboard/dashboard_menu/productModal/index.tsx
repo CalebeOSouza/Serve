@@ -1,6 +1,6 @@
 "use client";
 
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
 import { useRef } from "react";
@@ -160,7 +160,17 @@ export default function ProductModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-lg shadow-sm p-8 w-[450px]">
+      
+<div className="relative bg-white rounded-lg shadow-sm p-8 w-[450px]">
+  <button
+    type="button"
+    onClick={resetAndClose}
+    aria-label="Fechar modal"
+    className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-md text-[#8a93a5] hover:text-[#19274b] cursor-pointer"
+  >
+    <X className="w-4 h-4" />
+  </button>
+
         <h2 className="text-xl font-semibold text-[#19274b]">
           {mode === "create" ? "Novo produto" : "Editar produto"}
         </h2>
@@ -256,23 +266,17 @@ export default function ProductModal({
           />
         </div>
 
-        <div className="flex gap-3 mt-6">
-          <button
-            type="button"
-            onClick={resetAndClose}
-            className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
-          >
-            Cancelar
-          </button>
+        
+<div className="mt-6">
+  <button
+    type="button"
+    onClick={handleSubmit}
+    className="w-full py-2 rounded-md text-white bg-(--color-primary) hover:bg-(--color-secondary) transition cursor-pointer"
+  >
+    {mode === "create" ? "Criar" : "Salvar alterações"}
+  </button>
+</div>
 
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="w-full py-2 rounded-md text-white bg-(--color-primary) hover:bg-(--color-secondary) transition cursor-pointer"
-          >
-            {mode === "create" ? "Criar" : "Salvar alterações"}
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -55,13 +55,13 @@ export default function RestaurantHours({
   onBack,
 }: RestaurantHoursProps) {
   const [hours, setHours] = useState<HoursForm>({
-    segunda: { enabled: true, open: "08:00", close: "18:00" },
-    terca: { enabled: true, open: "08:00", close: "18:00" },
-    quarta: { enabled: true, open: "08:00", close: "18:00" },
-    quinta: { enabled: true, open: "08:00", close: "18:00" },
-    sexta: { enabled: true, open: "08:00", close: "18:00" },
-    sabado: { enabled: false, open: "", close: "" },
-    domingo: { enabled: false, open: "", close: "" },
+    segunda: { enabled: true, open: "08:00", close: "23:00" },
+    terca: { enabled: true, open: "08:00", close: "23:00" },
+    quarta: { enabled: true, open: "08:00", close: "23:00" },
+    quinta: { enabled: true, open: "08:00", close: "23:00" },
+    sexta: { enabled: true, open: "08:00", close: "23:00" },
+    sabado: { enabled: true, open: "08:00", close: "23:00" },
+    domingo: { enabled: true, open: "08:00", close: "23:00" },
   });
 
   const [alert, setAlert] = useState<{

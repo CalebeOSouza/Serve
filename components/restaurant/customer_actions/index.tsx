@@ -27,7 +27,7 @@ export type Account = {
   table_type: "mesa_quadrada" | "mesa_redonda" | "mesa_retangular" | "mesa_l";
   table_rotation: number;
   people_count: number;
-  account_status: "aberta" | "conta_solicitada";
+  account_status: "aberta";
   total_consumed: number;
   total_paid: number;
   opened_at: string;
@@ -152,7 +152,7 @@ export default function CustomerActions({
       {!isFullyPaid && open && (
         <div className="mt-4">
           {!activeAction && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 max-[1250px]:grid-cols-1">
               <button
                 type="button"
                 className="flex cursor-pointer items-center gap-3 rounded-md border border-[#dce4ef] bg-white px-3 py-3 text-left outline-none hover:border-[#355fb3] hover:bg-[#f5f8ff]"
@@ -187,7 +187,7 @@ export default function CustomerActions({
 
               <button
                 type="button"
-                className="col-span-2 flex cursor-pointer items-center gap-3 rounded-md border border-[#dce4ef] bg-white px-3 py-3 text-left outline-none hover:border-[#355fb3] hover:bg-[#f5f8ff]"
+                className="col-span-2 flex cursor-pointer items-center gap-3 rounded-md border border-[#dce4ef] bg-white px-3 py-3 text-left outline-none hover:border-[#355fb3] hover:bg-[#f5f8ff] max-[1250px]:col-span-1"
                 onClick={() => openAction("pago")}
               >
                 <CheckCircle2 size={18} className="shrink-0 text-[#355fb3]" />
@@ -196,7 +196,7 @@ export default function CustomerActions({
                     Marcar como pago
                   </span>
                   <span className="mt-0.5 block text-[11px] text-[#8294b8]">
-                    Registrar quitação completa
+                    Registrar pagamento completo
                   </span>
                 </span>
               </button>
@@ -280,7 +280,7 @@ export default function CustomerActions({
                   <button
                     type="button"
                     disabled={!transferTarget || saving}
-                    className="mt-3 h-10 w-full cursor-pointer rounded-md bg-[#355fb3] text-[13px] font-medium text-white outline-none hover:bg-[#294d96] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-3 h-10 w-full cursor-pointer rounded-md bg-(--color-primary) text-[13px] font-medium text-white outline-none hover:bg-(--color-secondary) disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={handleTransferItem}
                   >
                     Transferir item
@@ -322,7 +322,7 @@ export default function CustomerActions({
               <button
                 type="button"
                 disabled={!partialValue || saving}
-                className="mt-3 h-10 w-full cursor-pointer rounded-md bg-[#355fb3] text-[13px] font-medium text-white outline-none hover:bg-[#294d96] disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-3 h-10 w-full cursor-pointer rounded-md bg-(--color-primary) text-[13px] font-medium text-white outline-none hover:bg-(--color-secondary) disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={handlePartialPayment}
               >
                 Registrar pagamento
@@ -338,7 +338,7 @@ export default function CustomerActions({
                     Marcar como pago
                   </p>
                   <p className="mt-1 text-[12px] leading-5 text-[#8294b8]">
-                    Isso registrará a quitação completa dos{" "}
+                    Isso registrará o pagamento completo dos{" "}
                     {formatCurrency(pending)} deste cliente.
                   </p>
                 </div>
@@ -367,7 +367,7 @@ export default function CustomerActions({
       {!isFullyPaid && (
         <button
           type="button"
-          className="mt-4 flex h-10 w-full cursor-pointer items-center justify-center rounded-md border border-[#355fb3] bg-white text-[13px] font-medium text-[#355fb3] outline-none hover:bg-[#355fb3] hover:text-white"
+          className="mt-4 flex h-10 w-full cursor-pointer items-center justify-center rounded-md border border-[#355fb3] bg-white text-[13px] font-medium text-[#123b73] outline-none outline-none hover:bg-[#f5f8ff]"
           onClick={() => {
             if (open) closeActions();
             else {

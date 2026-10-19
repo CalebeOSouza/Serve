@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Plus, GripVertical, Trash2, Inbox, LoaderCircle } from "lucide-react";
+import {
+  Plus,
+  GripVertical,
+  Trash2,
+  Inbox,
+  LoaderCircle,
+  X,
+} from "lucide-react";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
 import CategoryCard from "@/components/dashboard/dashboard_menu/categoryCard";
 
@@ -400,23 +407,20 @@ export default function RestaurantCardapio() {
   function handleDragEnd() {
     setDraggingIndex(null);
   }
-function handleSubcategoryDeleted(
-  categoryId: number,
-  subcategoryId: number,
-) {
-  setCategories((prev) =>
-    prev.map((category) =>
-      category.id === categoryId
-        ? {
-            ...category,
-            subcategories: category.subcategories.filter(
-              (sub) => sub.id !== subcategoryId,
-            ),
-          }
-        : category,
-    ),
-  );
-}
+  function handleSubcategoryDeleted(categoryId: number, subcategoryId: number) {
+    setCategories((prev) =>
+      prev.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              subcategories: category.subcategories.filter(
+                (sub) => sub.id !== subcategoryId,
+              ),
+            }
+          : category,
+      ),
+    );
+  }
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-x-hidden">
       <header className={`w-full mx-auto flex flex-col pt-10 px-5 lg:px-10`}>
@@ -425,7 +429,7 @@ function handleSubcategoryDeleted(
             <h1 className="font-semibold text-[27px] text-[#19274b]">
               Criar cardápio!
             </h1>
-            <p className="max-w-full text-[16px] leading-6 text-[#19274b]">
+            <p className="mt-1 max-w-full text-[16px] leading-6 text-[#19274b]">
               Gerencie o cardápio do seu estabelecimento e destaque o que o seu
               restaurante tem de melhor a oferecer.
             </p>
@@ -446,7 +450,18 @@ function handleSubcategoryDeleted(
 
         {categoryModal.open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl p-8 w-[450px]">
+            <div className="relative bg-white rounded-lg shadow-xl p-8 w-[450px]">
+              <button
+                type="button"
+                onClick={() =>
+                  setCategoryModal({ ...categoryModal, open: false })
+                }
+                aria-label="Fechar modal"
+                className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-md text-[#8a93a5] hover:text-[#19274b] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
               <h2 className="text-xl font-semibold text-[#19274b]">
                 {categoryModal.mode === "create"
                   ? "Crie uma nova categoria"
@@ -454,7 +469,6 @@ function handleSubcategoryDeleted(
               </h2>
 
               <p className="text-sm text-gray-500 mt-2 mb-6">
-     
                 {categoryModal.mode === "create"
                   ? "Adicione uma nova categoria ao seu cardápio para organizar seus produtos de forma eficiente."
                   : "Edite o nome da categoria."}
@@ -553,19 +567,10 @@ function handleSubcategoryDeleted(
                   )}
                 </div>
               )}
-              <div className="flex gap-3 mt-4">
+
+              <div className="mt-4">
                 <button
                   type="button"
-                  onClick={() =>
-                    setCategoryModal({ ...categoryModal, open: false })
-                  }
-                  className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
                   onClick={createCategory}
                   className="w-full py-2 rounded-md text-white bg-(--color-primary) hover:bg-(--color-secondary) transition cursor-pointer"
                 >
@@ -580,95 +585,153 @@ function handleSubcategoryDeleted(
       </header>
 
       <main className="flex w-full min-w-0 py-5 pb-10 lg:px-10 mt-5">
-        <div className="grid w-full min-w-0 grid-cols-1 min-[1530px]:grid-cols-2 gap-6 items-start">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-30 w-full col-span-full gap-3">
-              <LoaderCircle className="w-10 h-10 text-(--color-primary) animate-spin" />
-              <p className="text-gray-500">Carregando cardápio...</p>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-30 w-full gap-3">
+            <LoaderCircle className="w-10 h-10 text-(--color-primary) animate-spin" />
+            <p className="text-gray-500">Carregando cardápio...</p>
+          </div>
+        ) : categories.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-30 w-full border border-gray-200 rounded-md">
+            <div className="bg-[#F5F5F6] p-6 rounded-full flex items-center justify-center">
+              <Inbox className="w-14 h-14 text-[#a9b2c6]" />
             </div>
-          ) : categories.length === 0 ? (
 
-            
-            <div className="flex flex-col items-center justify-center gap-3 py-30 w-full border border-gray-200 rounded-md col-span-full">
-              <div className="bg-[#F5F5F6] p-6 rounded-full flex items-center justify-center">
-                <Inbox className="w-14 h-14 text-[#CCCFD4]" />
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-gray-800 font-bold text-[20px]">
-                  Nenhuma categoria criada ainda
-                </p>
-                <p className="text-gray-500 text-[15px] w-92 text-center">
-                  Comece adicionando sua primeira categoria para organizar os
-                  itens do seu cardápio
-                </p>
-              </div>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-gray-800 font-bold text-[20px]">
+                Nenhuma categoria criada ainda
+              </p>
 
-              <div className="flex items-center mt-3">
-                <button
-                  className="flex items-center gap-2 bg-(--color-primary) text-white text-sm font-semibold px-5 py-2.5 rounded-md hover:bg-(--color-secondary) transition-all cursor-pointer"
-                  onClick={() => {
-                    setCategoryModal({ ...categoryModal, open: true });
-                  }}
-                >
-                  <Plus className="w-5 h-5 text-white" />
-                  Nova categoria
-                </button>
-              </div>
+              <p className="text-gray-500 text-[15px] w-92 text-center">
+                Comece adicionando sua primeira categoria para organizar os
+                itens do seu cardápio
+              </p>
             </div>
-          ) : (
-            categories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                id={category.id}
-                name={category.name}
-                restaurantId={restaurantId}
-                subcategories={category.subcategories}
-                onSubcategoriesCreated={(categoryId, created) => {
-                  setCategories((prev) =>
-                    prev.map((cat) =>
-                      cat.id === categoryId
-                        ? {
-                            ...cat,
-                            subcategories: [
-                              ...cat.subcategories,
-                              ...created.map((sub) => ({
-                                ...sub,
-                                products: [],
-                              })),
-                            ],
-                          }
-                        : cat,
-                    ),
-                  );
+
+            <div className="flex items-center mt-3">
+              <button
+                className="flex items-center gap-2 bg-(--color-primary) text-white text-sm font-semibold px-5 py-2.5 rounded-md hover:bg-(--color-secondary) transition-all cursor-pointer"
+                onClick={() => {
+                  setCategoryModal({ ...categoryModal, open: true });
                 }}
-                onProductCreated={handleProductCreated}
-                onEdit={(id, name, parentId, type) => {
-                  setCategoryModal({
-                    open: true,
-                    mode: "edit",
+              >
+                <Plus className="w-5 h-5 text-white" />
+                Nova categoria
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col min-[1530px]:flex-row w-full min-w-0 gap-4 items-start">
+            <div className="flex flex-col w-full min-[1530px]:w-1/2 gap-4">
+              {categories
+                .filter((_, index) => index % 2 === 0)
+                .map((category) => (
+                  <div key={category.id}>
+                    <CategoryCard
+                      id={category.id}
+                      name={category.name}
+                      restaurantId={restaurantId}
+                      subcategories={category.subcategories}
+                      onSubcategoriesCreated={(categoryId, created) => {
+                        setCategories((prev) =>
+                          prev.map((cat) =>
+                            cat.id === categoryId
+                              ? {
+                                  ...cat,
+                                  subcategories: [
+                                    ...cat.subcategories,
+                                    ...created.map((sub) => ({
+                                      ...sub,
+                                      products: [],
+                                    })),
+                                  ],
+                                }
+                              : cat,
+                          ),
+                        );
+                      }}
+                      onProductCreated={handleProductCreated}
+                      onEdit={(id, name, parentId, type) => {
+                        setCategoryModal({
+                          open: true,
+                          mode: "edit",
+                          categoryId: id,
+                          parentId,
+                          editingType: type,
+                          form: {
+                            name,
+                            subcategories: [],
+                          },
+                        });
+                      }}
+                      onDelete={(id) => {
+                        setCategories((prev) =>
+                          prev.filter((c) => c.id !== id),
+                        );
+                      }}
+                      onSubcategoryDeleted={handleSubcategoryDeleted}
+                      onProductUpdated={handleProductUpdated}
+                      onProductDeleted={handleProductDeleted}
+                    />
+                  </div>
+                ))}
+            </div>
 
-                    categoryId: id,
-
-                    parentId,
-
-                    editingType: type,
-
-                    form: {
-                      name,
-                      subcategories: [],
-                    },
-                  });
-                }}
-                onDelete={(id) => {
-                  setCategories((prev) => prev.filter((c) => c.id !== id));
-                }}
-                onSubcategoryDeleted={handleSubcategoryDeleted}
-                onProductUpdated={handleProductUpdated}
-                onProductDeleted={handleProductDeleted}
-              />
-            ))
-          )}
-        </div>
+            <div className="flex flex-col w-full min-[1530px]:w-1/2 gap-4">
+              {categories
+                .filter((_, index) => index % 2 === 1)
+                .map((category) => (
+                  <div key={category.id}>
+                    <CategoryCard
+                      id={category.id}
+                      name={category.name}
+                      restaurantId={restaurantId}
+                      subcategories={category.subcategories}
+                      onSubcategoriesCreated={(categoryId, created) => {
+                        setCategories((prev) =>
+                          prev.map((cat) =>
+                            cat.id === categoryId
+                              ? {
+                                  ...cat,
+                                  subcategories: [
+                                    ...cat.subcategories,
+                                    ...created.map((sub) => ({
+                                      ...sub,
+                                      products: [],
+                                    })),
+                                  ],
+                                }
+                              : cat,
+                          ),
+                        );
+                      }}
+                      onProductCreated={handleProductCreated}
+                      onEdit={(id, name, parentId, type) => {
+                        setCategoryModal({
+                          open: true,
+                          mode: "edit",
+                          categoryId: id,
+                          parentId,
+                          editingType: type,
+                          form: {
+                            name,
+                            subcategories: [],
+                          },
+                        });
+                      }}
+                      onDelete={(id) => {
+                        setCategories((prev) =>
+                          prev.filter((c) => c.id !== id),
+                        );
+                      }}
+                      onSubcategoryDeleted={handleSubcategoryDeleted}
+                      onProductUpdated={handleProductUpdated}
+                      onProductDeleted={handleProductDeleted}
+                    />
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

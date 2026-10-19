@@ -11,6 +11,7 @@ import {
   Search,
   Copy,
   Check,
+  X,
 } from "lucide-react";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
 import EmployeeCard, {
@@ -447,7 +448,7 @@ export default function RestaurantFuncionarios({ role }: Props) {
           <h1 className="font-semibold text-[27px] text-[#19274b]">
             Gerencie sua equipe!
           </h1>
-          <p className=" text-[16px] text-[#19274b]">
+          <p className="mt-1 text-[16px] text-[#19274b]">
             Crie e administre as contas dos cargos do seu restaurante.
           </p>
         </div>
@@ -618,37 +619,14 @@ export default function RestaurantFuncionarios({ role }: Props) {
 
                   <p className="text-gray-500">Carregando funcionários...</p>
                 </div>
-              ) : employees.length === 0 ? (
-                // <div className="rounded-lg bg-white flex flex-col items-center shadow-sm col-span-4 py-5">
-                //   <div className="relative w-30 h-16">
-                //     <Image
-                //       src="/sem_funcionarios2.png"
-                //       alt="Banner do restaurante"
-                //       fill
-                //       className="object-cover"
-                //       priority
-                //     />
-                //   </div>
-
-                //   <div className="flex flex-col px-5 py-5 pt-3 text-center w-full">
-                //     <div className="flex flex-col text-center gap-2">
-                //       <h1 className="font-semibold text-[22px] text-[#19274b]">
-                //         Nenhum funcionário cadastrado
-                //       </h1>
-                //       <p className=" text-[15px] text-[#19274b]">
-                //         Comece criando as contas da sua equipe
-                //       </p>
-                //     </div>
-                //   </div>
-                // </div>
-
+              ) : employees.length === 0 ? (             
                 <div className="flex flex-col items-center justify-center gap-3 py-15 w-full border border-gray-200 rounded-md col-span-full">
                   <div className="relative w-30 h-16">
                     <Image
                       src="/sem_funcionarios2.png"
                       alt="Banner do restaurante"
                       fill
-                      className="object-cover"
+                      className="object-cover grayscale brightness-75"
                       priority
                     />
                   </div>
@@ -787,10 +765,19 @@ export default function RestaurantFuncionarios({ role }: Props) {
             ref={formRef}
             className={`layout-aside ${openModal ? "is-open" : ""}`}
           >
-            <form
-              onSubmit={criarFuncionario}
-              className="bg-white rounded-lg shadow-sm p-10 py-5 h-fit transition-all border border-gray-100 flex flex-col"
-            >
+            
+<form
+  onSubmit={criarFuncionario}
+  className="relative bg-white rounded-lg shadow-sm p-10 py-10 h-fit transition-all border border-gray-100 flex flex-col"
+>
+  <button
+    type="button"
+    onClick={fecharModal}
+    className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-md text-[#8a93a5] hover:text-[#19274b] cursor-pointer"
+  >
+    <X className="w-4 h-4" />
+  </button>
+
               <h1 className="font-semibold text-[22px] text-[#19274b]">
                 {editingEmployee ? "Editar funcionário" : "Novo funcionário"}
               </h1>
@@ -899,190 +886,188 @@ export default function RestaurantFuncionarios({ role }: Props) {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-4 mt-auto pt-6">
-                <button
-                  type="button"
-                  onClick={fecharModal}
-                  className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-100 transition-all cursor-pointer"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  className="bg-(--color-primary) text-white text-sm px-5 py-2 rounded-md hover:bg-(--color-secondary) transition-all cursor-pointer"
-                >
-                  {editingEmployee ? "Salvar alterações" : "Criar funcionário"}
-                </button>
-              </div>
+              <div className="mt-auto pt-6">
+  <button
+    type="submit"
+    className="w-full bg-(--color-primary) text-white text-sm font-semibold px-5 py-2.5 rounded-md hover:bg-(--color-secondary) transition-all cursor-pointer"
+  >
+    {editingEmployee ? "Salvar alterações" : "Criar funcionário"}
+  </button>
+</div>
             </form>
           </div>
         )}
       </section>
 
-      {pinModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-xl p-8 w-[400px]">
-            <h2 className="text-xl font-semibold text-[#19274b]">
-              Gerenciar PIN
-            </h2>
+      
+{pinModal.open && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="relative bg-white rounded-lg shadow-xl p-8 w-[400px]">
+      <button
+        type="button"
+        onClick={() =>
+          setPinModal({
+            open: false,
+            pin: null,
+            employeeId: null,
+            hasPin: false,
+          })
+        }
+        aria-label="Fechar modal"
+        className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-md text-[#8a93a5] hover:text-[#19274b] cursor-pointer"
+      >
+        <X className="w-4 h-4" />
+      </button>
 
-            <p className="text-sm text-gray-500 mt-2">
-              Gere ou redefina o PIN deste funcionário.
-            </p>
+      <h2 className="text-xl font-semibold text-[#19274b]">
+        Gerenciar PIN
+      </h2>
 
-            <div className="mt-6 flex flex-col gap-4">
-              {!pinModal.pin ? (
-                !pinModal.hasPin ? (
-                  <button
-                    onClick={gerarPinModal}
-                    className="w-full bg-(--color-primary) text-white py-3 rounded-md hover:bg-(--color-secondary) transition cursor-pointer"
-                  >
-                    Gerar PIN
-                  </button>
-                ) : (
-                  <>
-                    <div className="text-center text-sm text-gray-500">
-                      Este funcionário já possui um PIN ativo.
-                      <br />
-                      Caso tenha esquecido, você pode redefinir.
-                    </div>
+      <p className="text-sm text-gray-500 mt-2">
+        Gere ou redefina o PIN deste funcionário.
+      </p>
 
-                    <button
-                      onClick={gerarPinModal}
-                      className="w-full bg-(--color-primary) text-white py-3 rounded-md hover:bg-(--color-secondary) transition cursor-pointer"
-                    >
-                      Redefinir PIN
-                    </button>
-                  </>
-                )
-              ) : (
-                <>
-                  <div className="bg-(--color-tertiary) text-(--color-primary) font-bold text-2xl tracking-widest px-6 py-3 rounded-xl text-center">
-                    {pinModal.pin}
-                  </div>
-
-                  <button
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(pinModal.pin || "");
-
-                      setCopiedPin(true);
-
-                      setTimeout(() => {
-                        setCopiedPin(false);
-                      }, 2000);
-                    }}
-                    className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    {copiedPin ? (
-                      <>
-                        <Copy className="w-5 h-5 text-[#19274b]" />
-                        <span>Copiado</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-5 h-5 text-[#19274b]" />
-                        <span>Copiar PIN</span>
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={gerarPinModal}
-                    className="w-full bg-(--color-primary) text-white py-2 rounded-md hover:bg-(--color-secondary) transition cursor-pointer"
-                  >
-                    Redefinir PIN
-                  </button>
-                </>
-              )}
+      <div className="mt-6 flex flex-col gap-4">
+        {!pinModal.pin ? (
+          !pinModal.hasPin ? (
+            <button
+              onClick={gerarPinModal}
+              className="w-full bg-(--color-primary) text-white py-3 rounded-md hover:bg-(--color-secondary) transition cursor-pointer"
+            >
+              Gerar PIN
+            </button>
+          ) : (
+            <>
+              <div className="text-center text-sm text-gray-500">
+                Este funcionário já possui um PIN ativo.
+                <br />
+                Caso tenha esquecido, você pode redefinir.
+              </div>
 
               <button
-                onClick={() =>
-                  setPinModal({
-                    open: false,
-                    pin: null,
-                    employeeId: null,
-                    hasPin: false,
-                  })
-                }
-                className="w-full mt-2 text-gray-500 text-sm hover:underline cursor-pointer"
+                onClick={gerarPinModal}
+                className="w-full bg-(--color-primary) text-white py-3 rounded-md hover:bg-(--color-secondary) transition cursor-pointer"
               >
-                Fechar
+                Redefinir PIN
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {credentialsModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-[500px] flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-xl font-semibold text-[#19274b]">
-                {hasRolePassword
-                  ? "Redefinir senha dos cargos"
-                  : "Definir senha dos cargos"}
-              </h2>
-
-              <p className="text-sm text-gray-500">
-                {hasRolePassword
-                  ? "Você pode redefinir a senha global dos cargos"
-                  : "Defina uma senha única para todos os cargos"}
-              </p>
+            </>
+          )
+        ) : (
+          <>
+            <div className="bg-(--color-tertiary) text-(--color-primary) font-bold text-2xl tracking-widest px-6 py-3 rounded-xl text-center">
+              {pinModal.pin}
             </div>
 
-            <form onSubmit={salvarSenhaCargos} className="flex flex-col gap-4">
-              <AnimatedAlert
-                message={alert.message}
-                type={alert.type}
-                onClose={() => setAlert((prev) => ({ ...prev, message: null }))}
-              />
+            <button
+              onClick={async () => {
+                await navigator.clipboard.writeText(pinModal.pin || "");
 
-              <div className="flex flex-col gap-1">
-                <label>{hasRolePassword ? "Nova senha" : "Senha"}</label>
-                <input
-                  value={rolePassword}
-                  onChange={(e) => setRolePassword(e.target.value)}
-                  type="password"
-                  placeholder="Ex: Abc@123"
-                  className="border border-gray-300 py-2 px-4 rounded-md outline-none"
-                />
-              </div>
+                setCopiedPin(true);
 
-              {hasRolePassword && (
-                <div className="flex flex-col gap-1">
-                  <label>Confirmar senha</label>
-                  <input
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    type="password"
-                    placeholder="Confirme a senha"
-                    maxLength={30}
-                    className="border border-gray-300 py-2 px-4 rounded-md outline-none"
-                  />
-                </div>
+                setTimeout(() => {
+                  setCopiedPin(false);
+                }, 2000);
+              }}
+              className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              {copiedPin ? (
+                <>
+                  <Copy className="w-5 h-5 text-[#19274b]" />
+                  <span>Copiado</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5 text-[#19274b]" />
+                  <span>Copiar PIN</span>
+                </>
               )}
+            </button>
 
-              <div className="flex gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setCredentialsModal({ open: false })}
-                  className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
-                >
-                  Cancelar
-                </button>
+            <button
+              onClick={gerarPinModal}
+              className="w-full bg-(--color-primary) text-white py-2 rounded-md hover:bg-(--color-secondary) transition cursor-pointer"
+            >
+              Redefinir PIN
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
-                <button
-                  type="submit"
-                  className="w-full py-2 rounded-md text-white bg-(--color-primary) hover:bg-(--color-secondary) transition cursor-pointer"
-                >
-                  {hasRolePassword ? "Redefinir senha" : "Salvar senha"}
-                </button>
-              </div>
-            </form>
-          </div>
+
+    
+{credentialsModal.open && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="relative bg-white rounded-lg shadow-xl p-8 w-[500px] flex flex-col gap-4">
+      <button
+        type="button"
+        onClick={() => setCredentialsModal({ open: false })}
+        className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-md text-[#8a93a5] hover:text-[#19274b] cursor-pointer"
+      >
+        <X className="w-4 h-4" />
+      </button>
+
+      <div className="flex flex-col gap-2 pr-6">
+        <h2 className="text-xl font-semibold text-[#19274b]">
+          {hasRolePassword
+            ? "Redefinir senha dos cargos"
+            : "Definir senha dos cargos"}
+        </h2>
+
+        <p className="text-sm text-gray-500">
+          {hasRolePassword
+            ? "Você pode redefinir a senha global dos cargos"
+            : "Defina uma senha única para todos os cargos"}
+        </p>
+      </div>
+
+      <form onSubmit={salvarSenhaCargos} className="flex flex-col gap-4">
+        <AnimatedAlert
+          message={alert.message}
+          type={alert.type}
+          onClose={() => setAlert((prev) => ({ ...prev, message: null }))}
+        />
+
+        <div className="flex flex-col gap-1">
+          <label>{hasRolePassword ? "Nova senha" : "Senha"}</label>
+          <input
+            value={rolePassword}
+            onChange={(e) => setRolePassword(e.target.value)}
+            type="password"
+            placeholder="Ex: Abc@123"
+            className="border border-gray-300 py-2 px-4 rounded-md outline-none"
+          />
         </div>
-      )}
+
+        {hasRolePassword && (
+          <div className="flex flex-col gap-1">
+            <label>Confirmar senha</label>
+            <input
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              type="password"
+              placeholder="Confirme a senha"
+              maxLength={30}
+              className="border border-gray-300 py-2 px-4 rounded-md outline-none"
+            />
+          </div>
+        )}
+
+        <div className="mt-4">
+          <button
+            type="submit"
+            className="w-full py-2 rounded-md text-white bg-(--color-primary) hover:bg-(--color-secondary) transition cursor-pointer"
+          >
+            {hasRolePassword ? "Redefinir senha" : "Salvar senha"}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

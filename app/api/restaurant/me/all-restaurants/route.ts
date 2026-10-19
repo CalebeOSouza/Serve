@@ -43,7 +43,6 @@ export async function GET() {
         r.description,
         r.city,
         r.state,
-        r.status,
         r.updated_at,
         m.logo_url,
         m.banner_url

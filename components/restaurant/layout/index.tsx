@@ -17,7 +17,7 @@ import { useRef } from "react";
 import ElementsSidebar from "@/components/dashboard/dashboard_layout/elementsSidebar";
 import ZoomControls from "@/components/dashboard/dashboard_layout/zoomControls";
 import ToolbarActions from "@/components/dashboard/dashboard_layout/toolbarActions";
-import Salao from "@/components/restaurant/salao";
+import AnimatedAlert from "@/components/alert/AnimatedAlert";
 import FloorRenderer, {
   Floor,
   FloorHandle,
@@ -184,47 +184,10 @@ const [reservations, setReservations] = useState<
   }[]
 >([]);
 
-useEffect(() => {
-  if (!restaurantId) return;
-
-  async function loadReservations() {
-    try {
-      const res = await fetch(
-        `/api/restaurant/${restaurantId}/garcom/reservation`,
-        { cache: "no-store" },
-      );
-
-      if (!res.ok) return;
-
-      const data = await res.json();
-
-      setReservations(data.reservations ?? []);
-
-      setLayoutState((s) => ({
-        ...s,
-        items: s.items.map((item) => {
-          if (!isRestaurantTable(item)) return item;
-
-          const updatedTable = data.tables?.find(
-            (table: { id: number; status: RestaurantTable["status"] }) =>
-              String(table.id) === getRawTableId(item.id),
-          );
-
-          if (!updatedTable) return item;
-
-          return { ...item, status: updatedTable.status };
-        }),
-      }));
-    } catch (error) {
-      console.error("Erro ao carregar reservas:", error);
-    }
-  }
-
-  loadReservations();
-
-  const interval = setInterval(loadReservations, 30000);
-  return () => clearInterval(interval);
-}, [restaurantId]);
+  const [blockedTablesAlert, setBlockedTablesAlert] = useState<{
+    visible: boolean;
+    tables: number[];
+  } | null>(null);
 
   const { items, walls, floors, history, future } = layoutState;
 
@@ -398,7 +361,7 @@ function getNextReservationTime(tableId: string) {
     return { tables, doors, walls, floors };
   }
 
-  async function saveLayout() {
+    async function saveLayout() {
     try {
       const res = await fetch(`/api/restaurant/${restaurantId}/layout`, {
         method: "POST",
@@ -408,12 +371,20 @@ function getNextReservationTime(tableId: string) {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
+
+        if (res.status === 409 && data?.blockedTables) {
+          setBlockedTablesAlert({
+            visible: true,
+            tables: data.blockedTables,
+          });
+          await loadLayout();
+          return;
+        }
+
         console.error("Falha ao salvar layout:", data?.error);
-        //<AnimatedAlert />
         return;
       }
       setHasUnsavedChanges(false);
-      //<AnimatedAlert />
     } catch (err) {
       console.error("Erro de rede ao salvar layout:", err);
     }
@@ -2280,7 +2251,7 @@ const reservationTime = isRestaurantTable(item)
 
   return (
     <div className="w-full mx-auto flex flex-col px-5 py-10 md:px-10 max-lg:landscape:px-3">
-      <div className="flex flex-col text-start gap-8">
+      <div className="flex flex-col text-start gap-5">
         <header className="flex justify-between text-start flex-col gap-6 lg:flex-row lg:gap-0">
           <div className="flex flex-col">
             <h1 className="font-semibold text-[27px] text-[#19274b]">
@@ -2302,9 +2273,16 @@ const reservationTime = isRestaurantTable(item)
             />
           )}
         </header>
-        <div className="relative">
+                <div className="relative">
+          {blockedTablesAlert?.visible && (
+            <AnimatedAlert
+              type="error"
+              message={`Mesa(s) ${blockedTablesAlert.tables.join(", ")} em uso. Aguarde ficarem livres para editar.`}
+              onClose={() => setBlockedTablesAlert(null)}
+            />
+          )}
           {role === "admin" && (
-            <div className="relative w-full max-w-full min-w-0 flex flex-col md:flex-col lg:flex-row border border-[#e1e4f0] bg-[#F9F8FB] rounded-lg overflow-hidden max-lg:portrait:blur-sm max-lg:portrait:pointer-events-none max-lg:portrait:select-none">
+            <div className="mt-5 relative w-full max-w-full min-w-0 flex flex-col md:flex-col lg:flex-row border border-[#e1e4f0] bg-[#F9F8FB] rounded-lg overflow-hidden max-lg:portrait:blur-sm max-lg:portrait:pointer-events-none max-lg:portrait:select-none">
               {/* Div dos elementos */}
               {canEdit && (
                 <ElementsSidebar
@@ -2778,6 +2756,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                               setSelectedWallId(null);
                             }}
                             onMouseDown={(e) => {
+                              if (e.button === 2) return;
                               e.stopPropagation();
                               if (!canEdit || wallResizing) return;
                               if (floorResizing) return;
@@ -3218,6 +3197,7 @@ ${previewItem || isFloorModeActive || isWallModeActive ? "opacity-100" : "opacit
                                     ),
                                   }));
                                   setHasUnsavedChanges(true);
+
                                 }}
                               />
                             );

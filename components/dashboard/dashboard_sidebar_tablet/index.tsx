@@ -189,8 +189,8 @@ export function DashboardMenuTablet({ restaurantId }: Props) {
                       transition-all
                       ${
                         isActive
-                          ? "bg-[#E2EAFA]"
-                          : "hover:bg-[#E2EAFA]"
+                          ? "bg-[#E3EFFE]"
+                          : "hover:bg-[#E3EFFE]"
                       }
                     `}
                   >

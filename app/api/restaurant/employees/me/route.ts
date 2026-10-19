@@ -85,7 +85,6 @@ export async function GET(req: NextRequest) {
     const employees = rows as {
       id: number;
       name: string;
-      status: "ativo" | "inativo";
       role: EmployeeRole;
     }[];
 
@@ -102,7 +101,7 @@ export async function GET(req: NextRequest) {
       id: employee.id,
       name: employee.name,
       role: employee.role,
-      active: employee.status === "ativo",
+
     });
   } catch (error) {
     console.error("Erro ao carregar funcionário atual:", error);

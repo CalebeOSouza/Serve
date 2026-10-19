@@ -7,15 +7,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-import AdminMenu from "../menus/adminMenu";
-import GerenteMenu from "../menus/gerenteMenu";
-import ClienteMenu from "../menus/clienteMenu";
-import CozinhaMenu from "../menus/cozinhaMenu";
-import GarcomMenu from "../menus/garcomMenu";
-import CaixaMenu from "../menus/caixaMenu";
 import LogoutButton from "../logout_btn";
 
-import { Bell, BellOff } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  ChefHat,
+  ChevronRight,
+  CircleHelp,
+  CookingPot,
+  Home,
+  LayoutGrid,
+  LogIn,
+  LogOut,
+  Plus,
+  Store,
+  UserRound,
+  UtensilsCrossed,
+  WalletCards,
+  X,
+} from "lucide-react";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,31 +55,12 @@ export function Header() {
   const router = useRouter();
   const { data: session, status } = useSession();
   console.log(session);
-  const role = session?.user?.role?.toLowerCase() ?? null;
-  const restaurantId = session?.user?.restaurantId;
-  const isLogged = !!session;
-  const hasRole = role !== null;
+ const role = session?.user?.role?.toLowerCase() ?? null;
+const restaurantId = session?.user?.restaurantId;
 
-  function renderMenu() {
-    console.log("Role atual:", role);
-
-    switch (role) {
-      case "admin":
-        return <AdminMenu />;
-      case "gerente":
-        return <GerenteMenu />;
-      case "cliente":
-        return <ClienteMenu />;
-      case "cozinha":
-        return <CozinhaMenu />;
-      case "garcom":
-        return <GarcomMenu />;
-      case "caixa":
-        return <CaixaMenu />;
-      default:
-        return <LogoutButton />;
-    }
-  }
+const isAuthenticated = status === "authenticated";
+const isUnauthenticated = status === "unauthenticated";
+const hasRole = role !== null;
 
   type ScrollDirection = "up" | "down" | null;
 
@@ -149,134 +141,118 @@ export function Header() {
     };
   }, [menuOpen]);
 
-  const notifications = useRef<number>(0);
-  // Recebendo a notificação de abandono do onboarding
-  // useEffect(() => {
-  //   async function checkOnboarding() {
-  //     try {
-  //       const res = await fetch("/api/restaurant/onboarding-status");
-  //       const data = await res.json();
+// useEffect(() => {
+//   if (status !== "authenticated") return;
 
-  //       if (!data?.restaurant) {
-  //         setOnboardingNotification(null);
-  //         setShowOnboardingNotification(false);
-  //         return;
-  //       }
+//   async function checkOnboarding() {
+//     try {
+//       const res = await fetch("/api/restaurant/onboarding-status", {
+//         cache: "no-store",
+//       });
 
-  //       const restaurant = data.restaurant;
+//       const data = await res.json();
 
-  //       if (restaurant.onboarding_step === 0) {
-  //         setOnboardingNotification(null);
-  //         setShowOnboardingNotification(false);
-  //         return;
-  //       }
+//       if (!data?.restaurant) {
+//         setOnboardingNotification(null); if (status !== "authenticated") return;
+//         setShowOnboardingNotification(false);
+//         return;
+//       }
 
-  //       setOnboardingNotification(restaurant);
+//       const restaurant = data.restaurant;
 
-  //       const updatedAt = new Date(restaurant.updated_at);
-  //       //60 * 60
-  //       const notificationTime = new Date(updatedAt.getTime() + 5 * 1000);
+//       if (restaurant.onboarding_step === 0) {
+//         setOnboardingNotification(null);
+//         setShowOnboardingNotification(false);
+//         return;
+//       }
 
-  //       const now = new Date();
-  //       const timeLeft = notificationTime.getTime() - now.getTime();
+//       setOnboardingNotification(restaurant);
 
-  //       if (timeLeft <= 0) {
-  //         setShowOnboardingNotification(true);
-  //       } else {
-  //         setTimeout(() => {
-  //           setShowOnboardingNotification(true);
-  //         }, timeLeft);
-  //       }
-  //     } catch (error) {
-  //       console.error("Erro ao verificar onboarding:", error);
+//       const updatedAt = new Date(restaurant.updated_at).getTime();
+//       const now = Date.now();
 
-  //       setOnboardingNotification(null);
-  //       setShowOnboardingNotification(false);
-  //     }
-  //   }
+//       const elapsed = now - updatedAt;
 
-  //   if (session) {
-  //     checkOnboarding();
-  //   }
-  // }, [session]);
+//       if (elapsed >= 5000) {
+//         setShowOnboardingNotification(true);
+//       } else {
+//         setShowOnboardingNotification(false);
+//       }
+//     } catch (error) {
+//       console.error("Erro ao verificar onboarding:", error);
+//       setOnboardingNotification(null);
+//       setShowOnboardingNotification(false);
+//     }
+//   }
 
-  useEffect(() => {
-    if (status !== "authenticated") return;
+//   checkOnboarding();
 
-    async function checkOnboarding() {
-      try {
-        const res = await fetch("/api/restaurant/onboarding-status");
-        const data = await res.json();
+//   const interval = setInterval(checkOnboarding, 2000);
 
-        if (!data?.restaurant) {
-          setOnboardingNotification(null);
-          setShowOnboardingNotification(false);
-          return;
-        }
+//   return () => clearInterval(interval);
+// }, [status, pathname]);
+ 
 
-        const restaurant = data.restaurant;
+useEffect(() => {
+  if (status !== "authenticated") return;
 
-        if (restaurant.onboarding_step === 0) {
-          setOnboardingNotification(null);
-          setShowOnboardingNotification(false);
-          return;
-        }
+  let active = true;
 
-        setOnboardingNotification(restaurant);
-      } catch (error) {
-        console.error("Erro ao verificar onboarding:", error);
+  async function checkOnboarding() {
+    try {
+      const res = await fetch("/api/restaurant/onboarding-status", {
+        cache: "no-store",
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      if (!active) return;
+
+      if (!data?.exists || !data?.restaurant) {
         setOnboardingNotification(null);
         setShowOnboardingNotification(false);
+        return;
       }
-    }
 
-    checkOnboarding();
+      const restaurant = data.restaurant;
 
-    const interval = setInterval(checkOnboarding, 30000);
-
-    return () => clearInterval(interval);
-  }, [status, pathname]);
-
-  //Timer
-
-  useEffect(() => {
-    if (!onboardingNotification) return;
-
-    const updatedAt = new Date(onboardingNotification.updated_at);
-
-    const notificationTime = new Date(updatedAt.getTime() + 60 * 1000);
-
-    const now = new Date();
-    const timeLeft = notificationTime.getTime() - now.getTime();
-
-    if (timeLeft <= 0) {
-      setShowOnboardingNotification(true);
-      return;
-    }
-
-    let secondsLeft = Math.floor(timeLeft / 1000);
-
-    const interval = setInterval(() => {
-      secondsLeft--;
-
-      if (secondsLeft <= 0) {
-        clearInterval(interval);
+      if (restaurant.onboarding_step === 0) {
+        setOnboardingNotification(null);
+        setShowOnboardingNotification(false);
+        return;
       }
-    }, 1000);
 
-    const timeout = setTimeout(() => {
-      setShowOnboardingNotification(true);
-      clearInterval(interval);
-    }, timeLeft);
+      setOnboardingNotification(restaurant);
 
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [onboardingNotification]);
+      const updatedAt = new Date(restaurant.updated_at).getTime();
+
+      if (!Number.isFinite(updatedAt)) {
+        setShowOnboardingNotification(false);
+        return;
+      }
+
+      setShowOnboardingNotification(
+        Date.now() - updatedAt >= 5000,
+      );
+    } catch {
+      
+    }
+  }
+
+  checkOnboarding();
+
+  const interval = setInterval(checkOnboarding, 2000);
+
+  return () => {
+    active = false;
+    clearInterval(interval);
+  };
+}, [status, pathname]);
+
 
   //Mostrar os pedidos prontos pro garçom que fez eles
-
   useEffect(() => {
     if (status !== "authenticated" || role !== "garcom" || !restaurantId) {
       setOrderNotifications([]);
@@ -348,88 +324,6 @@ export function Header() {
     };
   }, [status, role, restaurantId]);
 
-  const renderContent = () => {
-    if (isLogged && hasRole) {
-      return (
-        <div className="flex flex-col items-start w-full text-start mb-5 text-(--color-text)">
-          {renderMenu()}
-        </div>
-      );
-    }
-
-    if (isLogged) {
-      return (
-        <div className="flex flex-col items-start w-full text-start mb-5 text-(--color-text)">
-          <Link
-            href="/"
-            className="flex items-center py-5 gap-2 w-full relative transition-all hover:text-(--color-secondary)"
-          >
-            <li className={`flex items-center`}>
-              Logado sem role definido
-              <i className="absolute bi bi-chevron-right right-0 text-sm"></i>
-            </li>
-          </Link>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-col items-start w-full text-start mb-5 text-(--color-text)">
-        <p className="text-(--color-primary) text-sm font-semibold border-b border-b-gray-300 w-full py-3">
-          Funções
-        </p>
-
-        <Link
-          href="/"
-          className="flex items-center py-5 gap-2 w-full relative transition-all hover:text-(--color-secondary)"
-        >
-          <li className={`flex items-center`}>
-            Início
-            <i className="absolute bi bi-chevron-right right-0 text-sm"></i>
-          </li>
-        </Link>
-
-        <Link
-          href="/funcionalidades"
-          className="border-y border-y-gray-300 flex items-center py-5 gap-2 w-full relative transition-all hover:text-(--color-secondary)"
-        >
-          <li className={`flex items-center`}>
-            Funcionalidades
-            <i className="absolute bi bi-chevron-right right-0 text-sm"></i>
-          </li>
-        </Link>
-
-        <Link
-          href="/suporte"
-          className="border-b border-b-gray-300 flex items-center py-5 gap-2 w-full relative transition-all hover:text-(--color-secondary)"
-        >
-          <li className={`flex items-center`}>
-            Suporte
-            <i className="absolute bi bi-chevron-right right-0 text-sm"></i>
-          </li>
-        </Link>
-
-        <div className="flex flex-col items-start w-full text-start text-(--color-text)">
-          <p className="text-(--color-primary) text-sm font-semibold border-b border-b-gray-300 w-full py-3">
-            Conta
-          </p>
-          <div className="flex items-center gap-8">
-            <li className="flex gap-5 items-center justify-start py-5 relative w-full">
-              <Link href="/account_access?mode=cadastro">
-                <button className="cursor-pointer rounded-lg bg-(--color-primary) px-7 py-2 text-center text-white text-[12px] transition-all ease-in-out duration-200 hover:bg-[#253e6f]">
-                  Começar
-                </button>
-              </Link>
-            </li>
-            <li className="hover:text-(--color-secondary)">
-              <Link href="/account_access?mode=login">Entrar</Link>
-            </li>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <header className="relative z-9999">
       <div
@@ -441,7 +335,10 @@ export function Header() {
       >
         <div
           className={`absolute right-8 top-1/2 -translate-y-1/2 z-40 flex items-center gap-6
-  ${isLogged && hasRole ? "flex" : "flex lg:hidden"}`}
+  ${isAuthenticated && hasRole ? "flex" : "flex lg:hidden"}`}
+
+
+  
         >
           <div className="relative hover:animate-[ring_0.9s_ease-in-out]">
             <Bell
@@ -536,23 +433,24 @@ export function Header() {
                   </div>
                 )}
 
-                {orderNotifications.length === 0 && !showOnboardingNotification && (
-                  <div className="py-3 flex flex-col items-center justify-center text-center">
-                    <div className="w-10 h-10 rounded-full bg-[#F3F5F8] flex items-center justify-center">
-                      <BellOff className="w-6 h-6 text-[#89909F]" />
-                    </div>
+                {orderNotifications.length === 0 &&
+                  !showOnboardingNotification && (
+                    <div className="py-3 flex flex-col items-center justify-center text-center">
+                      <div className="w-10 h-10 rounded-full bg-[#F3F5F8] flex items-center justify-center">
+                        <BellOff className="w-6 h-6 text-[#89909F]" />
+                      </div>
 
-                    <p className="text-[14px] font-semibold text-[#555B6B] mt-3">
-                      Nenhuma notificação!
-                    </p>
-                  </div>
-                )}
+                      <p className="text-[14px] font-semibold text-[#555B6B] mt-3">
+                        Nenhuma notificação!
+                      </p>
+                    </div>
+                  )}
               </div>
             </div>
           )}
 
           <i
-            className="bi bi-list cursor-pointer text-2xl text-(--color-primary)"
+            className="bi bi-list cursor-pointer text-2xl text-(--color-primary) shrink-0"
             onClick={() => setMenuOpen(true)}
           ></i>
         </div>
@@ -566,12 +464,11 @@ export function Header() {
             />
           </Link>
 
-          {!isLogged && (
+          {isUnauthenticated && (
             <>
-              {/* ================= PÚBLICO ================= */}
-              {/* ===== Links ===== */}
+              {/* Público */}
 
-              <div className="lg:block md:hidden hidden ">
+              {/* <div className="lg:block md:hidden hidden ">
                 <ul className="flex items-center gap-8 text-(--color-primary)">
                   <li
                     className={`relative group hover:text-(--color-secondary) px-2 `}
@@ -593,48 +490,15 @@ export function Header() {
     `}
                     />
                   </li>
-                  <li className="relative group hover:text-(--color-secondary)">
-                    <Link href="" className="flex items-center gap-2">
-                      {/* <i className="bi bi-grid-1x2-fill text-sm"></i>*/}
-                      Funcionalidades
-                    </Link>
-
-                    <span
-                      className={`
-      absolute left-0 -bottom-2 h-0.5 bg-(--color-primary)
-      ${
-        pathname === "/funcionalidades"
-          ? "w-full"
-          : "w-0 group-hover:w-full transition-all duration-300"
-      }
-    `}
-                    />
-                  </li>
-                  <li className="relative group hover:text-(--color-secondary)">
-                    <Link href="" className="flex items-center gap-2">
-                      {/*<i className="bi bi-headset text-sm"></i>*/}Suporte
-                    </Link>
-
-                    <span
-                      className={`
-      absolute left-0 -bottom-2 h-0.5 bg-(--color-primary)
-      ${
-        pathname === "/suporte"
-          ? "w-full"
-          : "w-0 group-hover:w-full transition-all duration-300"
-      }
-    `}
-                    />
-                  </li>
+                  
                 </ul>
-              </div>
+              </div> */}
 
-              {/* ===== Cadastro e login ===== */}
               <div className="lg:block md:hidden hidden">
                 <ul className="flex items-center gap-8 text-(--color-primary)">
                   <li>
                     <Link href="/account_access?mode=cadastro">
-                      <button className="cursor-pointer rounded-lg bg-(--color-primary) px-7 py-2 text-center text-white text-[12px] transition-all ease-in-out duration-200 hover:bg-[#253e6f]">
+                      <button className="cursor-pointer rounded-lg bg-(--color-primary) px-7 py-2 text-center text-white text-[12px] transition-all ease-in-out duration-200 hover:bg-[#1d3d7d]">
                         Começar
                       </button>
                     </Link>
@@ -646,33 +510,264 @@ export function Header() {
               </div>
             </>
           )}
-
-          {/* ================= LOGADO SEM ROLE ================= */}
-          {isLogged && !hasRole && (
-            <div className="flex items-center gap-6 text-(--color-primary)">
-              <Link href="/profile">Perfil</Link>
-              <LogoutButton />
-            </div>
-          )}
         </nav>
       </div>
 
-      {/* ===== MENU MOBILE ===== */}
+      {/* Menu mobile */}
 
       <div
-        className={`fixed top-0 right-0 z-50 bg-(--color-bg) h-full w-[70%] md:w-[20%] flex flex-col gap-8 items-start p-5 transform transition-transform duration-300 shadow-lg text-[14px] font-bold overflow-y-auto overscroll-contain lg:   ${
+        className={`fixed top-0 right-0 z-50 h-full w-[78%] max-w-[320px] bg-[#fafafa] px-5 py-5 shadow-2xl transition-transform duration-300 ease-in-out ${
           menuOpen ? "translate-x-0" : "translate-x-full"
-        } `}
+        }`}
       >
-        <i
-          className="bi bi-x-lg text-[22px] text-(--color-primary)
-               absolute mt-0.5 top-4 right-10 cursor-pointer z-50"
-          onClick={() => setMenuOpen(false)}
-        ></i>
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              className="flex h-9 w-9 items-center justify-center text-(--color-primary) transition-opacity cursor-pointer"
+            >
+              <X className="h-5 w-5 stroke-[1.5]" />
+            </button>
+          </div>
 
-        <ul className="flex flex-col items-start justify-between text-center w-full mt-10">
-          {renderContent()}
-        </ul>
+          <div className="mt-5 flex flex-1 flex-col">
+            {isAuthenticated && hasRole ? (
+              <>
+                <p className="mb-2 px-3 text-[14px] font-semibold text-(--color-primary)">
+                  Menu
+                </p>
+
+                <div className="flex flex-col gap-1">
+                  {role === "admin" && (
+                    <>
+                      <Link
+                        href="/"
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname === "/"
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
+                      >
+                        <Home className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Início</span>
+                      </Link>
+
+                      <Link
+                        href="/admin/my-restaurants"
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname.startsWith("/admin/my-restaurants")
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
+                      >
+                        <Store className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Meus restaurantes</span>
+                      </Link>
+
+                      <Link
+                        href="/admin/onboarding/create-restaurant"
+                        onClick={() => setMenuOpen(false)}
+                        className="mt-2 flex items-center justify-center gap-4 rounded-lg bg-(--color-primary) px-3 py-2.25 text-[14.5px] font-medium text-white transition hover:bg-(--color-secondary)"
+                      >
+                        
+                        <span>Criar restaurante</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {role === "garcom" && (
+                    <>
+                      <Link
+                        href={`/`}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                      >
+                        <Home className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Início</span>
+                      </Link>
+
+                      <Link
+                        href={`/roles/garcom/dashboard/${restaurantId}/salao`}
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname.startsWith(
+                            `/roles/garcom/dashboard/${restaurantId}/salao`,
+                          )
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
+                      >
+                        <CookingPot className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Salão</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {role === "cozinha" && (
+                    <>
+                      <Link
+                        href={`/`}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                      >
+                        <Home className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Início</span>
+                      </Link>
+
+                      <Link
+                        href={`/roles/cozinha/dashboard/${restaurantId}/pedidos_cozinha`}
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname.startsWith(
+                            `/roles/cozinha/dashboard/${restaurantId}/pedidos_cozinha`,
+                          )
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
+                      >
+                        <ChefHat className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Cozinha</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {role === "caixa" && (
+                    <>
+                      <Link
+                        href={`/`}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                      >
+                        <Home className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Início</span>
+                      </Link>
+
+                      <Link
+                        href={`/roles/caixa/dashboard/${restaurantId}/painel_caixa`}
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname.startsWith(
+                            `/roles/caixa/dashboard/${restaurantId}/painel_caixa`,
+                          )
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
+                      >
+                        <WalletCards className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Caixa</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {role === "gerente" && (
+                    <>
+                      <Link
+                        href={`/`}
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                      >
+                        <Home className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Início</span>
+                      </Link>
+
+                      <Link
+                        href={`/roles/gerente/dashboard/${restaurantId}/funcionarios`}
+                        onClick={() => setMenuOpen(false)}
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname.startsWith(
+                            `/roles/gerente/dashboard/${restaurantId}/funcionarios`,
+                          )
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
+                      >
+                        <UserRound className="h-[21px] w-[21px] stroke-[1.7]" />
+                        <span>Painel gerente</span>
+                      </Link>
+                    </>
+                  )}
+
+                </div>
+
+                <div className="mt-auto">
+                  <div className="mb-4 border-t border-[#e7e9ed]" />
+
+                  <p className="mb-4 px-3 text-[14px] font-semibold text-(--color-primary)">
+                    Conta
+                  </p>
+
+                  <div className="flex items-center gap-2 px-3 text-[14px] font-medium text-(--color-primary)/80">
+                    <LogoutButton />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mb-2 px-3 text-[14px] font-semibold text-(--color-primary)">
+                  Menu
+                </p>
+
+                <div className="flex flex-col gap-1">
+                  <Link
+                    href="/"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                  >
+                    <Home className="h-[21px] w-[21px] stroke-[1.7]" />
+                    <span>Início</span>
+                  </Link>
+
+                  <Link
+                    href="/funcionalidades"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                  >
+                    <LayoutGrid className="h-[21px] w-[21px] stroke-[1.7]" />
+                    <span>Funcionalidades</span>
+                  </Link>
+
+                  <Link
+                    href="/suporte"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                  >
+                    <CircleHelp className="h-[21px] w-[21px] stroke-[1.7]" />
+                    <span>Suporte</span>
+                  </Link>
+                </div>
+
+                <div className="mt-auto">
+                  <div className="mb-4 border-t border-[#e7e9ed]" />
+
+                  <p className="mb-4 text-[14px] font-semibold text-(--color-primary)">
+                    Conta
+                  </p>
+
+                  <div className="flex flex-col w-full gap-2">
+                    <Link
+                      href="/account_access?mode=cadastro"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex flex-1 items-center justify-center rounded-lg bg-(--color-primary) px-3 py-2 text-[14px] font-semibold text-white transition hover:bg-(--color-secondary)"
+                    >
+                      <span>Começar</span>
+                    </Link>
+
+                    <Link
+                      href="/account_access?mode=login"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex flex-1 items-center justify-center rounded-lg border border-[#dfe4eb] bg-white px-3 py-2 text-[14px] font-semibold text-(--color-primary) transition hover:bg-[#f1f4f8]"
+                    >
+                      <span>Entrar</span>
+                    </Link>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );

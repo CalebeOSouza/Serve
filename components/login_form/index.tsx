@@ -5,14 +5,14 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AnimatedAlert from "@/components/alert/AnimatedAlert";
-
+import { Eye, EyeOff, UserRound, Mail } from "lucide-react";
 type Props = {
   activeContainer: boolean;
 };
 
 export function LoginForm({ activeContainer }: Props) {
   const router = useRouter();
-
+const [showPassword, setShowPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -90,14 +90,18 @@ export function LoginForm({ activeContainer }: Props) {
   return (
 
     <div
-      className={`absolute w-full h-[70%] bottom-0 md:w-1/2 md:h-full bg-white flex items-center text-center text-[#333] p-10 transition-all duration-0 delay-500 ${
-        activeContainer
-          ? "opacity-100 z-10 md:right-1/2 md:bottom-0 right-0 bottom-[30%]"
-          : "opacity-0 z-0 right-0"
-      }`}
-    >
-      <form className="w-full" onSubmit={handleSubmit} autoComplete="on">
-        <h1 className="text-[32px] font-bold -mt-2.5 mb-4">Login</h1>
+  className={`absolute right-0 bottom-0 flex h-[70%] w-full items-center bg-white p-10 text-center text-[#333] md:top-0 md:bottom-auto md:right-1/2 md:h-full md:w-1/2 ${
+    activeContainer
+      ? "z-30 opacity-100 pointer-events-auto"
+      : "z-0 opacity-0 pointer-events-none"
+  }`}
+>
+       <form
+  className="w-full max-w-[500px] mx-auto"
+  onSubmit={handleSubmit}
+  autoComplete="on"
+>
+        <h1 className="text-[32px] font-bold -mt-2.5 mb-4 text-[#19274b]">Login</h1>
 
         <AnimatedAlert
           message={errorMessage}
@@ -122,27 +126,33 @@ export function LoginForm({ activeContainer }: Props) {
   placeholder="Email ou usuário"
   onChange={(e) => setIdentifier(e.target.value)}
 />
-          <i className="bi bi-envelope-fill absolute right-5 top-1/2 -translate-y-1/2 text-[#888] text-[20px]"></i>
+          <Mail size={20} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#888] text-[20px]" />
         </div>
-        <div className="relative my-7.5">
-          {/* border border-gray-300 py-2 px-4 rounded-md outline-none */}
-          <input
-            className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white
-    autofill:text-black
-    autofill:shadow-[inset_0_0_0px_1000px_white]"
-            type="password"
-            name="password"
-            placeholder="Senha"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <i className="bi bi-lock-fill absolute right-5 top-1/2 -translate-y-1/2 text-[#888] text-[20px]"></i>
-        </div>
+        
+<div className="relative my-7.5">
+  <input
+    className="w-full pt-3.25 pr-12.5 pb-3.25 pl-5 rounded-md border border-gray-300 outline-none text-[16px] font-normal placeholder-[#888] font-small focus:ring-1 focus:ring-black/10 transition autofill:bg-white autofill:text-black autofill:shadow-[inset_0_0_0px_1000px_white]"
+    name="password"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    type={showPassword ? "text" : "password"}
+    placeholder="Senha"
+  />
 
-        <div className="-mt-3.75 mr-0 ml-0 mb-3.75">
-          <Link href="" className="text-[14.5px] text-[#333] no-underline">
-            Esqueceu a senha?
-          </Link>
-        </div>
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-5 top-1/2 -translate-y-1/2 text-[#888] cursor-pointer"
+    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+  >
+    {showPassword ? (
+      <Eye size={20} />
+    ) : (
+      <EyeOff size={20} />
+    )}
+  </button>
+</div>
+
 
         <button
           type="submit"

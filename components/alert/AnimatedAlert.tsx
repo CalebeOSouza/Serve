@@ -53,7 +53,7 @@ export default function AnimatedAlert({
       icon: <AlertCircle className="w-5 h-5 shrink-0" />,
     },
     success: {
-      box: "border-green-300 bg-green-50 text-green-700",
+      box: "border-[#355fb3] text-[#123b73] bg-[#f5f8ff]",
       icon: <CheckCircle2 className="w-5 h-5 shrink-0" />,
     },
     warning: {

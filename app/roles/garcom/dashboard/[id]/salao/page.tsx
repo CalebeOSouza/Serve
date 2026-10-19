@@ -313,14 +313,14 @@ export default function LayoutPage() {
   };
 
   return (
-    <div className="w-full mx-auto flex flex-col px-5 py-10 md:px-10 max-lg:landscape:px-3 gap-8">
+    <div className="w-full mx-auto flex flex-col px-5 py-10 md:px-10 max-lg:landscape:px-4 gap-8">
       <header className="flex justify-between text-start flex-col gap-6 lg:flex-row lg:gap-0">
         <div className="flex flex-col">
           <h1 className="font-semibold text-[27px] text-[#19274b]">
             Salao do restaurante
           </h1>
 
-          <p className="text-[16px] text-[#19274b]">
+          <p className="mt-1 text-[16px] text-[#19274b]">
             Visualize as mesas, faça reservas e gerencie pedidos!
           </p>
         </div>

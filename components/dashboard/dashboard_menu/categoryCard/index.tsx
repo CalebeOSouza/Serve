@@ -14,6 +14,7 @@ import {
   Trash2,
   Inbox,
   Dot,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 type Product = {
@@ -254,13 +255,18 @@ export default function CategoryCard({
   );
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-hidden border border-gray-200 bg-white rounded-lg px-6 py-5 flex flex-col justify-between gap-4">
+    <div className="w-full min-w-0 max-w-full overflow-hidden border border-gray-200 bg-white rounded-lg px-6 py-4 flex flex-col justify-between gap-2">
+     <AnimatedAlert
+      message={alert.message}
+      type={alert.type}
+      onClose={() => setAlert((prev) => ({ ...prev, message: null }))}
+    />
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <p className="font-semibold text-[17px]">{name}</p>
 
           <div className="flex gap-2">
-            <p className="text-sm text-gray-500 flex item-center gap-1 justify-center">
+            <p className="text-sm text-gray-500 flex item-center gap-1 justify-center pb-2">
               {subcategoryCount}{" "}
               {subcategoryCount === 1 ? "subcategoria" : "subcategorias"}
               {" - "}
@@ -339,30 +345,43 @@ export default function CategoryCard({
 
                      <button
   onClick={async () => {
-    try {
-      const response = await fetch(
-        `/api/restaurant/menu/category?id=${id}&restaurantId=${restaurantId}`,
-        {
-          method: "DELETE",
-        },
-      );
+  try {
+    const response = await fetch(
+      `/api/restaurant/menu/category?id=${id}&restaurantId=${restaurantId}`,
+      {
+        method: "DELETE",
+      },
+    );
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (!response.ok) {
-        console.error("Erro ao excluir categoria:", result);
-        return;
-      }
-
-      // Remove imediatamente da tela
-      onDelete(id);
+    if (!response.ok) {
+      setAlert({
+        message: result.error || "Não foi possível excluir a categoria.",
+        type: "error",
+      });
 
       setConfirmDelete(false);
       setMenuOpen(false);
-    } catch (error) {
-      console.error("Erro ao excluir categoria:", error);
+      return;
     }
-  }}
+
+    onDelete(id);
+
+    setConfirmDelete(false);
+    setMenuOpen(false);
+  } catch (error) {
+    console.error("Erro ao excluir categoria:", error);
+
+    setAlert({
+      message: "Erro ao excluir categoria.",
+      type: "error",
+    });
+
+    setConfirmDelete(false);
+    setMenuOpen(false);
+  }
+}}
   className="flex-1 bg-red-800 rounded py-2 text-sm cursor-pointer hover:bg-red-900 transition"
 >
   Excluir
@@ -385,7 +404,7 @@ export default function CategoryCard({
         {subcategories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-5 text-center">
             <div className="bg-[#F5F5F6] p-5 rounded-full flex items-center justify-center mb-5">
-              <Inbox className="w-10 h-10 text-[#CCCFD4]" />
+              <Inbox className="w-10 h-10 text-[#a9b2c6]" />
             </div>
             <div className="flex items-center flex-col gap-2">
               <p className="text-gray-500 font-semibold">
@@ -439,7 +458,19 @@ export default function CategoryCard({
 
       {subcategoryModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-[450px]">
+          
+<div className="relative bg-white rounded-lg shadow-sm p-8 w-[450px]">
+  <button
+    type="button"
+    onClick={() =>
+      setSubcategoryModal({ open: false, input: "", list: [] })
+    }
+    aria-label="Fechar modal"
+    className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-md text-[#8a93a5] hover:text-[#19274b] cursor-pointer"
+  >
+    <X className="w-4 h-4" />
+  </button>
+
             <h2 className="text-xl font-semibold text-[#19274b]">
               Nova subcategoria
             </h2>
@@ -456,7 +487,7 @@ export default function CategoryCard({
             />
 
             <div>
-              <label className="block mb-1 text-sm font-medium text-[#19274b]">
+              <label className="block mb-1 text-sm font-medium text-[#19274b] mt-3">
                 Nome da subcategoria
               </label>
 
@@ -515,25 +546,17 @@ export default function CategoryCard({
               ))}
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <button
-                type="button"
-                onClick={() =>
-                  setSubcategoryModal({ open: false, input: "", list: [] })
-                }
-                className="w-full border border-gray-300 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
-              >
-                Cancelar
-              </button>
+            
+<div className="mt-6">
+  <button
+    type="button"
+    onClick={createSubcategories}
+    className="w-full py-2 rounded-md text-white bg-(--color-primary) hover:bg-(--color-secondary) transition cursor-pointer"
+  >
+    Criar
+  </button>
+</div>
 
-              <button
-                type="button"
-                onClick={createSubcategories}
-                className="w-full py-2 rounded-md text-white bg-(--color-primary) hover:bg-(--color-secondary) transition cursor-pointer"
-              >
-                Criar
-              </button>
-            </div>
           </div>
         </div>
       )}

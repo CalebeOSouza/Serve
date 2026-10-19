@@ -237,11 +237,11 @@ export default function RestaurantMedia({
                   src={bannerPreview || "/no_banner2.png"}
                   alt="Banner do restaurante"
                   fill
-                  className="object-cover group-hover:scale-105 transition duration-300"
+                  className="object-cover"
                   priority
                 />
 
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-70 transition duration-500" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-70 transition" />
               </div>
 
               {/* LOGO */}
@@ -251,14 +251,14 @@ export default function RestaurantMedia({
               >
                 <div className="relative w-26 h-26 rounded-full border-2 border-gray-300 shadow-md overflow-hidden">
                   <Image
-                    src={logoPreview || "/no_logo4.png"}
+                    src={logoPreview || "/no_logo6.png"}
                     alt="Logo do restaurante"
                     fill
-                    className="object-cover group-hover:scale-105 transition duration-300"
+                    className="object-cover"
                     priority
                   />
 
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-70 transition duration-500" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-70 transition" />
                 </div>
               </div>
             </div>

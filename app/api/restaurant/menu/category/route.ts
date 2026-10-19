@@ -225,7 +225,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Busca a categoria/subcategoria
+   
     const [categoryRows]: any = await db.query(
       `
       SELECT id, parent_id
@@ -249,12 +249,43 @@ export async function DELETE(req: NextRequest) {
 
     const category = categoryRows[0];
 
-    // =========================================================
-    // SUBCATEGORIA
-    // =========================================================
+  //Sub categoria
 
     if (category.parent_id !== null) {
-      // Apaga todos os produtos da subcategoria
+      
+      const [activeOrderItems]: any = await db.query(
+        `
+        SELECT oi.id
+        FROM order_items oi
+        INNER JOIN orders o
+          ON o.id = oi.order_id
+        INNER JOIN table_accounts ta
+          ON ta.id = o.account_id
+        INNER JOIN tables t
+          ON t.id = ta.table_id
+        INNER JOIN menu_items mi
+          ON mi.id = oi.menu_item_id
+        INNER JOIN menu_categories mc
+          ON mc.id = mi.category_id
+        WHERE mi.category_id = ?
+          AND mc.restaurant_id = ?
+        LIMIT 1
+        `,
+        [id, restaurantId],
+      );
+
+      if (activeOrderItems.length > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Não é possível excluir esta subcategoria porque existe um produto em um pedido de uma mesa com conta aberta.",
+          },
+          {
+            status: 409,
+          },
+        );
+      }
+
       await db.query(
         `
         DELETE FROM menu_items
@@ -263,7 +294,6 @@ export async function DELETE(req: NextRequest) {
         [id],
       );
 
-      // Apaga a subcategoria
       await db.query(
         `
         DELETE FROM menu_categories
@@ -280,12 +310,47 @@ export async function DELETE(req: NextRequest) {
       });
     }
 
-    // =========================================================
-    // CATEGORIA PRINCIPAL
-    // =========================================================
+    //Categoria
 
-    // Busca todas as subcategorias
+    const [activeOrderItems]: any = await db.query(
+      `
+      SELECT oi.id
+      FROM order_items oi
+      INNER JOIN orders o
+        ON o.id = oi.order_id
+      INNER JOIN table_accounts ta
+        ON ta.id = o.account_id
+      INNER JOIN tables t
+        ON t.id = ta.table_id
+      INNER JOIN menu_items mi
+        ON mi.id = oi.menu_item_id
+      INNER JOIN menu_categories mc
+        ON mc.id = mi.category_id
+      WHERE mc.restaurant_id = ?
+        AND (
+          mc.id = ?
+          OR mc.parent_id = ?
+        )
+      LIMIT 1
+      `,
+      [restaurantId, id, id],
+    );
+
+    if (activeOrderItems.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Não é possível excluir esta categoria porque existe um produto em um pedido de uma mesa com conta aberta.",
+        },
+        {
+          status: 409,
+        },
+      );
+    }
+
     const [subs]: any = await db.query(
+
+   
       `
       SELECT id
       FROM menu_categories
@@ -295,7 +360,6 @@ export async function DELETE(req: NextRequest) {
       [id, restaurantId],
     );
 
-    // Apaga os produtos das subcategorias
     for (const sub of subs) {
       await db.query(
         `
@@ -306,7 +370,6 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Apaga produtos que estejam diretamente na categoria
     await db.query(
       `
       DELETE FROM menu_items
@@ -315,7 +378,6 @@ export async function DELETE(req: NextRequest) {
       [id],
     );
 
-    // Apaga as subcategorias
     await db.query(
       `
       DELETE FROM menu_categories
@@ -325,7 +387,6 @@ export async function DELETE(req: NextRequest) {
       [id, restaurantId],
     );
 
-    // Apaga a categoria principal
     await db.query(
       `
       DELETE FROM menu_categories
@@ -340,16 +401,28 @@ export async function DELETE(req: NextRequest) {
       type: "category",
       id,
     });
-  } catch (error) {
-    console.error("Erro ao excluir categoria:", error);
+  } catch (error: any) {
+  console.error("Erro ao excluir categoria:", error);
 
+  if (error?.errno === 1451) {
     return NextResponse.json(
       {
-        error: "Erro ao excluir categoria.",
+        error:
+          "Não é possível excluir esta subcategoria porque existem produtos dela em pedidos.",
       },
       {
-        status: 500,
+        status: 409,
       },
     );
   }
+
+  return NextResponse.json(
+    {
+      error: "Erro ao excluir categoria.",
+    },
+    {
+      status: 500,
+    },
+  );
+}
 }

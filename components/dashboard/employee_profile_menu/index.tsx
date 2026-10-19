@@ -127,31 +127,25 @@ export default function EmployeeProfileMenu({
   }, [open]);
 
   async function handleLogout() {
-    if (loggingOut) return;
+  if (loggingOut) return;
 
-    try {
-      setLoggingOut(true);
+  try {
+    setLoggingOut(true);
 
-      const response = await fetch("/api/restaurant/employees/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          role,
-        }),
-      });
+    const response = await fetch("/api/restaurant/employees/logout", {
+      method: "POST",
+    });
 
-      if (!response.ok) {
-        throw new Error("Não foi possível encerrar a sessão.");
-      }
-
-      window.location.reload();
-    } catch (error) {
-      console.error("Erro ao encerrar sessão:", error);
-      setLoggingOut(false);
+    if (!response.ok) {
+      throw new Error("Não foi possível encerrar a sessão.");
     }
+
+    window.location.assign(window.location.href);
+  } catch (error) {
+    console.error("Erro ao encerrar sessão:", error);
+    setLoggingOut(false);
   }
+}
 
   const initials = getInitials(employee?.name);
   const firstName = getFirstName(employee?.name);

@@ -13,6 +13,15 @@ const pool = mysql.createPool({
 
 type EmployeeRole = "gerente" | "cozinha" | "caixa" | "garcom";
 
+const VALID_ROLES: EmployeeRole[] = [
+  "gerente",
+  "cozinha",
+  "caixa",
+  "garcom",
+];
+
+const EMPLOYEE_SESSION_COOKIE = "serve_employee_session";
+
 function getSecret() {
   const secret = process.env.NEXTAUTH_SECRET;
 
@@ -52,7 +61,16 @@ function verifyEmployeeToken(token: string) {
     return null;
   }
 
-  if (Number(expiresAt) < Date.now()) {
+  if (!VALID_ROLES.includes(role as EmployeeRole)) {
+    return null;
+  }
+
+  const expiresAtNumber = Number(expiresAt);
+
+  if (
+    !Number.isFinite(expiresAtNumber) ||
+    expiresAtNumber < Date.now()
+  ) {
     return null;
   }
 
@@ -74,11 +92,42 @@ function verifyEmployeeToken(token: string) {
     return null;
   }
 
+  const employeeIdNumber = Number(employeeId);
+  const restaurantIdNumber = Number(restaurantId);
+
+  if (
+    !Number.isInteger(employeeIdNumber) ||
+    !Number.isInteger(restaurantIdNumber)
+  ) {
+    return null;
+  }
+
   return {
-    employeeId: Number(employeeId),
-    restaurantId: Number(restaurantId),
-    role,
+    employeeId: employeeIdNumber,
+    restaurantId: restaurantIdNumber,
+    role: role as EmployeeRole,
   };
+}
+
+async function clearOldEmployeeCookies() {
+  const cookieStore = await cookies();
+
+  const oldCookies = [
+    "serve_employee_gerente",
+    "serve_employee_garcom",
+    "serve_employee_cozinha",
+    "serve_employee_caixa",
+  ];
+
+  for (const cookieName of oldCookies) {
+    cookieStore.set(cookieName, "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: new Date(0),
+    });
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -87,9 +136,15 @@ export async function GET(req: NextRequest) {
       req.nextUrl.searchParams.get("restaurantId"),
     );
 
-    const role = req.nextUrl.searchParams.get("role") as EmployeeRole;
+    const role = req.nextUrl.searchParams.get(
+      "role",
+    ) as EmployeeRole;
 
-    if (!restaurantId || !role) {
+    if (
+      !restaurantId ||
+      !role ||
+      !VALID_ROLES.includes(role)
+    ) {
       return NextResponse.json(
         { error: "Dados de identificação não informados." },
         { status: 400 },
@@ -97,7 +152,10 @@ export async function GET(req: NextRequest) {
     }
 
     const cookieStore = await cookies();
-    const token = cookieStore.get(`serve_employee_${role}`)?.value;
+
+    const token = cookieStore.get(
+      EMPLOYEE_SESSION_COOKIE,
+    )?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -131,7 +189,7 @@ export async function GET(req: NextRequest) {
           ON r.id = er.role_id
         WHERE e.id = ?
           AND e.restaurant_id = ?
-          AND e.status = 'ativo'
+
           AND r.restaurant_id = ?
           AND r.type = ?
         LIMIT 1
@@ -172,13 +230,19 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const restaurantId = Number(body.restaurantId);
+
     const pin = String(body.pin || "")
       .trim()
       .toUpperCase();
 
     const role = body.role as EmployeeRole;
 
-    if (!restaurantId || !pin || !role) {
+    if (
+      !restaurantId ||
+      !pin ||
+      !role ||
+      !VALID_ROLES.includes(role)
+    ) {
       return NextResponse.json(
         { error: "PIN não informado." },
         { status: 400 },
@@ -200,7 +264,6 @@ export async function POST(req: NextRequest) {
         INNER JOIN roles r
           ON r.id = er.role_id
         WHERE e.restaurant_id = ?
-          AND e.status = 'ativo'
           AND r.restaurant_id = ?
           AND r.type = ?
       `,
@@ -220,7 +283,10 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const validPin = await bcrypt.compare(pin, item.pin);
+      const validPin = await bcrypt.compare(
+        pin,
+        item.pin,
+      );
 
       if (validPin) {
         employee = item;
@@ -246,7 +312,9 @@ export async function POST(req: NextRequest) {
 
     const cookieStore = await cookies();
 
-    cookieStore.set(`serve_employee_${role}`, token, {
+    await clearOldEmployeeCookies();
+
+    cookieStore.set(EMPLOYEE_SESSION_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

@@ -73,29 +73,6 @@ export default function RestaurantCard({ restaurant }: Props) {
           <div className="flex flex-col items-start gap-2">
             <h1 className="text-2xl font-bold text-[#35393a]">{name}</h1>
 
-            <div className="flex gap-3">
-              {status === "operacional" && (
-                <span className="inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[14px] font-bold bg-(--color-badge-1) text-(--color-secondary)">
-                  <CircleCheck className="w-4 h-4 text-(--color-primary)" />
-                  Operacional
-                </span>
-              )}
-
-              {status === "configurando" && (
-                <span className="inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[14px] font-bold bg-(--color-badge-3) text-[#292929]">
-                  <Settings className="w-4 h-4 text-[#292929]" />
-                  Configurando
-                </span>
-              )}
-
-              {status === "pausado" && (
-                <span className="inline-flex items-center gap-2 px-2 py-1 rounded-lg text-[14px] font-bold bg-(--color-badge-3) text-[#292929]">
-                  <PauseCircle className="w-4 h-4 text-[#292929]" />
-                  Pausado
-                </span>
-              )}
-            </div>
-
             <div className="flex gap-2 items-center">
               <MapPin className="w-4 h-4" />
               <p>

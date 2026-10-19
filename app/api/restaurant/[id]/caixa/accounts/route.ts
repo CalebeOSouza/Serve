@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getEmployeeSession } from "../../../../../lib/employeeSession";
 import mysql from "mysql2/promise";
 
 const pool = mysql.createPool({
@@ -14,11 +15,14 @@ async function applyPayment(
   customerName: string,
   value: number,
 ) {
+  
   const [rows] = await conn.query(
     `SELECT oi.id, oi.quantity, oi.unit_price, oi.paid_amount
      FROM order_items oi
      INNER JOIN orders o ON o.id = oi.order_id
-     WHERE o.account_id = ? AND oi.customer_name = ? AND o.status != 'cancelado'
+     WHERE o.account_id = ?
+       AND BINARY oi.customer_name = BINARY ?
+       AND o.status != 'cancelado'
      ORDER BY oi.id ASC`,
     [accountId, customerName],
   );
@@ -84,7 +88,7 @@ type Account = {
   table_type: "mesa_quadrada" | "mesa_redonda" | "mesa_retangular" | "mesa_l";
   table_rotation: number;
   people_count: number;
-  account_status: "aberta" | "conta_solicitada";
+  account_status: "aberta";
   total_consumed: number;
   total_paid: number;
   opened_at: string;
@@ -140,7 +144,7 @@ export async function GET(
         ON t.id = ta.table_id
 
       WHERE t.restaurant_id = ?
-        AND ta.status IN ('aberta', 'conta_solicitada')
+        AND ta.status = 'aberta'
 
       ORDER BY t.number ASC
       `,
@@ -256,21 +260,122 @@ export async function PATCH(
     const body = await req.json();
     const { action, accountId } = body;
 
+    if (!restaurantId || !accountId) {
+      return NextResponse.json(
+        { error: "Dados obrigatórios não informados." },
+        { status: 400 },
+      );
+    }
+
+    await conn.beginTransaction();
+
     const [accRows] = await conn.query(
-      `SELECT ta.id FROM table_accounts ta
+      `SELECT
+        ta.id,
+        ta.table_id,
+        ta.total_consumed,
+        ta.total_paid,
+        t.number AS table_number
+       FROM table_accounts ta
        INNER JOIN tables t ON t.id = ta.table_id
-       WHERE ta.id = ? AND t.restaurant_id = ?
-         AND ta.status IN ('aberta','conta_solicitada')
-       LIMIT 1`,
+       WHERE ta.id = ?
+         AND t.restaurant_id = ?
+         AND ta.status = 'aberta'
+       LIMIT 1
+       FOR UPDATE`,
       [accountId, restaurantId],
     );
 
     const account = (accRows as any[])[0];
+
     if (!account) {
-      return NextResponse.json({ error: "Conta não encontrada." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Conta não encontrada." },
+        { status: 404 },
+      );
     }
 
-    await conn.beginTransaction();
+    if (action === "liberar") {
+      const totalConsumed = Number(account.total_consumed);
+      const totalPaid = Number(account.total_paid);
+      const pending = Math.max(0, totalConsumed - totalPaid);
+
+      if (pending > 0) {
+        await conn.rollback();
+
+        return NextResponse.json(
+          {
+            error: "A conta ainda possui valor pendente.",
+          },
+          { status: 400 },
+        );
+      }
+
+      await conn.query(
+        `DELETE FROM orders
+         WHERE account_id = ?`,
+        [account.id],
+      );
+
+      await conn.query(
+        `DELETE FROM reservations
+         WHERE id = (
+           SELECT reservation_id
+           FROM (
+             SELECT id AS reservation_id
+             FROM reservations
+             WHERE restaurant_id = ?
+               AND table_id = ?
+               AND TIMESTAMP(reservation_date, reservation_time) <= NOW()
+             ORDER BY
+               TIMESTAMP(reservation_date, reservation_time) DESC,
+               id DESC
+             LIMIT 1
+           ) AS current_reservation
+         )`,
+        [restaurantId, account.table_id],
+      );
+
+      await conn.query(
+        `DELETE FROM table_accounts
+         WHERE id = ?`,
+        [account.id],
+      );
+
+      await conn.query(
+        `UPDATE tables
+         SET status = 'livre'
+         WHERE id = ?
+           AND restaurant_id = ?`,
+        [account.table_id, restaurantId],
+      );
+
+      const employeeSession = await getEmployeeSession("caixa");
+
+      if (employeeSession) {
+        await conn.query(
+          `INSERT INTO employee_logs (
+      restaurant_id,
+      employee_id,
+      system_account,
+      action_description
+    )
+    VALUES (?, ?, 'caixa', ?)`,
+          [
+            restaurantId,
+            employeeSession.employeeId,
+            `Liberou a mesa ${account.table_number} após o encerramento da conta.`,
+          ],
+        );
+      }
+
+      await conn.commit();
+
+      return NextResponse.json({
+        success: true,
+        message: `Mesa ${account.table_number} liberada com sucesso.`,
+      });
+    }
 
     if (action === "transferir") {
       const { orderItemId, toCustomer } = body;
@@ -288,12 +393,14 @@ export async function PATCH(
 
       if (!Number.isFinite(value) || value <= 0) {
         await conn.rollback();
+
         return NextResponse.json({ error: "Valor inválido." }, { status: 400 });
       }
 
       await applyPayment(conn, account.id, customerName, value);
     } else {
       await conn.rollback();
+
       return NextResponse.json({ error: "Ação inválida." }, { status: 400 });
     }
 
@@ -303,7 +410,9 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (error) {
     await conn.rollback();
+
     console.error("Erro na ação do caixa:", error);
+
     return NextResponse.json({ error: "Erro interno." }, { status: 500 });
   } finally {
     conn.release();

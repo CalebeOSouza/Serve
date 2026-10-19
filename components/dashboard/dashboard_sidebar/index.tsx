@@ -160,7 +160,7 @@ const employeeRole =
           : null;
   return (
     <section className="hidden lg:flex fixed top-0 left-0 h-screen w-55 bg-[#F9F9FC] text-(--color-secondary) z-10 border-r border-[#ECEDF4]">
-      {/* bg-(--color-primary) */}
+      {/* bg-(--color-primary) text-white / bg-[#F9F9FC] text-(--color-secondary) */}
       <div className="flex flex-col w-full text-center mx-auto mt-3">
         <ul className="flex flex-col px-5 py-10 pt-20 w-full items-start text-left">
           <div className="flex flex-col items-start gap-3 text-[15px] w-full">
@@ -176,7 +176,7 @@ const employeeRole =
                   <Link href={item.path} className="block w-full">
                     <div
                       className={`flex items-center gap-4 px-3 py-3 rounded-md transition-all
-                      ${isActive ? "bg-[#E2EAFA]" : "hover:bg-[#E2EAFA]"}`}
+                      ${isActive ? "bg-[#E3EFFE]" : "hover:bg-[#E3EFFE]"}`}
                     >
                       <Icon size={18} className="shrink-0" />
 

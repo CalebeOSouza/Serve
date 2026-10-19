@@ -44,7 +44,7 @@ export default function ZoomControls({
   }, []);
 
   return (
-    <div className="relative flex items-center w-full gap-3 px-4">
+    <div className="relative flex items-center w-full gap-3">
       {role === "admin" && (
         <div className="relative flex items-center">
           <div

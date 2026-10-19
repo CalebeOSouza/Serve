@@ -349,7 +349,7 @@ export default function Reservas() {
   }
 
   return (
-    <div className="w-full min-h-full px-10 py-8">
+    <div className="w-full min-h-full md:px-10 max-lg:landscape:px-4 py-8">
       <div className="mx-auto w-full">
         <header className="flex flex-col gap-5 border-b border-[#e5e9f0] pb-7 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -357,7 +357,7 @@ export default function Reservas() {
               Reservas
             </h1>
 
-            <p className="mt-1 text-[16px] text-[#7b8497]">
+            <p className="mt-1 text-[16px] text-[#19274b]">
               Acompanhe todas as reservas futuras do restaurante
             </p>
           </div>
@@ -368,7 +368,7 @@ export default function Reservas() {
             </div>
 
             <div>
-              <p className="text-[13px] font-medium text-[#7b8497]">
+              <p className="text-[13px] font-medium text-gray-700">
                 Reservas futuras
               </p>
 
@@ -500,7 +500,7 @@ export default function Reservas() {
                       {formatDate(reservation)}
                     </p>
 
-                    <p className="mt-0.5 text-[13px] capitalize text-[#7b8497]">
+                    <p className="mt-0.5 text-[13px] capitalize text-[#8a93a5]">
                       {formatWeekday(reservation)}
                     </p>
                   </div>
@@ -598,7 +598,7 @@ export default function Reservas() {
           ) : (
             <div className="flex w-full flex-col items-center justify-center gap-3 rounded-md border border-gray-200 py-30">
               <div className="bg-[#F5F5F6] p-6 rounded-full flex items-center justify-center">
-                <Calendar className="w-14 h-14 text-[#CCCFD4]" />
+                <Calendar className="w-14 h-14 text-[#a9b2c6]" />
               </div>
               <div className="flex flex-col items-center gap-1">
                 <p className="text-gray-800 font-bold text-[20px]">

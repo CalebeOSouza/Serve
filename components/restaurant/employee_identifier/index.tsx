@@ -173,7 +173,7 @@ export default function EmployeeIdentifier({
             </h1>
 
             <p className="text-sm text-gray-500 mt-2 max-w-[320px]">
-              Digite o PIN do funcionário para acessar o sistema.
+              Digite o seu PIN de identificação para acessar o sistema.
             </p>
           </div>
 
@@ -220,7 +220,7 @@ export default function EmployeeIdentifier({
                   maxLength={6}
                   autoComplete="off"
                   disabled={loading}
-                  className="w-full h-12 rounded-lg border border-gray-300 pl-12 pr-4 text-center text-lg font-semibold tracking-[0.25em] text-[#19274b] outline-none transition-all focus:border-(--color-primary) focus:ring-2 focus:ring-(--color-primary)/10"
+                  className="w-full h-12 rounded-lg border border-gray-300 pl-12 pr-4 text-center text-lg font-semibold tracking-[0.25em] text-[#19274b] outline-none"
                 />
               </div>
             </div>

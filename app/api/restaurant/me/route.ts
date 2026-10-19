@@ -30,7 +30,7 @@ export async function GET(req: Request) {
 
     const [restaurants]: any = await db.execute(
       `
-  SELECT id, name, description, city, state, status
+  SELECT id, name, description, city, state
   FROM restaurants
   WHERE id = ?
   LIMIT 1

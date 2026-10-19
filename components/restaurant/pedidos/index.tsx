@@ -183,7 +183,7 @@ function TablePreview({
       </div>
 
       <div className="min-w-0">
-        <p className="text-[13px] font-medium text-[#7b8497]">
+        <p className="text-[13px] font-medium text-gray-700">
           Mesa selecionada
         </p>
 
@@ -563,7 +563,7 @@ export function Pedidos({
                                   {pendingItem.menuItem.name}
                                 </p>
 
-                                <p className="mt-0.5 text-[12px] font-medium text-[#7b8497]">
+                                <p className="mt-0.5 text-[12px] font-medium text-gray-700">
                                   {pendingItem.customerName
                                     .trim()
                                     .split(/\s+/)[0] || "Sem nome"}
@@ -593,7 +593,7 @@ export function Pedidos({
 
                       {pendingItem.observation && (
                         <div className="mt-3 bg-[#f8f9fb] px-4 py-2">
-                          <p className="text-[13px] font-medium text-[#7b8497]">
+                          <p className="text-[13px] font-medium text-gray-700">
                             Observação do cliente
                           </p>
 
@@ -623,7 +623,7 @@ export function Pedidos({
               }
             />
 
-            <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center justify-between mt-5">
               <span className="text-sm font-medium text-[#536078]">Total</span>
 
               <span className="text-lg font-bold text-[#19274b]">
@@ -738,7 +738,7 @@ export function Pedidos({
             ${
               isSelected
                 ? "border-[#8bb5df] bg-[#f2f8ff] text-[#1b325f]"
-                : "border-[#e5e9ef] bg-white text-[#7b8497] hover:border-[#d1d9e3]"
+                : "border-[#e5e9ef] bg-white text-gray-700 hover:border-[#d1d9e3]"
             }
           `}
                     >
@@ -761,7 +761,7 @@ export function Pedidos({
               (categories.length === 0 || filteredItems.length === 0) && (
                 <div className="flex flex-col items-center justify-center gap-3 py-30 w-full h-full border border-gray-200 rounded-md col-span-full">
                   <div className="bg-[#F5F5F6] p-6 rounded-full flex items-center justify-center">
-                    <Inbox className="w-14 h-14 text-[#CCCFD4]" />
+                    <Inbox className="w-14 h-14 text-[#a9b2c6]" />
                   </div>
                   <div className="flex flex-col items-center gap-1">
                     <p className="text-gray-800 font-bold text-[20px]">
