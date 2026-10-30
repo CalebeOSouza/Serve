@@ -4,8 +4,8 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-import mysql from "mysql2/promise";
-
+// import mysql from "mysql2/promise";
+import { db } from "@/app/lib/db";
 const NOTIFICATION_DELAY_HOURS = 0.05; //0.001 -> 3,6s //1
 
 const DELETE_DELAY_HOURS = 24; //0.01 -> 1m48s //24
@@ -17,12 +17,12 @@ export async function GET() {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const db = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: "db_serve",
-  });
+  // const db = await mysql.createConnection({
+  //   host: process.env.DB_HOST,
+  //   user: process.env.DB_USER,
+  //   password: process.env.DB_PASSWORD,
+  //   database: "db_serve",
+  // });
 
   try {
     const [users]: any = await db.execute(
@@ -111,7 +111,5 @@ export async function GET() {
       { error: "Erro interno" },
       { status: 500 },
     );
-  } finally {
-    await db.end();
   }
 }
