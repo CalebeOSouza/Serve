@@ -1690,15 +1690,15 @@ useEffect(() => {
           // const snappedY = snapToHalfGrid(rawY);
           // return { ...w, x: snappedX, y: snappedY };
 
-          if (w.wallType === "interna") {
-            const snappedX = isVertical
-              ? snapInternalWallEdge(rawX)
-              : snapToHalfGrid(rawX);
-            const snappedY = isVertical
-              ? snapToHalfGrid(rawY)
-              : snapInternalWallEdge(rawY);
-            return { ...w, x: snappedX, y: snappedY };
-          }
+          // if (w.wallType === "interna") {
+          //   const snappedX = isVertical
+          //     ? snapInternalWallEdge(rawX)
+          //     : snapToHalfGrid(rawX);
+          //   const snappedY = isVertical
+          //     ? snapToHalfGrid(rawY)
+          //     : snapInternalWallEdge(rawY);
+          //   return { ...w, x: snappedX, y: snappedY };
+          // }
 
           if (w.wallType === "externa") {
             const snappedX = isVertical

@@ -583,7 +583,11 @@ useEffect(() => {
                       <Link
                         href={`/`}
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname === "/"
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
                       >
                         <Home className="h-[21px] w-[21px] stroke-[1.7]" />
                         <span>Início</span>
@@ -611,7 +615,11 @@ useEffect(() => {
                       <Link
                         href={`/`}
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname === "/"
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
                       >
                         <Home className="h-[21px] w-[21px] stroke-[1.7]" />
                         <span>Início</span>
@@ -639,7 +647,11 @@ useEffect(() => {
                       <Link
                         href={`/`}
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname === "/"
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
                       >
                         <Home className="h-[21px] w-[21px] stroke-[1.7]" />
                         <span>Início</span>
@@ -667,7 +679,11 @@ useEffect(() => {
                       <Link
                         href={`/`}
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium text-(--color-primary)/80 transition hover:bg-[#f1f4f8]"
+                        className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
+                          pathname === "/"
+                            ? "bg-[#eaf1fb] text-(--color-primary)"
+                            : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
+                        }`}
                       >
                         <Home className="h-[21px] w-[21px] stroke-[1.7]" />
                         <span>Início</span>

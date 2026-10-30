@@ -8,9 +8,10 @@ import AnimatedAlert from "@/components/alert/AnimatedAlert";
 import { Eye, EyeOff, UserRound, Mail } from "lucide-react";
 type Props = {
   activeContainer: boolean;
+  isAnimating: boolean;
 };
 
-export function LoginForm({ activeContainer }: Props) {
+export function LoginForm({ activeContainer, isAnimating }: Props) {
   const router = useRouter();
 const [showPassword, setShowPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
@@ -90,11 +91,11 @@ const [showPassword, setShowPassword] = useState(false);
   return (
 
     <div
-  className={`absolute right-0 bottom-0 flex h-[70%] w-full items-center bg-white p-10 text-center text-[#333] md:top-0 md:bottom-auto md:right-1/2 md:h-full md:w-1/2 ${
-    activeContainer
-      ? "z-30 opacity-100 pointer-events-auto"
-      : "z-0 opacity-0 pointer-events-none"
-  }`}
+  className={`absolute right-0 bottom-0 z-0 flex h-[70%] w-full items-center bg-white p-10 text-center text-[#333] md:top-0 md:bottom-auto md:right-1/2 md:h-full md:w-1/2 ${
+  activeContainer && !isAnimating
+    ? "pointer-events-auto"
+    : "pointer-events-none"
+}`}
 >
        <form
   className="w-full max-w-[500px] mx-auto"

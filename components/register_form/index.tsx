@@ -8,9 +8,10 @@ import { Eye, EyeOff, UserRound, Mail } from "lucide-react";
 
 type Props = {
   activeContainer: boolean;
+  isAnimating: boolean;
 };
 
-export function RegisterForm({ activeContainer }: Props) {
+export function RegisterForm({ activeContainer, isAnimating }: Props) {
   const router = useRouter();
 
 const [showPassword, setShowPassword] = useState(false);
@@ -79,11 +80,11 @@ const [showPassword, setShowPassword] = useState(false);
   return (
    
    <div
-  className={`absolute left-0 bottom-0 flex h-[70%] w-full items-center p-10 text-center text-[#333] md:top-0 md:bottom-auto md:left-1/2 md:h-full md:w-1/2 ${
-    !activeContainer
-      ? "z-30 opacity-100 pointer-events-auto"
-      : "z-0 opacity-0 pointer-events-none"
-  }`}
+  className={`absolute left-0 bottom-0 z-0 flex h-[70%] w-full items-center bg-white p-10 text-center text-[#333] md:top-0 md:bottom-auto md:left-1/2 md:h-full md:w-1/2 ${
+  !activeContainer && !isAnimating
+    ? "pointer-events-auto"
+    : "pointer-events-none"
+}`}
 >
   
     <form
