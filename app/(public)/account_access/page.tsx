@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,7 @@ import { RegisterForm } from "../../../components/register_form/index";
 import { LoginForm } from "../../../components/login_form/index";
 import Image from "next/image";
 
-export default function Cadastro() {
+function CadastroContent() {
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
   const router = useRouter();
@@ -180,5 +180,12 @@ className={`right pointer-events-auto absolute right-0 z-50 flex h-[30%] w-full 
 
       </div>
     </section>
+  );
+}
+export default function Cadastro() {
+  return (
+    <Suspense fallback={<div className="fixed inset-0 z-[100] bg-white" />}>
+      <CadastroContent />
+    </Suspense>
   );
 }
