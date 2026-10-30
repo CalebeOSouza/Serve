@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import mysql from "mysql2/promise";
-
+// import mysql from "mysql2/promise";
+import { db } from "@/app/lib/db";
 export async function POST(req: Request) {
 
   const session = await getServerSession(authOptions);
@@ -17,12 +17,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "restaurantId obrigatório" }, { status: 400 });
   }
 
-  const db = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: "db_serve",
-  });
+  // const db = await mysql.createConnection({
+  //   host: process.env.DB_HOST,
+  //   user: process.env.DB_USER,
+  //   password: process.env.DB_PASSWORD,
+  //   database: "db_serve",
+  // });
 
   try {
 
@@ -58,10 +58,10 @@ export async function POST(req: Request) {
       { status: 500 }
     );
 
-  } finally {
+   } //finally {
 
-    await db.end();
+  //   await db.end();
 
-  }
+  // }
 
 }
