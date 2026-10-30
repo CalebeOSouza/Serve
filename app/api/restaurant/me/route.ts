@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import mysql from "mysql2/promise";
+import { db } from "@/app/lib/db";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -12,13 +12,6 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const restaurantId = searchParams.get("restaurantId");
-
-  const db = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: "db_serve",
-  });
 
   try {
     if (!restaurantId) {
@@ -84,8 +77,6 @@ export async function GET(req: Request) {
       { error: "Erro ao buscar restaurante" },
       { status: 500 },
     );
-  } finally {
-    await db.end();
   }
 }
 
