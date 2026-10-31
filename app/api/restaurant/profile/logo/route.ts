@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, unlink } from "fs/promises";
-import path from "path";
+// import { writeFile, unlink } from "fs/promises";
+// import path from "path";
 import { db } from "../../../../lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import {
+  saveUploadedImage,
+  deleteUploadedImage,
+} from "@/app/lib/storage";
+
+
 
 const MAX_SIZE = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -48,14 +54,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // const bytes = await file.arrayBuffer();
+    // const buffer = Buffer.from(bytes);
 
-    const fileName = `logo_${Date.now()}_${file.name.replace(/\s/g, "_")}`;
-    const filePath = path.join(process.cwd(), "public/uploads/logos", fileName);
-    await writeFile(filePath, buffer);
+    // const fileName = `logo_${Date.now()}_${file.name.replace(/\s/g, "_")}`;
+    // const filePath = path.join(process.cwd(), "public/uploads/logos", fileName);
+    // await writeFile(filePath, buffer);
 
-    const logoUrl = `/uploads/logos/${fileName}`;
+    // const logoUrl = `/uploads/logos/${fileName}`;
+
+const logoUrl = await saveUploadedImage(file, "logos");
 
     const [media]: any = await db.query(
       "SELECT logo_url FROM restaurant_media WHERE restaurant_id = ?",
@@ -75,10 +83,13 @@ export async function POST(req: NextRequest) {
         [logoUrl, restaurantId],
       );
 
-      if (oldLogo) {
-        const oldPath = path.join(process.cwd(), "public", oldLogo);
-        await unlink(oldPath).catch(() => {});
-      }
+      // if (oldLogo) {
+      //   const oldPath = path.join(process.cwd(), "public", oldLogo);
+      //   await unlink(oldPath).catch(() => {});
+      // }
+
+await deleteUploadedImage(oldLogo);
+
     }
 
     await db.query(

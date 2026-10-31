@@ -1,22 +1,25 @@
 import { db } from "../../../../lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import fs from "fs/promises";
-import path from "path";
+// import { randomUUID } from "crypto";
+// import fs from "fs/promises";
+// import path from "path";
+import {
+  saveUploadedImage,
+  deleteUploadedImage,
+} from "@/app/lib/storage";
+// async function deleteImage(imageUrl: string | null) {
+//   if (!imageUrl) return;
 
-async function deleteImage(imageUrl: string | null) {
-  if (!imageUrl) return;
+//   try {
+//     const filePath = path.join(
+//       process.cwd(),
+//       "public",
+//       imageUrl.replace(/^\//, ""),
+//     );
 
-  try {
-    const filePath = path.join(
-      process.cwd(),
-      "public",
-      imageUrl.replace(/^\//, ""),
-    );
-
-    await fs.unlink(filePath);
-  } catch {}
-}
+//     await fs.unlink(filePath);
+//   } catch {}
+// }
 
 export async function GET(req: NextRequest) {
   try {
@@ -196,24 +199,29 @@ export async function POST(req: NextRequest) {
 
     let imageUrl: string | null = null;
 
-    if (image && image.size > 0) {
-      const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+    // if (image && image.size > 0) {
+    //   const bytes = await image.arrayBuffer();
+    //   const buffer = Buffer.from(bytes);
 
-      const extension = image.name.split(".").pop();
-      const fileName = `${randomUUID()}.${extension}`;
+    //   const extension = image.name.split(".").pop();
+    //   const fileName = `${randomUUID()}.${extension}`;
 
-      const uploadDir = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "products",
-      );
-      await fs.mkdir(uploadDir, { recursive: true });
-      await fs.writeFile(path.join(uploadDir, fileName), buffer);
+    //   const uploadDir = path.join(
+    //     process.cwd(),
+    //     "public",
+    //     "uploads",
+    //     "products",
+    //   );
+    //   await fs.mkdir(uploadDir, { recursive: true });
+    //   await fs.writeFile(path.join(uploadDir, fileName), buffer);
 
-      imageUrl = `/uploads/products/${fileName}`;
-    }
+    //   imageUrl = `/uploads/products/${fileName}`;
+    // }
+
+if (image && image.size > 0) {
+  imageUrl = await saveUploadedImage(image, "products");
+}
+
 
     const [result]: any = await db.query(
       `
@@ -379,6 +387,7 @@ export async function PUT(req: NextRequest) {
     }
 
     let imageUrl = rows[0].image_url;
+const oldImageUrl = imageUrl;
 
     if (image && image.size > 0) {
       const allowedTypes = [
@@ -407,27 +416,31 @@ export async function PUT(req: NextRequest) {
         );
       }
 
-      await deleteImage(imageUrl);
+      // await deleteImage(imageUrl);
 
-      const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+      // const bytes = await image.arrayBuffer();
+      // const buffer = Buffer.from(bytes);
 
-      const fileName = `${randomUUID()}.${extension}`;
+      // const fileName = `${randomUUID()}.${extension}`;
 
-      const uploadDir = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "products",
-      );
+      // const uploadDir = path.join(
+      //   process.cwd(),
+      //   "public",
+      //   "uploads",
+      //   "products",
+      // );
 
-      await fs.mkdir(uploadDir, {
-        recursive: true,
-      });
+      // await fs.mkdir(uploadDir, {
+      //   recursive: true,
+      // });
 
-      await fs.writeFile(path.join(uploadDir, fileName), buffer);
+      // await fs.writeFile(path.join(uploadDir, fileName), buffer);
 
-      imageUrl = `/uploads/products/${fileName}`;
+      // imageUrl = `/uploads/products/${fileName}`;
+
+
+imageUrl = await saveUploadedImage(image, "products");
+
     }
 
     await db.query(
@@ -446,6 +459,10 @@ WHERE mi.id = ?
       [name, description || null, price, imageUrl, id, restaurantId],
     );
 
+if (image && image.size > 0) {
+  await deleteUploadedImage(oldImageUrl);
+}
+    
     return NextResponse.json({
       success: true,
       id,
@@ -455,6 +472,9 @@ WHERE mi.id = ?
       imageUrl,
       available: Boolean(rows[0].available),
     });
+
+
+    
   } catch (error) {
     console.error(error);
 
@@ -554,8 +574,8 @@ WHERE mi.id = ?
       );
     }
 
-    await deleteImage(rows[0].image_url);
-
+    // await deleteImage(rows[0].image_url);
+await deleteUploadedImage(rows[0].image_url);
     await db.query(
       `
       DELETE mi
