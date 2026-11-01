@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import mysql from "mysql2/promise";
+
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import { getEmployeeSession } from "../../../../lib/employeeSession";
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: "db_serve",
-});
-
+import { db } from "@/app/lib/db";
 const VALID_ROLES = ["gerente", "cozinha", "caixa", "garcom"] as const;
 
 type EmployeeRole = (typeof VALID_ROLES)[number];
@@ -57,7 +51,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       `
         SELECT
           e.id,

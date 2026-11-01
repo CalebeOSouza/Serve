@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
-import mysql from "mysql2/promise";
+// import mysql from "mysql2/promise";
+import type { PoolConnection } from "mysql2/promise";
+import { db } from "@/app/lib/db";
 import { getEmployeeSession } from "../../../../../lib/employeeSession";
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: "db_serve",
-});
+// const pool = mysql.createPool({
+//   host: process.env.DB_HOST,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   database: "db_serve",
+// });
 
 async function createEmployeeLog(
-  connection: mysql.PoolConnection,
+  connection: PoolConnection,
   restaurantId: string,
   employeeId: number,
   description: string,
@@ -32,7 +34,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const connection = await pool.getConnection();
+  const connection = await db.getConnection();
 
   try {
     const { id } = await params;
@@ -351,7 +353,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const connection = await pool.getConnection();
+  const connection = await db.getConnection();
 
   try {
     const { id: restaurantId } = await params;
@@ -632,7 +634,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const connection = await pool.getConnection();
+  const connection = await db.getConnection();
 
   try {
     const { id: restaurantId } = await params;
@@ -845,7 +847,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const connection = await pool.getConnection();
+  const connection = await db.getConnection();
 
   try {
     const { id: restaurantId } = await params;

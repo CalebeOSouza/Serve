@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import mysql from "mysql2/promise";
+// import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME || "db_serve",
-});
+import { db } from "@/app/lib/db";
+// const pool = mysql.createPool({
+//   host: process.env.DB_HOST,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   database: process.env.DB_NAME || "db_serve",
+// });
 
 type EmployeeRole = "gerente" | "cozinha" | "caixa" | "garcom";
 
@@ -177,7 +177,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       `
         SELECT
           e.id,
@@ -249,7 +249,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       `
         SELECT
           e.id,
