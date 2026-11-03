@@ -112,13 +112,13 @@ async function syncTableStatuses(connection: any, restaurantId: string) {
           MIN(TIMESTAMP(reservation_date, reservation_time)) AS reservation_datetime
         FROM reservations
         WHERE restaurant_id = ?
-          AND TIMESTAMP(reservation_date, reservation_time) > NOW()
+          AND TIMESTAMP(reservation_date, reservation_time) > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
         GROUP BY table_id
       ) r ON r.table_id = t.id
       SET t.status = 'reservada'
       WHERE t.restaurant_id = ?
         AND t.status = 'livre'
-        AND r.reservation_datetime <= DATE_ADD(NOW(), INTERVAL 150 MINUTE)
+        AND r.reservation_datetime <= DATE_ADD(DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR), INTERVAL 150 MINUTE)
     `,
     [restaurantId, restaurantId],
   );
@@ -132,8 +132,8 @@ async function syncTableStatuses(connection: any, restaurantId: string) {
           MIN(TIMESTAMP(reservation_date, reservation_time)) AS reservation_datetime
         FROM reservations
         WHERE restaurant_id = ?
-          AND TIMESTAMP(reservation_date, reservation_time) <= NOW()
-          AND TIMESTAMP(reservation_date, reservation_time) >= DATE_SUB(NOW(), INTERVAL 6 HOUR)
+          AND TIMESTAMP(reservation_date, reservation_time) <= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+          AND TIMESTAMP(reservation_date, reservation_time) >= DATE_SUB(DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR), INTERVAL 6 HOUR)
         GROUP BY table_id
       ) r ON r.table_id = t.id
       SET t.status = 'ocupada'
@@ -199,7 +199,7 @@ export async function GET(
     INNER JOIN tables t
       ON t.id = r.table_id
     WHERE r.restaurant_id = ?
-  AND TIMESTAMP(r.reservation_date, r.reservation_time) > NOW()
+ AND TIMESTAMP(r.reservation_date, r.reservation_time) > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
 ORDER BY r.reservation_date ASC, r.reservation_time ASC
   `,
       [restaurantId],
@@ -214,7 +214,7 @@ ORDER BY r.reservation_date ASC, r.reservation_time ASC
       r.people_count
     FROM reservations r
     WHERE r.restaurant_id = ?
-      AND TIMESTAMP(r.reservation_date, r.reservation_time) <= NOW()
+      AND TIMESTAMP(r.reservation_date, r.reservation_time) <= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
       AND NOT EXISTS (
         SELECT 1
         FROM reservations r2
@@ -222,7 +222,7 @@ ORDER BY r.reservation_date ASC, r.reservation_time ASC
           AND r2.table_id = r.table_id
           AND TIMESTAMP(r2.reservation_date, r2.reservation_time)
             > TIMESTAMP(r.reservation_date, r.reservation_time)
-          AND TIMESTAMP(r2.reservation_date, r2.reservation_time) <= NOW()
+          AND TIMESTAMP(r2.reservation_date, r2.reservation_time) <= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
       )
   `,
       [restaurantId],
@@ -407,7 +407,7 @@ export async function POST(
   reservation_date,
   reservation_time
 )
-VALUES (?, ?, ?, ?, CURDATE(), CURTIME())
+VALUES (?, ?, ?, ?, DATE(DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)), TIME(DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)))
         `,
         [restaurantId, tableId, name.trim(), Number(peopleCount)],
       );
@@ -482,9 +482,9 @@ VALUES (?, ?, ?, ?, CURDATE(), CURTIME())
     }
 
     const [nowCheckRows]: any = await connection.query(
-      `SELECT TIMESTAMP(?, ?) > NOW() AS isFuture`,
-      [date, time],
-    );
+  `SELECT TIMESTAMP(?, ?) > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR) AS isFuture`,
+  [date, time],
+);
 
     if (!nowCheckRows[0].isFuture) {
       await connection.rollback();

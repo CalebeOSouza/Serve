@@ -419,8 +419,46 @@ export default function Pedidos_Cozinha() {
 
       <main className="px-4 md:px-10 pb-5 pt-6">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-[14px] text-[#7d89a6]">Carregando pedidos...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 w-full gap-5 items-start py-10">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="flex flex-col w-full overflow-hidden rounded-lg border border-[#e5e9f0] bg-white animate-pulse"
+              >
+                <div className="flex items-center justify-between px-4 py-3 bg-[#EDF3FA]">
+                  <div className="flex flex-col gap-2">
+                    <div className="h-3 w-24 rounded bg-[#DCE7F4]" />
+                    <div className="h-3 w-14 rounded bg-[#DCE7F4]" />
+                  </div>
+
+                  <div className="h-6 w-20 rounded-full bg-[#DCE7F4]" />
+                </div>
+
+                <div className="flex items-center justify-between p-3">
+                  <div className="h-4 w-16 rounded bg-[#EDF3FA]" />
+                  <div className="h-4 w-24 rounded bg-[#EDF3FA]" />
+                </div>
+
+                <div className="w-full h-px bg-[#EDF1F6]" />
+
+                <div className="flex flex-col gap-5 p-3 py-5">
+                  {[1, 2, 3].map((line) => (
+                    <div key={line} className="flex items-start gap-3">
+                      <div className="h-4 w-5 rounded bg-[#E5EDF7]" />
+
+                      <div className="flex flex-col gap-2 flex-1">
+                        <div className="h-4 w-3/4 rounded bg-[#E5EDF7]" />
+                        <div className="h-3 w-1/2 rounded bg-[#F0F4F9]" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="px-3 pb-4">
+                  <div className="h-9 w-full rounded-md bg-[#EDF3FA]" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-36 px-4 w-full min-h-[500px] h-auto border border-gray-200 rounded-md mt-5">

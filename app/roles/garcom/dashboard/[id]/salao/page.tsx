@@ -352,11 +352,55 @@ export default function LayoutPage() {
             {/* CONTEÚDO */}
             <div className="p-4 max-h-[calc(100vh-200px)] overflow-y-auto">
               {loadingOrders ? (
-                <div className="py-12 flex flex-col items-center justify-center">
-                  <LoaderCircle className="w-8 h-8 text-(--color-primary) animate-spin" />
-                  <p className="text-[13px] text-[#858A99] mt-3">
-                    Carregando pedidos...
-                  </p>
+                <div className="flex flex-col gap-3">
+                  {[1, 2, 3].map((item) => (
+                    <div
+                      key={item}
+                      className="overflow-hidden rounded-lg border border-[#E5E9F0] bg-white animate-pulse"
+                    >
+                      <div className="flex items-center justify-between px-3 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-lg bg-[#E5EDF7]" />
+
+                          <div className="flex flex-col gap-2">
+                            <div className="h-3.5 w-20 rounded bg-[#E5EDF7]" />
+                            <div className="h-2.5 w-14 rounded bg-[#EDF3FA]" />
+                          </div>
+                        </div>
+
+                        <div className="h-4 w-4 rounded bg-[#EDF3FA]" />
+                      </div>
+
+                      <div className="px-3 pb-3 flex flex-col gap-2.5">
+                        <div className="rounded-lg border border-[#EDF1F6] p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-2 rounded-full bg-[#DCE7F4]" />
+                              <div className="h-3 w-20 rounded bg-[#E5EDF7]" />
+                            </div>
+
+                            <div className="h-3 w-12 rounded bg-[#EDF3FA]" />
+                          </div>
+
+                          <div className="mt-4 flex flex-col gap-3">
+                            {[1, 2].map((line) => (
+                              <div
+                                key={line}
+                                className="flex items-start gap-2"
+                              >
+                                <div className="h-3 w-5 rounded bg-[#E5EDF7]" />
+
+                                <div className="flex flex-1 flex-col gap-2">
+                                  <div className="h-3 w-3/4 rounded bg-[#E5EDF7]" />
+                                  <div className="h-2.5 w-1/2 rounded bg-[#F0F4F9]" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : tables.length === 0 ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center">

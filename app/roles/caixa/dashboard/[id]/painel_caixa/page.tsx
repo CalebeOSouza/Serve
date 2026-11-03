@@ -144,8 +144,8 @@ export default function Painel_Caixa() {
         
 <div className={`rounded-lg border border-[#e3e6ed] bg-white p-4 ${
   !loading && accounts.length === 0
-    ? "h-auto min-h-0 overflow-hidden"
-    : "h-[calc(100vh-257px)] min-h-[500px] overflow-y-auto max-[1669px]:h-auto max-[1669px]:min-h-[300px]"
+    ? "flex flex-col items-center justify-center h-auto min-h-[196px] overflow-hidden pb-6"
+    : "h-[calc(100vh-257px)] min-h-[500px] overflow-y-auto max-[1669px]:h-auto max-[1669px]:min-h-[300px] "
 }`}>
 
           <AnimatedAlert
@@ -156,10 +156,33 @@ export default function Painel_Caixa() {
 
           <div className="flex h-full flex-col gap-3 mt-3">
             {loading ? (
-              <div className="flex h-full items-center justify-center text-sm text-gray-700">
-                Carregando contas...
-              </div>
-            ) : accounts.length === 0 ? (
+  <div className="flex flex-col gap-3">
+    {[1, 2, 3].map((item) => (
+      <div
+        key={item}
+        className="flex items-center justify-between rounded-lg border border-[#e3e6ed] bg-white px-3 py-3 animate-pulse max-[500px]:flex-col max-[500px]:items-start max-[500px]:gap-3"
+      >
+       
+        <div className="flex min-w-0 items-center gap-3 max-[500px]:w-full">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E5EDF7]" />
+
+          <div className="flex flex-col gap-2">
+            <div className="h-4 w-20 rounded bg-[#E5EDF7]" />
+
+            <div className="h-3 w-24 rounded bg-[#EDF3FA]" />
+          </div>
+        </div>
+
+  
+        <div className="flex shrink-0 items-center gap-2 max-[500px]:w-full">
+          <div className="h-8 w-[88px] rounded-md bg-[#EDF3FA] max-[500px]:flex-1" />
+
+          <div className="h-8 w-[78px] rounded-md bg-[#E5EDF7] max-[500px]:flex-1" />
+        </div>
+      </div>
+    ))}
+  </div>
+) : accounts.length === 0 ? (
               <div className="flex flex-1 items-center justify-center">
                 <div className="flex flex-col items-center text-center">
                   <div className="flex items-center justify-center rounded-full bg-[#F5F5F6] p-4">
