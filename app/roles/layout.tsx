@@ -45,24 +45,58 @@ export default function DashboardLayout({
       ? (session.user.role as EmployeeRole)
       : null;
 
-  useEffect(() => {
-    async function fetchRestaurant() {
-      try {
-        const res = await fetch(`/api/restaurant/me?restaurantId=${id}`);
+ 
+useEffect(() => {
+  if (
+    sessionStatus !== "authenticated" ||
+    !employeeRole ||
+    !id ||
+    Array.isArray(id)
+  ) {
+    setLoading(false);
+    return;
+  }
 
-        const data = await res.json();
+  let cancelled = false;
+
+  async function fetchRestaurant() {
+    try {
+      setLoading(true);
+
+      const res = await fetch(
+        `/api/restaurant/me?restaurantId=${id}`,
+        { cache: "no-store" }
+      );
+
+      if (!res.ok) {
+        throw new Error(
+          `Erro ao buscar restaurante: ${res.status}`
+        );
+      }
+
+      const data = await res.json();
+
+      if (!cancelled) {
         setRestaurant(data);
-      } catch (error) {
+      }
+    } catch (error) {
+      if (!cancelled) {
         console.error("Erro ao buscar restaurante:", error);
-      } finally {
+      }
+    } finally {
+      if (!cancelled) {
         setLoading(false);
       }
     }
+  }
 
-    if (id && !Array.isArray(id)) {
-      fetchRestaurant();
-    }
-  }, [id]);
+  fetchRestaurant();
+
+  return () => {
+    cancelled = true;
+  };
+}, [id, sessionStatus, employeeRole]);
+
 
   if (!id || Array.isArray(id)) {
     return null;

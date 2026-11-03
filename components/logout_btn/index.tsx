@@ -1,3 +1,4 @@
+
 "use client";
 
 import { signOut } from "next-auth/react";
@@ -6,15 +7,31 @@ import { LogOut } from "lucide-react";
 export default function LogoutButton() {
   async function handleLogout() {
     try {
-      await fetch("/api/restaurant/employees/logout", {
-        method: "POST",
-      });
+      const response = await fetch(
+        "/api/restaurant/employees/logout",
+        {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Não foi possível encerrar a sessão do funcionário."
+        );
+      }
+
+      await signOut({ redirect: false });
+
+      window.location.replace(
+        "/account_access?mode=login"
+      );
     } catch (error) {
-      console.error("Erro ao encerrar sessão do funcionário:", error);
-    } finally {
-      await signOut({
-        callbackUrl: "/",
-      });
+      console.error("Erro ao realizar logout:", error);
+      alert(
+        "Não foi possível encerrar sua sessão. Tente novamente."
+      );
     }
   }
 
