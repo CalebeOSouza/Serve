@@ -119,7 +119,7 @@ export function DashboardMenuTablet({ restaurantId }: Props) {
   const cozinhaMenu: MenuItem[] = [
     {
       label: "Pedidos",
-      path: `${basePath}/pedidos`,
+      path: `${basePath}/pedidos_cozinha`,
       icon: ListTodo,
     },
   ];
@@ -127,7 +127,7 @@ export function DashboardMenuTablet({ restaurantId }: Props) {
   const caixaMenu: MenuItem[] = [
     {
       label: "Pedidos",
-      path: `${basePath}/pedidos`,
+      path: `${basePath}/painel_caixa`,
       icon: Utensils,
     },
   ];

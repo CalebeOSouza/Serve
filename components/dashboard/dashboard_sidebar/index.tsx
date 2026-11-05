@@ -122,7 +122,7 @@ export function DashboardMenu({ restaurantId }: Props) {
   const cozinhaMenu: MenuItem[] = [
     {
       label: "Pedidos",
-      path: `${basePath}/pedidos`,
+      path: `${basePath}/pedidos_cozinha`,
       icon: ListTodo,
     },
   ];
