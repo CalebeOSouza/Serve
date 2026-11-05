@@ -397,6 +397,18 @@ CREATE TABLE orders (
 );
 `);
 
+// CREATE TABLE orders (
+//     id INT NOT NULL AUTO_INCREMENT,
+//     account_id INT NOT NULL,
+//     waiter_employee_id INT NOT NULL,
+//     status ENUM('recebido','em_preparo','pronto','entregue','cancelado') DEFAULT 'recebido',
+//     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+//     canceled_at TIMESTAMP NULL DEFAULT NULL,
+//     PRIMARY KEY (id),
+//     KEY account_id (account_id),
+//     KEY waiter_employee_id (waiter_employee_id)
+// ) AUTO_ID_CACHE = 1;
+
     await pool.query(`
 
 CREATE TABLE order_items (

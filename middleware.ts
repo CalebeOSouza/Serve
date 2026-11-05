@@ -43,7 +43,7 @@ function getEmployeeHome(
   const paths = {
     gerente: `/roles/gerente/dashboard/${restaurantId}/funcionarios`,
     garcom: `/roles/garcom/dashboard/${restaurantId}/salao`,
-    cozinha: `/roles/cozinha/dashboard/${restaurantId}/pedidos`,
+    cozinha: `/roles/cozinha/dashboard/${restaurantId}/pedidos_cozinha`,
     caixa: `/roles/caixa/dashboard/${restaurantId}/painel_caixa`,
   };
 
