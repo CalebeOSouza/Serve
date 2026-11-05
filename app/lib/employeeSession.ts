@@ -76,35 +76,9 @@ export async function getEmployeeSession(
     return null;
   }
 
-  const newExpiresAt =
-    Date.now() + 12 * 60 * 60 * 1000;
-
-  const newPayload =
-    `${employeeId}.${restaurantId}.${role}.${newExpiresAt}`;
-
-  const newSignature = crypto
-    .createHmac("sha256", getSecret())
-    .update(newPayload)
-    .digest("hex");
-
-  const newToken =
-    `${newPayload}.${newSignature}`;
-
-  cookieStore.set(
-    "serve_employee_session",
-    newToken,
-    {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 12,
-      path: "/",
-    }
-  );
-
   return {
-    employeeId: Number(employeeId),
-    restaurantId: Number(restaurantId),
-    role: role as EmployeeRole,
-  };
+  employeeId: Number(employeeId),
+  restaurantId: Number(restaurantId),
+  role: role as EmployeeRole,
+};
 }

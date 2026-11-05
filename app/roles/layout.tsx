@@ -1,7 +1,161 @@
+// "use client";
+
+// import { useEffect, useState } from "react";
+// import { useParams } from "next/navigation";
+// import { useSession } from "next-auth/react";
+
+// import { DashboardMenu } from "@/components/dashboard/dashboard_sidebar";
+// import { DashboardMenuTablet } from "@/components/dashboard/dashboard_sidebar_tablet";
+// import Image from "next/image";
+// import EmployeeIdentifier from "@/components/restaurant/employee_identifier/";
+
+// type Restaurant = {
+//   id: number;
+//   name: string;
+//   city: string;
+//   state: string;
+//   status: "operacional" | "configurando" | "pausado";
+//   media?: {
+//     logo_url?: string | null;
+//     banner_url?: string | null;
+//   };
+//   updated_at: string;
+// };
+
+// type EmployeeRole = "gerente" | "cozinha" | "caixa" | "garcom";
+
+// const VALID_ROLES: EmployeeRole[] = ["gerente", "cozinha", "caixa", "garcom"];
+
+// export default function DashboardLayout({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+//   const [loading, setLoading] = useState(true);
+
+//   const params = useParams();
+//   const id = params?.id;
+
+//   const { data: session, status: sessionStatus } = useSession();
+
+//   const employeeRole =
+//     session?.user?.role &&
+//     VALID_ROLES.includes(session.user.role as EmployeeRole)
+//       ? (session.user.role as EmployeeRole)
+//       : null;
+
+ 
+// useEffect(() => {
+//   if (
+//     sessionStatus !== "authenticated" ||
+//     !employeeRole ||
+//     !id ||
+//     Array.isArray(id)
+//   ) {
+//     setLoading(false);
+//     return;
+//   }
+
+//   let cancelled = false;
+
+//   async function fetchRestaurant() {
+//     try {
+//       setLoading(true);
+
+//       const res = await fetch(
+//         `/api/restaurant/me?restaurantId=${id}`,
+//         { cache: "no-store" }
+//       );
+
+//       if (!res.ok) {
+//         throw new Error(
+//           `Erro ao buscar restaurante: ${res.status}`
+//         );
+//       }
+
+//       const data = await res.json();
+
+//       if (!cancelled) {
+//         setRestaurant(data);
+//       }
+//     } catch (error) {
+//       if (!cancelled) {
+//         console.error("Erro ao buscar restaurante:", error);
+//       }
+//     } finally {
+//       if (!cancelled) {
+//         setLoading(false);
+//       }
+//     }
+//   }
+
+//   fetchRestaurant();
+
+//   return () => {
+//     cancelled = true;
+//   };
+// }, [id, sessionStatus, employeeRole]);
+
+
+//   if (!id || Array.isArray(id)) {
+//     return null;
+//   }
+
+//   if (sessionStatus === "loading") {
+//     return null;
+//   }
+
+//   if (!employeeRole) {
+//     console.error(
+//       "Cargo inválido ou não encontrado na sessão:",
+//       session?.user?.role,
+//     );
+
+//     return null;
+//   }
+
+//   const content = (
+//     <section className="min-h-screen flex bg-(--color-background)">
+//       <DashboardMenu restaurantId={id} />
+
+//       <div className="flex flex-1 flex-col lg:pl-55 pt-16">
+//         <div className="relative h-40 w-full overflow-hidden shadow-sm">
+//           {!loading && (
+//             <Image
+//               src={restaurant?.media?.banner_url || "/no_banner2.png"}
+//               alt="Banner do restaurante"
+//               fill
+//               className="object-cover"
+//               priority
+//             />
+//           )}
+
+//           <div className="absolute inset-0 bg-black/20" />
+//         </div>
+
+//         <DashboardMenuTablet restaurantId={id} />
+
+//         <main className="flex-1 flex flex-col">{children}</main>
+//       </div>
+//     </section>
+//   );
+
+//   if (employeeRole === "gerente") {
+//     return content;
+//   }
+
+//   return (
+//     <EmployeeIdentifier restaurantId={id} role={employeeRole}>
+//       {content}
+//     </EmployeeIdentifier>
+//   );
+// }
+
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useParams, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { DashboardMenu } from "@/components/dashboard/dashboard_sidebar";
@@ -24,7 +178,12 @@ type Restaurant = {
 
 type EmployeeRole = "gerente" | "cozinha" | "caixa" | "garcom";
 
-const VALID_ROLES: EmployeeRole[] = ["gerente", "cozinha", "caixa", "garcom"];
+const VALID_ROLES: EmployeeRole[] = [
+  "gerente",
+  "cozinha",
+  "caixa",
+  "garcom",
+];
 
 export default function DashboardLayout({
   children,
@@ -33,86 +192,97 @@ export default function DashboardLayout({
 }) {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [employeeAuthenticated, setEmployeeAuthenticated] = useState(false);
 
   const params = useParams();
-  const id = params?.id;
+  const pathname = usePathname();
 
-  const { data: session, status: sessionStatus } = useSession();
+  const idParam = params?.id;
+  const id = typeof idParam === "string" ? idParam : null;
+
+  const { status: sessionStatus } = useSession();
+
+  const roleFromPath = pathname.match(/^\/roles\/([^/]+)/)?.[1];
 
   const employeeRole =
-    session?.user?.role &&
-    VALID_ROLES.includes(session.user.role as EmployeeRole)
-      ? (session.user.role as EmployeeRole)
+    roleFromPath && VALID_ROLES.includes(roleFromPath as EmployeeRole)
+      ? (roleFromPath as EmployeeRole)
       : null;
 
- 
-useEffect(() => {
-  if (
-    sessionStatus !== "authenticated" ||
-    !employeeRole ||
-    !id ||
-    Array.isArray(id)
-  ) {
-    setLoading(false);
-    return;
-  }
+  const handleEmployeeIdentified = useCallback(() => {
+    setEmployeeAuthenticated(true);
+  }, []);
 
-  let cancelled = false;
+  useEffect(() => {
+    if (!id || !employeeRole) {
+      setLoading(false);
+      return;
+    }
 
-  async function fetchRestaurant() {
-    try {
-      setLoading(true);
+    const isManager = employeeRole === "gerente";
 
-      const res = await fetch(
-        `/api/restaurant/me?restaurantId=${id}`,
-        { cache: "no-store" }
-      );
+    const canFetchRestaurant = isManager
+      ? sessionStatus === "authenticated"
+      : employeeAuthenticated;
 
-      if (!res.ok) {
-        throw new Error(
-          `Erro ao buscar restaurante: ${res.status}`
+    if (!canFetchRestaurant) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchRestaurant() {
+      try {
+        setLoading(true);
+
+        const res = await fetch(
+          `/api/restaurant/me?restaurantId=${id}`,
+          {
+            method: "GET",
+            cache: "no-store",
+            credentials: "same-origin",
+          }
         );
-      }
 
-      const data = await res.json();
+        if (!res.ok) {
+          throw new Error(
+            `Erro ao buscar restaurante: ${res.status}`
+          );
+        }
 
-      if (!cancelled) {
-        setRestaurant(data);
-      }
-    } catch (error) {
-      if (!cancelled) {
-        console.error("Erro ao buscar restaurante:", error);
-      }
-    } finally {
-      if (!cancelled) {
-        setLoading(false);
+        const data = await res.json();
+
+        if (!cancelled) {
+          setRestaurant(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Erro ao buscar restaurante:", error);
+          setRestaurant(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
-  }
 
-  fetchRestaurant();
+    fetchRestaurant();
 
-  return () => {
-    cancelled = true;
-  };
-}, [id, sessionStatus, employeeRole]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, employeeRole, sessionStatus, employeeAuthenticated]);
 
-
-  if (!id || Array.isArray(id)) {
+  if (!id || !employeeRole) {
     return null;
   }
 
-  if (sessionStatus === "loading") {
-    return null;
-  }
-
-  if (!employeeRole) {
-    console.error(
-      "Cargo inválido ou não encontrado na sessão:",
-      session?.user?.role,
-    );
-
-    return null;
+  if (employeeRole === "gerente") {
+    if (sessionStatus === "loading" || sessionStatus !== "authenticated") {
+      return null;
+    }
   }
 
   const content = (
@@ -146,7 +316,11 @@ useEffect(() => {
   }
 
   return (
-    <EmployeeIdentifier restaurantId={id} role={employeeRole}>
+    <EmployeeIdentifier
+      restaurantId={id}
+      role={employeeRole}
+      onIdentified={handleEmployeeIdentified}
+    >
       {content}
     </EmployeeIdentifier>
   );

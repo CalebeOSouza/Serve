@@ -1,10 +1,15 @@
-
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const response = NextResponse.json({
-    success: true,
-  });
+  const response = NextResponse.json(
+    { success: true },
+    {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    }
+  );
 
   const cookiesToRemove = [
     "serve_employee_session",
