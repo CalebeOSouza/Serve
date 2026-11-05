@@ -23,11 +23,12 @@ export async function DELETE(
     const [reservationRows]: any = await connection.query(
       `
     SELECT
-      r.customer_name,
-      r.people_count,
-      r.reservation_date,
-      r.reservation_time,
-      t.number AS table_number
+  r.table_id,
+  r.customer_name,
+  r.people_count,
+  r.reservation_date,
+  r.reservation_time,
+  t.number AS table_number
     FROM reservations r
     INNER JOIN tables t
       ON t.id = r.table_id
@@ -56,6 +57,40 @@ export async function DELETE(
           { status: 404 },
         );
       }
+
+await connection.query(
+  `
+    UPDATE tables
+    SET status = 'livre'
+    WHERE id = ?
+      AND restaurant_id = ?
+      AND status = 'reservada'
+      AND NOT EXISTS (
+        SELECT 1
+        FROM reservations r
+        WHERE r.table_id = tables.id
+          AND r.restaurant_id = tables.restaurant_id
+          AND (
+            TIMESTAMP(r.reservation_date, r.reservation_time)
+              > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+            AND TIMESTAMP(r.reservation_date, r.reservation_time)
+              <= DATE_ADD(
+                DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR),
+                INTERVAL 150 MINUTE
+              )
+            OR
+            TIMESTAMP(r.reservation_date, r.reservation_time)
+              <= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR)
+            AND TIMESTAMP(r.reservation_date, r.reservation_time)
+              >= DATE_SUB(
+                DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 HOUR),
+                INTERVAL 6 HOUR
+              )
+          )
+      )
+  `,
+  [reservationRows[0].table_id, restaurantId],
+);
 
       const employeeSession = await getEmployeeSession("garcom");
 

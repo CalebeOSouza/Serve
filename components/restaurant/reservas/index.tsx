@@ -576,7 +576,7 @@ export default function Reservas() {
                             }}
                             className="flex-1 bg-white text-red-600 rounded py-2 text-sm cursor-pointer hover:bg-gray-100 transition"
                           >
-                            Voltar
+                            Cancelar
                           </button>
 
                           <button
