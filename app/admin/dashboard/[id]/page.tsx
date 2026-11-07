@@ -44,7 +44,7 @@ export default function RestaurantDashboard() {
           <div className="md:w-1/2">
             <div className="relative w-130 h-full">
               <Image
-                src="/configure_restaurante_3.png"
+                src="/configure_restaurante_4.png"
                 alt="Banner do restaurante"
                 fill
                 className="object-cover"
@@ -113,7 +113,7 @@ export default function RestaurantDashboard() {
         <div className="bg-white border border-gray-100 shadow-sm rounded-lg overflow-hidden flex flex-col transition-all items-center">
           <div className="relative w-80 h-full">
             <Image
-              src="/funcionarios10.png"
+              src="/funcionarios8.png"
               alt="Banner do restaurante"
               fill
               className="object-cover mt-2"
