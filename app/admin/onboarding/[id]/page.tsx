@@ -26,6 +26,7 @@ export default function AdminMenu() {
   const id = params.id as string;
 
   const [step, setStep] = useState<Step | null>(null);
+const [loading, setLoading] = useState(true);
 
   const [profileData, setProfileData] = useState<ProfileForm>({
     name: "",
@@ -45,49 +46,51 @@ export default function AdminMenu() {
   const [restaurantId, setRestaurantId] = useState<number | null>(null);
 
   useEffect(() => {
-    async function loadRestaurant() {
-      try {
-        const res = await fetch("/api/restaurant/onboarding-status", {
-          cache: "no-store",
-        });
+  async function loadRestaurant() {
+    try {
+      const res = await fetch("/api/restaurant/onboarding-status", {
+        cache: "no-store",
+      });
 
-        const data = await res.json();
+      const data = await res.json();
 
-        if (!data.exists) {
-          setStep("profile");
-          return;
-        }
+      if (!data.exists) {
+        setStep("profile");
+        return;
+      }
 
-        const r = data.restaurant;
+      const r = data.restaurant;
 
-        if (r.onboarding_step === 0) {
-          setRestaurantId(r.id);
-          setProfileData(r.profile);
-          setLogoPreview(r.media.logo);
-          setBannerPreview(r.media.banner);
-          setStep("success");
-          return;
-        }
-
+      if (r.onboarding_step === 0) {
         setRestaurantId(r.id);
         setProfileData(r.profile);
         setLogoPreview(r.media.logo);
         setBannerPreview(r.media.banner);
-
-        if (r.onboarding_step === 1) {
-          setStep("profile");
-        } else if (r.onboarding_step === 2) {
-          setStep("media");
-        } else if (r.onboarding_step === 3) {
-          setStep("hours");
-        }
-      } catch (error) {
-        console.error("Erro ao carregar restaurante:", error);
+        setStep("success");
+        return;
       }
-    }
 
-    loadRestaurant();
-  }, []);
+      setRestaurantId(r.id);
+      setProfileData(r.profile);
+      setLogoPreview(r.media.logo);
+      setBannerPreview(r.media.banner);
+
+      if (r.onboarding_step === 1) {
+        setStep("profile");
+      } else if (r.onboarding_step === 2) {
+        setStep("media");
+      } else if (r.onboarding_step === 3) {
+        setStep("hours");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar restaurante:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadRestaurant();
+}, []);
 
   useEffect(() => {
     if (!restaurantId || step === "success") return;
@@ -162,7 +165,91 @@ export default function AdminMenu() {
     }
   }
 
-  if (!step) return null;
+if (loading) {
+  return (
+    <section className="min-h-screen bg-(--color-background) flex items-center justify-center p-8">
+      <div className="w-full max-w-[576px] min-h-[671px] flex flex-col bg-white border border-[#DCE7F4] rounded-lg shadow-sm overflow-hidden animate-pulse mt-30">
+
+        {/* Barra superior */}
+        <div className="w-full h-[6px] bg-[#1B325F]" />
+
+        {/* Conteúdo */}
+        <div className="flex-1 px-8 pt-8 pb-12">
+
+          {/* Título e descrição */}
+          <div className="flex flex-col items-center gap-4 mb-12">
+            <div className="h-8 w-3/4 rounded-md bg-[#DCE7F4]" />
+            <div className="h-4 w-4/5 rounded-md bg-[#EDF3FA]" />
+          </div>
+
+          {/* Campos */}
+          <div className="grid grid-cols-2 gap-10">
+
+            {/* Coluna esquerda */}
+            <div className="flex flex-col gap-6">
+              <div className="h-5 w-4/5 rounded bg-[#DCE7F4]" />
+
+              <div className="flex flex-col gap-2">
+                <div className="h-4 w-4/5 rounded bg-[#E5EDF7]" />
+                <div className="h-[50px] w-full rounded-md bg-[#DCE7F4]" />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="h-4 w-3/4 rounded bg-[#E5EDF7]" />
+                <div className="h-[50px] w-full rounded-md bg-[#EDF3FA]" />
+              </div>
+            </div>
+
+            {/* Coluna direita */}
+            <div className="flex flex-col gap-6">
+              <div className="h-5 w-2/3 rounded bg-[#DCE7F4]" />
+
+              <div className="flex flex-col gap-2">
+                <div className="h-4 w-1/3 rounded bg-[#E5EDF7]" />
+                <div className="h-[50px] w-full rounded-md bg-[#DCE7F4]" />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="h-4 w-1/3 rounded bg-[#E5EDF7]" />
+                <div className="h-[50px] w-full rounded-md bg-[#EDF3FA]" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="h-4 w-2/3 rounded bg-[#E5EDF7]" />
+                  <div className="h-[50px] w-full rounded-md bg-[#DCE7F4]" />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="h-4 w-2/3 rounded bg-[#E5EDF7]" />
+                  <div className="h-[50px] w-full rounded-md bg-[#EDF3FA]" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="h-4 w-2/3 rounded bg-[#E5EDF7]" />
+                  <div className="h-[50px] w-full rounded-md bg-[#DCE7F4]" />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="h-4 w-2/3 rounded bg-[#E5EDF7]" />
+                  <div className="h-[50px] w-full rounded-md bg-[#EDF3FA]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Botão */}
+        <div className="w-full h-14 bg-[#1B325F]" />
+
+      </div>
+    </section>
+  );
+}
+
+if (!step) return null;
 
   return (
     <section className="min-h-screen bg-(--color-background) p-8">

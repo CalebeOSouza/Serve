@@ -224,7 +224,7 @@ export default function RestaurantProfile({
   return (
     <section className="min-h-screen flex items-center justify-center pt-15">
       <div className="flex flex-col items-center gap-10">
-        <div className="relative w-full max-w-xl bg-white rounded-sm shadow-sm overflow-hidden">
+        <div className="relative w-full max-w-xl bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1.5 bg-(--color-primary)" />
 
           <div className="p-8 pb-13">

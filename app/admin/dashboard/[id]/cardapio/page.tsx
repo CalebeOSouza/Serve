@@ -27,7 +27,48 @@ type CategoryModalState = {
     }[];
   };
 };
+function CategoryCardSkeleton() {
+  return (
+    <div className="w-full min-w-0 max-w-full overflow-hidden border border-[#DCE7F4] bg-white rounded-lg px-6 py-4 flex flex-col gap-5 animate-pulse">
 
+      {/* Cabeçalho da categoria */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-1 flex-col gap-3">
+          <div className="h-5 w-2/5 rounded bg-[#DCE7F4]" />
+
+          <div className="h-4 w-2/3 rounded bg-[#EDF3FA]" />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-md bg-[#DCE7F4]" />
+          <div className="w-7 h-7 rounded-md bg-[#EDF3FA]" />
+        </div>
+      </div>
+
+      {/* Subcategorias */}
+      <div className="flex flex-col gap-3">
+
+        <div className="border border-[#E1EAF5] bg-[#F8FAFD] rounded-md p-4 flex flex-col gap-3">
+          <div className="h-4 w-1/3 rounded bg-[#DCE7F4]" />
+
+          <div className="h-3 w-3/4 rounded bg-[#EDF3FA]" />
+          <div className="h-3 w-1/2 rounded bg-[#EDF3FA]" />
+        </div>
+
+        <div className="border border-[#E1EAF5] bg-[#F8FAFD] rounded-md p-4 flex flex-col gap-3">
+          <div className="h-4 w-2/5 rounded bg-[#DCE7F4]" />
+
+          <div className="h-3 w-2/3 rounded bg-[#EDF3FA]" />
+        </div>
+
+      </div>
+
+      {/* Botão de nova subcategoria */}
+      <div className="h-10 w-full rounded-md border border-[#DCE7F4] bg-[#EDF3FA]" />
+
+    </div>
+  );
+}
 export default function RestaurantCardapio() {
   const params = useParams();
 
@@ -585,12 +626,21 @@ export default function RestaurantCardapio() {
       </header>
 
       <main className="flex w-full min-w-0 py-5 pb-10 lg:px-10 mt-5">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-30 w-full gap-3">
-            <LoaderCircle className="w-10 h-10 text-(--color-primary) animate-spin" />
-            <p className="text-gray-500">Carregando cardápio...</p>
-          </div>
-        ) : categories.length === 0 ? (
+     {loading ? (
+  <div className="flex flex-col min-[1530px]:flex-row w-full min-w-0 gap-4 items-start">
+
+    <div className="flex flex-col w-full min-[1530px]:w-1/2 gap-4">
+      <CategoryCardSkeleton />
+      <CategoryCardSkeleton />
+    </div>
+
+    <div className="flex flex-col w-full min-[1530px]:w-1/2 gap-4">
+      <CategoryCardSkeleton />
+      <CategoryCardSkeleton />
+    </div>
+
+  </div>
+) : categories.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-30 w-full border border-gray-200 rounded-md">
             <div className="bg-[#F5F5F6] p-6 rounded-full flex items-center justify-center">
               <Inbox className="w-14 h-14 text-[#a9b2c6]" />
