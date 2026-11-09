@@ -21,11 +21,19 @@ const [activeContainer, setActiveContainer] = useState(mode === "login");
 const [imageSide, setImageSide] = useState(mode === "login");
 const [isAnimating, setIsAnimating] = useState(false);
 const [isReady, setIsReady] = useState(false);
-
+const [showLoading, setShowLoading] = useState(true);
 const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 const currentMode = useRef(mode === "login");
 const animatingRef = useRef(false);
+useEffect(() => {
+  if (isReady && imageLoaded) {
+    const timer = setTimeout(() => {
+      setShowLoading(false);
+    }, 100);
 
+    return () => clearTimeout(timer);
+  }
+}, [isReady, imageLoaded]);
 useEffect(() => {
   setIsReady(true);
 }, []);
@@ -77,12 +85,6 @@ function changeMode(targetMode: boolean) {
   startTransition(targetMode, true);
 }
 
-{!isReady || !imageLoaded ? (
-  <div className="fixed inset-0 z-[100] bg-white" />
-) : null}
-
-
-
   return (
     <section
   className={`relative w-full min-h-screen h-screen overflow-hidden bg-white ${
@@ -117,6 +119,8 @@ function changeMode(targetMode: boolean) {
     : "left-0 md:left-0"
 }`}
 >
+
+  
   <Image
   src="/form_image.jpg"
   alt="Imagem de fundo do acesso ao SERVE"
@@ -125,6 +129,7 @@ function changeMode(targetMode: boolean) {
   unoptimized
   sizes="(max-width: 767px) 100vw, 50vw"
   onLoad={() => setImageLoaded(true)}
+onError={() => setImageLoaded(true)}
   className="object-cover object-center brightness-75"
 />
 </div>
@@ -179,6 +184,16 @@ className={`right pointer-events-auto absolute right-0 z-50 flex h-[30%] w-full 
 </div>
 
       </div>
+
+{/* Tela de carregamento */}
+<div
+  className={`fixed inset-0 z-[100] bg-white transition-opacity duration-700 ease-in-out ${
+    showLoading
+      ? "opacity-100"
+      : "pointer-events-none opacity-0"
+  }`}
+/>
+
     </section>
   );
 }

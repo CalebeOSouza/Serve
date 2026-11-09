@@ -55,12 +55,12 @@ export function Header() {
   const router = useRouter();
   const { data: session, status } = useSession();
   console.log(session);
- const role = session?.user?.role?.toLowerCase() ?? null;
-const restaurantId = session?.user?.restaurantId;
+  const role = session?.user?.role?.toLowerCase() ?? null;
+  const restaurantId = session?.user?.restaurantId;
 
-const isAuthenticated = status === "authenticated";
-const isUnauthenticated = status === "unauthenticated";
-const hasRole = role !== null;
+  const isAuthenticated = status === "authenticated";
+  const isUnauthenticated = status === "unauthenticated";
+  const hasRole = role !== null;
 
   type ScrollDirection = "up" | "down" | null;
 
@@ -141,116 +141,110 @@ const hasRole = role !== null;
     };
   }, [menuOpen]);
 
-// useEffect(() => {
-//   if (status !== "authenticated") return;
+  // useEffect(() => {
+  //   if (status !== "authenticated") return;
 
-//   async function checkOnboarding() {
-//     try {
-//       const res = await fetch("/api/restaurant/onboarding-status", {
-//         cache: "no-store",
-//       });
+  //   async function checkOnboarding() {
+  //     try {
+  //       const res = await fetch("/api/restaurant/onboarding-status", {
+  //         cache: "no-store",
+  //       });
 
-//       const data = await res.json();
+  //       const data = await res.json();
 
-//       if (!data?.restaurant) {
-//         setOnboardingNotification(null); if (status !== "authenticated") return;
-//         setShowOnboardingNotification(false);
-//         return;
-//       }
+  //       if (!data?.restaurant) {
+  //         setOnboardingNotification(null); if (status !== "authenticated") return;
+  //         setShowOnboardingNotification(false);
+  //         return;
+  //       }
 
-//       const restaurant = data.restaurant;
+  //       const restaurant = data.restaurant;
 
-//       if (restaurant.onboarding_step === 0) {
-//         setOnboardingNotification(null);
-//         setShowOnboardingNotification(false);
-//         return;
-//       }
+  //       if (restaurant.onboarding_step === 0) {
+  //         setOnboardingNotification(null);
+  //         setShowOnboardingNotification(false);
+  //         return;
+  //       }
 
-//       setOnboardingNotification(restaurant);
+  //       setOnboardingNotification(restaurant);
 
-//       const updatedAt = new Date(restaurant.updated_at).getTime();
-//       const now = Date.now();
+  //       const updatedAt = new Date(restaurant.updated_at).getTime();
+  //       const now = Date.now();
 
-//       const elapsed = now - updatedAt;
+  //       const elapsed = now - updatedAt;
 
-//       if (elapsed >= 5000) {
-//         setShowOnboardingNotification(true);
-//       } else {
-//         setShowOnboardingNotification(false);
-//       }
-//     } catch (error) {
-//       console.error("Erro ao verificar onboarding:", error);
-//       setOnboardingNotification(null);
-//       setShowOnboardingNotification(false);
-//     }
-//   }
+  //       if (elapsed >= 5000) {
+  //         setShowOnboardingNotification(true);
+  //       } else {
+  //         setShowOnboardingNotification(false);
+  //       }
+  //     } catch (error) {
+  //       console.error("Erro ao verificar onboarding:", error);
+  //       setOnboardingNotification(null);
+  //       setShowOnboardingNotification(false);
+  //     }
+  //   }
 
-//   checkOnboarding();
+  //   checkOnboarding();
 
-//   const interval = setInterval(checkOnboarding, 2000);
+  //   const interval = setInterval(checkOnboarding, 2000);
 
-//   return () => clearInterval(interval);
-// }, [status, pathname]);
- 
+  //   return () => clearInterval(interval);
+  // }, [status, pathname]);
 
-useEffect(() => {
-  if (status !== "authenticated") return;
+  useEffect(() => {
+    if (status !== "authenticated") return;
 
-  let active = true;
+    let active = true;
 
-  async function checkOnboarding() {
-    try {
-      const res = await fetch("/api/restaurant/onboarding-status", {
-        cache: "no-store",
-      });
+    async function checkOnboarding() {
+      try {
+        const res = await fetch("/api/restaurant/onboarding-status", {
+          cache: "no-store",
+        });
 
-      if (!res.ok) return;
+        if (!res.ok) return;
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!active) return;
+        if (!active) return;
 
-      if (!data?.exists || !data?.restaurant) {
-        setOnboardingNotification(null);
-        setShowOnboardingNotification(false);
-        return;
-      }
+        if (!data?.exists || !data?.restaurant) {
+          setOnboardingNotification(null);
+          setShowOnboardingNotification(false);
+          return;
+        }
 
-      const restaurant = data.restaurant;
+        const restaurant = data.restaurant;
 
-      if (restaurant.onboarding_step === 0) {
-        setOnboardingNotification(null);
-        setShowOnboardingNotification(false);
-        return;
-      }
+        if (restaurant.onboarding_step === 0) {
+          setOnboardingNotification(null);
+          setShowOnboardingNotification(false);
+          return;
+        }
 
-      setOnboardingNotification(restaurant);
+        setOnboardingNotification(restaurant);
 
-      const updatedAt = new Date(restaurant.updated_at).getTime();
+        const updatedAt = new Date(restaurant.updated_at).getTime();
 
-      if (!Number.isFinite(updatedAt)) {
-        setShowOnboardingNotification(false);
-        return;
-      }
+        if (!Number.isFinite(updatedAt)) {
+          setShowOnboardingNotification(false);
+          return;
+        }
 
-      setShowOnboardingNotification(
-        Date.now() - updatedAt >= 5000,
-      );
-    } catch {
-      
+        setShowOnboardingNotification(Date.now() - updatedAt >= 5000);
+      } catch {}
     }
-  }
 
-  checkOnboarding();
+    checkOnboarding();
 
-  const interval = setInterval(checkOnboarding, 2000);
+    const interval = setInterval(checkOnboarding, 2000);
 
-  return () => {
-    active = false;
-    clearInterval(interval);
-  };
-}, [status, pathname]);
-
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [status, pathname]);
 
   //Mostrar os pedidos prontos pro garçom que fez eles
   useEffect(() => {
@@ -336,9 +330,6 @@ useEffect(() => {
         <div
           className={`absolute right-8 top-1/2 -translate-y-1/2 z-40 flex items-center gap-6
   ${isAuthenticated && hasRole ? "flex" : "flex lg:hidden"}`}
-
-
-  
         >
           <div className="relative hover:animate-[ring_0.9s_ease-in-out]">
             <Bell
@@ -572,7 +563,6 @@ useEffect(() => {
                         onClick={() => setMenuOpen(false)}
                         className="mt-2 flex items-center justify-center gap-4 rounded-lg bg-(--color-primary) px-3 py-2.25 text-[14.5px] font-medium text-white transition hover:bg-(--color-secondary)"
                       >
-                        
                         <span>Criar restaurante</span>
                       </Link>
                     </>
@@ -695,6 +685,12 @@ useEffect(() => {
                         className={`flex items-center gap-4 rounded-lg px-3 py-2.5 text-[15px] font-medium transition ${
                           pathname.startsWith(
                             `/roles/gerente/dashboard/${restaurantId}/funcionarios`,
+                          ) ||
+                          pathname.startsWith(
+                            `/roles/gerente/dashboard/${restaurantId}/reservas`,
+                          ) ||
+                          pathname.startsWith(
+                            `/roles/gerente/dashboard/${restaurantId}/logs`,
                           )
                             ? "bg-[#eaf1fb] text-(--color-primary)"
                             : "text-(--color-primary)/80 hover:bg-[#f1f4f8]"
@@ -705,7 +701,6 @@ useEffect(() => {
                       </Link>
                     </>
                   )}
-
                 </div>
 
                 <div className="mt-auto">
