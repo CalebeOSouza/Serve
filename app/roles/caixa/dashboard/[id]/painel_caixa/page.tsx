@@ -157,7 +157,7 @@ export default function Painel_Caixa() {
           <div className="flex h-full flex-col gap-3 mt-3">
             {loading ? (
   <div className="flex flex-col gap-3">
-    {[1, 2, 3].map((item) => (
+    {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
       <div
         key={item}
         className="flex items-center justify-between rounded-lg border border-[#e3e6ed] bg-white px-3 py-3 animate-pulse max-[500px]:flex-col max-[500px]:items-start max-[500px]:gap-3"
