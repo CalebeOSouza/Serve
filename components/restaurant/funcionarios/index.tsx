@@ -137,7 +137,34 @@ export default function RestaurantFuncionarios({ role }: Props) {
     const role = roles.find((r) => r.type === tipo);
     return role?.username || "Sem username";
   }
+function EmployeeCardSkeleton() {
+  return (
+    <div className="relative rounded-lg bg-white p-5 flex flex-col gap-5 shadow-sm border border-[#DCE7F4] animate-pulse">
+      <div className="flex justify-between items-start w-full">
+        <div className="flex gap-2">
+          <div className="w-8 h-8 rounded-full bg-[#DCE7F4]" />
+          <div className="w-8 h-8 rounded-full bg-[#EDF3FA]" />
+        </div>
 
+        <div className="w-9 h-9 rounded-full bg-[#EDF3FA]" />
+      </div>
+
+      <div className="flex items-center gap-4 mb-1">
+        <div className="w-16 h-16 rounded-full bg-[#DCE7F4] border border-[#c9dbff] shrink-0" />
+
+        <div className="flex flex-col flex-1 gap-3">
+          <div className="h-5 w-3/4 rounded bg-[#DCE7F4]" />
+          <div className="h-4 w-1/2 rounded bg-[#EDF3FA]" />
+        </div>
+      </div>
+
+      <div className="flex gap-3 mt-auto">
+        <div className="flex-1 h-9 rounded-md bg-[#DCE7F4]" />
+        <div className="flex-1 h-9 rounded-md bg-[#EDF3FA] border border-[#E1EAF5]" />
+      </div>
+    </div>
+  );
+}
   async function salvarSenhaCargos(e: React.FormEvent) {
     e.preventDefault();
 
@@ -614,12 +641,10 @@ export default function RestaurantFuncionarios({ role }: Props) {
               className={`mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3`}
             >
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-30 w-full col-span-full gap-3">
-                  <LoaderCircle className="w-10 h-10 text-(--color-primary) animate-spin" />
-
-                  <p className="text-gray-500">Carregando funcionários...</p>
-                </div>
-              ) : employees.length === 0 ? (             
+  Array.from({ length: 4 }).map((_, index) => (
+    <EmployeeCardSkeleton key={index} />
+  ))
+) : employees.length === 0 ? (            
                 <div className="flex flex-col items-center justify-center gap-3 py-15 w-full border border-gray-200 rounded-md col-span-full">
                   <div className="relative w-30 h-16">
                     <Image

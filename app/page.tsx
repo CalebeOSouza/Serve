@@ -261,7 +261,7 @@ export default function Home() {
         </div>
       </div> */}
 
-      <div className="relative w-full min-h-[600px] md:min-h-[750px] overflow-hidden">
+      <div className="relative w-full min-h-[600px] md:min-h-[900px] overflow-hidden">
         <Image
           src="/home_image_10.jpg"
           alt="Restaurante"

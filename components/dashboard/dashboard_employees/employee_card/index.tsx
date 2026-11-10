@@ -45,6 +45,8 @@ function getFirstName(name: string) {
   return name.trim().split(" ")[0];
 }
 
+
+
 export default function EmployeeCard({
   emp,
   cargos,
